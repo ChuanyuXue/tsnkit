@@ -1,0 +1,7 @@
+*.csv
+**/*.ipynb_checkpoints/
+*.pyc
+*.err
+*.log
+*.out
+*.DS_Store

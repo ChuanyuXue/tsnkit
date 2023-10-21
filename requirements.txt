@@ -1,0 +1,8 @@
+z3-solver>=4.11.2
+docplex>=2.23.222
+gurobipy>=9.5.1
+networkx>=2.8.8
+numpy>=1.21.4
+pandas>=1.4.1
+psutil>=5.9.4
+scikit_learn>=1.3.0

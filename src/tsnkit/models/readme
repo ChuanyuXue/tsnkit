@@ -1,0 +1,10 @@
+
+
+Resource isolation:
+
+    - Achieved by a guard process continuously pulling the resource utilization of all other processes and killing them if they exceed a threshold. 
+    - Killing is based on SIGKILL you can find in each model file. 
+    - Guard process is implemented in `src/utils/_system.py`.
+
+
+    
