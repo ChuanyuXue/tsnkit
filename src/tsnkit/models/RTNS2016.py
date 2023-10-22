@@ -30,7 +30,7 @@ def benchmark(name,
         stat.content(name=name)
         return stat
     except Exception as e:
-        print(e)
+        print("[!]", e, flush=True)
         stat.result = Result.error
         stat.content(name=name)
         return stat
@@ -63,7 +63,7 @@ class RTNS2016:
 
     def solve(self):
         if is_timeout(T_LIMIT):
-            return Statistics(None, Result.unknown)
+            return Statistics("-", Result.unknown)
         self.solver.set("timeout", int(T_LIMIT - time_log()) * 1000)
         result = self.solver.check()  ## Z3 solving
 
@@ -73,7 +73,7 @@ class RTNS2016:
         algo_result = Result.schedulable if result == z3.sat else Result.unschedulable
 
         self.model_output = self.solver.model()
-        return Statistics(None, algo_result, algo_time, algo_mem)
+        return Statistics("-", algo_result, algo_time, algo_mem)
 
     def output(self):
         config = Config()
@@ -102,8 +102,8 @@ class RTNS2016:
     def add_frame_const(solver, var):
         for s in var.keys():
             for l in var[s].keys():
-                solver.add(var[s][l]['phi'] >= 0, var[s][l]['phi']
-                           <= s.period - s.t_trans)
+                solver.add(var[s][l]['phi'] >= 0,
+                           var[s][l]['phi'] <= s.period - s.t_trans)
 
     @staticmethod
     def add_flow_trans_const(solver, var):
@@ -129,11 +129,10 @@ class RTNS2016:
                 for f1, f2 in task.get_frame_index_pairs(s1, s2):
                     solver.add(
                         z3.Or(
-                            var[s1][l]['phi'] + f1 * s1.period
-                            >= var[s2][l]['phi'] + f2 * s2.period + s2.t_trans,
-                            var[s2][l]['phi'] + f2 * s2.period
-                            >= var[s1][l]['phi'] + f1 * s1.period +
-                            s1.t_trans))
+                            var[s1][l]['phi'] + f1 * s1.period >=
+                            var[s2][l]['phi'] + f2 * s2.period + s2.t_trans,
+                            var[s2][l]['phi'] + f2 * s2.period >=
+                            var[s1][l]['phi'] + f1 * s1.period + s1.t_trans))
 
     @staticmethod
     def add_queue_range_const(solver, var):
@@ -150,11 +149,11 @@ class RTNS2016:
                 for f1, f2 in task.get_frame_index_pairs(s1, s2):
                     solver.add(
                         z3.Or(
-                            var[s2][l]['phi'] + f2 * s2.period + l.t_sync
-                            <= var[s1][pl_1]['phi'] + f1 * s1.period +
+                            var[s2][l]['phi'] + f2 * s2.period + l.t_sync <=
+                            var[s1][pl_1]['phi'] + f1 * s1.period +
                             pl_1.t_proc,
-                            var[s1][l]['phi'] + f1 * s1.period + l.t_sync
-                            <= var[s2][pl_2]['phi'] + f2 * s2.period +
+                            var[s1][l]['phi'] + f1 * s1.period + l.t_sync <=
+                            var[s2][pl_2]['phi'] + f2 * s2.period +
                             pl_2.t_proc, var[s1][l]['p'] != var[s2][l]['p']))
 
     @staticmethod
@@ -175,8 +174,8 @@ class RTNS2016:
     def get_release_time(result, var):
         release = []
         for s in var.keys():
-            for l in var[s].keys():
-                release.append([s, 0, result[var[s][l]['phi']].as_long()])
+            release.append(
+                [s, 0, result[var[s][s.first_link]['phi']].as_long()])
         return Release(release)
 
     @staticmethod

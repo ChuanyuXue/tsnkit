@@ -56,6 +56,18 @@ def oom_manager(name: str) -> subprocess.Popen:
                             stderr=kill_err)
 
 
+def find_files_with_prefix(directory: str, prefix: str):
+    matching_files = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.startswith(prefix):
+                full_path = os.path.join(root, file)
+                if ".csv" not in full_path:
+                    continue
+                matching_files.append(full_path)
+    return matching_files
+
+
 async def kill_process(proc: psutil.Process, time_limit: float):
     while True:
         if proc.poll() is not None:  # type: ignore
@@ -120,8 +132,8 @@ def kill_if(main_proc: int, mem_limit: int, time_limit: int,
             #       proc_info['cpu_percent'],
             #       proc_info['pid'],
             #       flush=True)
-            if 'python' in proc_info['name'] and proc_info[
-                    'cpu_times'].user > 0 and proc_info[
+            if 'python' in proc_info[
+                    'name'] and proc_info['cpu_times'].user > 0 and proc_info[
                         'status'] != psutil.STATUS_ZOMBIE:
                 # print('PID, CPU TIME, STATUS: ',
                 #       proc_info['pid'],

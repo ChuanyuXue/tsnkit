@@ -29,11 +29,13 @@ def result_slot_to_ns(result: List[List[float]], col: List[int]) -> bool:
 
 
 class GCL(list):
-    """
-    A list of [link, queue, start, end, cycle]
+    """A list of [link, queue, start, end, cycle]
+
+    Args:
+        init_list (List[List[link, queue, start, end, cycle]]): [description]
     """
 
-    def __init__(self, init_list: List[List]):
+    def __init__(self, init_list: List[List]) -> None:
         if init_list:
             if self.is_valid_gcl_format(init_list):
                 ## No hard constraints on overlap
@@ -49,7 +51,7 @@ class GCL(list):
                 )
 
     @staticmethod
-    def format_gcl_type(init_list):
+    def format_gcl_type(init_list: List[List]) -> bool:
         ##[NOTE] it will modify the input result
         ## Convert to GCL type
         for i, row in enumerate(init_list):
@@ -63,7 +65,7 @@ class GCL(list):
         return True
 
     @staticmethod
-    def is_overlap(init_list):
+    def is_overlap(init_list: List[List]) -> bool:
         ## Check if there is any overlap
         ## For each link:
         for link in set([x[0] for x in init_list]):
@@ -78,7 +80,7 @@ class GCL(list):
         return False
 
     @staticmethod
-    def is_small_entry(init_list):
+    def is_small_entry(init_list: List[List]) -> bool:
         ## Check if very samll entry exists
         for item in init_list:
             if (item[3] - item[2]) * T_SLOT < 400:
@@ -87,7 +89,7 @@ class GCL(list):
         return False
 
     @staticmethod
-    def is_valid_gcl_format(init_list):
+    def is_valid_gcl_format(init_list: List[List]) -> bool:
         for item in init_list:
             if not isinstance(item[0], (tuple, Link)):
                 warnings.warn("Invalid link type in GCL")
@@ -96,9 +98,10 @@ class GCL(list):
                 return False
         return True
 
-    def to_csv(self, path):
+    def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self)
-        result.columns = ['link_id', 'queue', 'start', 'end', 'cycle']
+        result.columns = ['link', 'queue', 'start', 'end',
+                          'cycle']  # type: ignore
         result.to_csv(path, index=False)
 
 
@@ -107,7 +110,7 @@ class Release(list):
     A list of [stream_id, frame_id, release_time]
     """
 
-    def __init__(self, init_list: List[List]):
+    def __init__(self, init_list: List[List]) -> None:
         if init_list:
             if self.is_valid_release_format(init_list):
                 result_slot_to_ns(init_list, [2])
@@ -117,29 +120,37 @@ class Release(list):
                 raise ValueError("Invalid format")
 
     @staticmethod
-    def is_valid_release_format(init_list):
+    def is_valid_release_format(init_list: List[List]) -> bool:
         for item in init_list:
             if len(item) != 3:
                 return False
         return True
 
     @staticmethod
-    def format_release_type(init_list):
+    def format_release_type(init_list: List[List]) -> None:
+        """[Note]: This will modify the input list
+
+        Args:
+            init_list (List[List]): _description_
+        """
         for i, row in enumerate(init_list):
             init_list[i] = [int(row[0]), int(row[1]), int(row[2])]
 
-    def to_csv(self, path):
+    def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self)
-        result.columns = ['id', 'ins_id', 'offset']
+        result.columns = ['stream', 'ins', 'offset']  # type: ignore
         result.to_csv(path, index=False)
 
 
 class Queue(list):
     """
     A list of [stream_id, frame_id, link, queue]
+    
+    Args:
+        init_list (List[List[stream_id, frame_id, link, queue]]): [description]
     """
 
-    def __init__(self, init_list: List[List]):
+    def __init__(self, init_list: List[List]) -> None:
         if init_list:
             if self.is_valid_queue_format(init_list):
                 self.is_valid_queue_range(init_list)
@@ -149,7 +160,7 @@ class Queue(list):
                 raise ValueError("Invalid format")
 
     @staticmethod
-    def is_valid_queue_format(init_list):
+    def is_valid_queue_format(init_list: List[List]) -> bool:
         for item in init_list:
             if not isinstance(item[2], (tuple, Link)):
                 warnings.warn("Invalid link type in queue")
@@ -159,7 +170,7 @@ class Queue(list):
         return True
 
     @staticmethod
-    def is_valid_queue_range(init_list):
+    def is_valid_queue_range(init_list: List[List]) -> bool:
         for item in init_list:
             if item[3] < 0 or item[3] >= MAX_NUM_QUEUE:
                 warnings.warn("Queue range out of MAX_NUM_QUEUE")
@@ -167,13 +178,19 @@ class Queue(list):
         return True
 
     @staticmethod
-    def format_queue_type(init_list):
+    def format_queue_type(init_list: List[List]) -> None:
+        """[Note]: This will modify the input list
+
+        Args:
+            init_list (List[List]): _description_
+        """
         for i, row in enumerate(init_list):
             init_list[i] = [int(row[0]), int(row[1]), str(row[2]), int(row[3])]
 
-    def to_csv(self, path):
+    def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self)
-        result.columns = ['id', 'ins_id', 'link', 'queue']
+        result.columns = ['stream', 'ins', 'link', 'queue']  # type: ignore
+        result.to_csv(path, index=False)
 
 
 class Route(list):
@@ -182,7 +199,7 @@ class Route(list):
     Each stream can contains several links as its route
     """
 
-    def __init__(self, init_list: List[List]):
+    def __init__(self, init_list: List[List]) -> None:
         if init_list:
             if self.is_valid_route_format(init_list):
                 self.is_valid_route_logic(init_list)
@@ -192,7 +209,7 @@ class Route(list):
                 raise ValueError("Invalid format")
 
     @staticmethod
-    def is_valid_route_format(init_list):
+    def is_valid_route_format(init_list: List[List]) -> bool:
         for item in init_list:
             if not isinstance(item[1], (tuple, Link, Path)):
                 warnings.warn("Invalid link type in route")
@@ -202,7 +219,7 @@ class Route(list):
         return True
 
     @staticmethod
-    def is_valid_route_logic(init_list):
+    def is_valid_route_logic(init_list: List[List]) -> bool:
         ## [NOTE] May casue some problem for un-continuous link_id
         routes = [[] for i in range(max([int(x[0]) for x in init_list]) + 1)]
         for item in init_list:
@@ -244,7 +261,7 @@ class Route(list):
 
     def to_csv(self, path):
         result = pd.DataFrame(self)
-        result.columns = ['id', 'link']
+        result.columns = ['stream', 'link']
         result.to_csv(path, index=False)
 
 
@@ -253,7 +270,7 @@ class Delay(list):
     A list of [stream_id, frame_id, delay]
     """
 
-    def __init__(self, init_list: List[List]):
+    def __init__(self, init_list: List[List]) -> None:
         if init_list:
             if self.is_valid_delay_format(init_list):
                 self.format_delay_type(init_list)
@@ -264,7 +281,7 @@ class Delay(list):
                 raise ValueError("Invalid format")
 
     @staticmethod
-    def is_valid_delay_format(init_list):
+    def is_valid_delay_format(init_list: List[List]) -> bool:
         # Add your check logic here
         # This is a simple example that checks if each item in the list has 3 elements
         for item in init_list:
@@ -273,13 +290,18 @@ class Delay(list):
         return True
 
     @staticmethod
-    def format_delay_type(init_list):
+    def format_delay_type(init_list: List[List]) -> None:
+        """[Note]: This will modify the input list
+
+        Args:
+            init_list (List[List]): _description_
+        """
         for i, row in enumerate(init_list):
             init_list[i] = [int(row[0]), int(row[1]), int(row[2])]
 
-    def to_csv(self, path):
+    def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self, dtype=int)
-        result.columns = ['id', 'ins_id', 'delay']
+        result.columns = ['stream', 'ins', 'delay']  # type: ignore
         result.to_csv(path, index=False)
 
 
@@ -312,7 +334,11 @@ class Config:
 
 
 if __name__ == "__main__":
-    net = load_network("../../input/test_topo.csv")
+    net = load_network("../data/input/test_topo.csv")
 
     ## Test GCL
     gcl = GCL([[net.get_link(0), 2, 3, 4, 10], [net.get_link(1), 3, 4, 5, 10]])
+
+    ## Test queue
+    queue = Queue([[0, 0, net.get_link(0), 0], [0, 0, net.get_link(1),
+                                                1]]).to_csv("testq.csv")
