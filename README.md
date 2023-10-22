@@ -5,3 +5,4 @@ Desc: description
 Created:  2023-10-21T23:45:53.243Z
 -->
 
+A simple scheduling toolkit for time-sensitive network in Python
