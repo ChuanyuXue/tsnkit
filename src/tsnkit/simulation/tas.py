@@ -1,13 +1,13 @@
 from enum import Enum
 import re
-from ..utils import find_files_with_prefix, T_SLOT
+from ..utils import find_files_with_prefix, T_SLOT, SEED
 
 from typing import Any, Dict, List, Tuple
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-np.random.seed()
+np.random.seed(SEED)
 
 
 def match_time(t: int, gcl: List[Tuple[int, int, int]]) -> int:

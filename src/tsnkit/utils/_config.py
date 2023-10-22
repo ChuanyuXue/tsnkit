@@ -9,9 +9,10 @@ Following code is mainly for generate the schedule output,
 which is also used as the input of the simulator/testbed
 """
 
-from typing import List, Union
+from typing import Dict, List, Tuple, Union
 from ._constants import T_SLOT, MAX_NUM_QUEUE
 from ._network import Link, Path, Network, load_network
+from ._stream import Stream, load_stream
 
 import pandas as pd
 import warnings
@@ -221,7 +222,9 @@ class Route(list):
     @staticmethod
     def is_valid_route_logic(init_list: List[List]) -> bool:
         ## [NOTE] May casue some problem for un-continuous link_id
-        routes = [[] for i in range(max([int(x[0]) for x in init_list]) + 1)]
+        routes: List[List[Union[Tuple[int, int], Link]]] = [
+            [] for i in range(max([int(x[0]) for x in init_list]) + 1)
+        ]
         for item in init_list:
             routes[int(item[0])].append(item[1])
 
@@ -243,13 +246,13 @@ class Route(list):
 
         ## Will only contain 2 nodes with degree 1
         for item in routes:
-            degree = {}
+            degree: Dict[int, int] = {}
             for link in item:
                 start, end = link
-                degree.setdefault(start, 0)
-                degree.setdefault(end, 0)
-                degree[start] += 1
-                degree[end] += 1
+                degree.setdefault(int(start), 0)
+                degree.setdefault(int(end), 0)
+                degree[int(start)] += 1
+                degree[int(end)] += 1
             if len([x for x in degree.values() if x == 1]) != 2:
                 warnings.warn("Path failed degree check unless multicast")
                 return False
@@ -340,5 +343,4 @@ if __name__ == "__main__":
     gcl = GCL([[net.get_link(0), 2, 3, 4, 10], [net.get_link(1), 3, 4, 5, 10]])
 
     ## Test queue
-    queue = Queue([[0, 0, net.get_link(0), 0], [0, 0, net.get_link(1),
-                                                1]]).to_csv("testq.csv")
+    queue = Queue([[0, 0, net.get_link(0), 0], [0, 0, net.get_link(1), 1]])

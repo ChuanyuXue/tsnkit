@@ -344,8 +344,10 @@ if __name__ == "__main__":
     network = load_network("../data/input/test_topo.csv")
     stream_set.set_routing(
         0, network.get_shortest_path(stream_set[0]._src, stream_set[0]._dst))
-    assert stream_set[0]._routing_path.llen == 3, "Routing path is wrong"
-    assert stream_set[0]._routing_path.nlen == 4, "Routing path is wrong"
+    assert stream_set[
+        0]._routing_path.llen == 3, "Routing path is wrong"  # type: ignore
+    assert stream_set[
+        0]._routing_path.nlen == 4, "Routing path is wrong"  # type: ignore
 
     stream_set.set_routing(1, Path([15, 5, 4, 3, 2, 1, 11], network))
     assert stream_set[1]._routing_path == network.get_shortest_path(
