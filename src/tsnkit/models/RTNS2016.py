@@ -205,5 +205,5 @@ class RTNS2016:
 
 
 if __name__ == "__main__":
-    benchmark('RTNS2016', '../data/input/test_task.csv',
-              '../data/input/test_topo.csv')
+    benchmark('RTNS2016', '../data/input/grid/0/300_task.csv',
+              '../data/input/grid/0/300_topo.csv')

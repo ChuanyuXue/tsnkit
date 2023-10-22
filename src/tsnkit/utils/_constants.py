@@ -1,4 +1,3 @@
-
 """
 Author: Chuanyu (skewcy@gmail.com)
 _constants.py (c) 2023
@@ -18,6 +17,7 @@ SEED = 1024
 T_LIMIT = 120 * 60
 M_LIMIT = 4096
 NUM_CORE_LIMIT = 4
+DEBUG = False
 
 ## Model parameters
 

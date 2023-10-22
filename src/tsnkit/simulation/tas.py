@@ -219,13 +219,16 @@ def simulation(task_path: str = "./",
 
 
 if __name__ == '__main__':
-    log = simulation("../data/input/grid/0/0_task.csv",
-                     "../data/output/grid/RTNS2016-0",
-                     it=5,
-                     verbose=True)
+    log = simulation(
+        "../data/input/grid/0/300_task.csv",
+        #  "../data/output/grid/RTNS2016-0",
+        "./",
+        it=5,
+        verbose=True)
 
     ### Check error
-    print([(log.index(flow), x) for flow in log
+    print("[Potential Errors]:",
+          [(log.index(flow), x) for flow in log
            for x in [[flow[1][i] - flow[0][i] for i in range(len(flow[1]))]]
            if len(x) == 0 or np.var(x) > 0])
     print("\n\n\n")

@@ -58,13 +58,11 @@ def oom_manager(name: str) -> subprocess.Popen:
 
 def find_files_with_prefix(directory: str, prefix: str):
     matching_files = []
-    for root, _, files in os.walk(directory):
-        for file in files:
-            if file.startswith(prefix):
-                full_path = os.path.join(root, file)
-                if ".csv" not in full_path:
-                    continue
-                matching_files.append(full_path)
+    for file in os.listdir(directory):
+        full_path = os.path.join(directory, file)
+        if os.path.isfile(full_path) and file.startswith(
+                prefix) and ".csv" in full_path:
+            matching_files.append(full_path)
     return matching_files
 
 
