@@ -59,8 +59,8 @@ class Statistics:
         self.result = result
         self.algo_time = round(algo_time, 3)
         self.algo_mem = round(algo_mem, 3)
-        self.total_time = round(time_log() + extra_time)
-        self.total_mem = round(mem_log() + extra_mem)
+        self.total_time = round(time_log() + extra_time, 3)
+        self.total_mem = round(mem_log() + extra_mem, 3)
 
     def to_list(self) -> List[Union[str, float]]:
         """Convert the statistics to a list
