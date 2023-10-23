@@ -33,7 +33,7 @@ METHOD_TO_ALGO = {
     'smt_wa': 'z3',
     'RTCSA2020': 'gurobi',
     'IEEEJAS2021': 'z3',
-    'RTNS2016_nowait': 'gurobi',
+    'smt_nw': 'gurobi',
     'RTNS2021': 'gurobi',
     'RTCSA2018': 'cplex',
     'RTAS2020': 'gurobi',
