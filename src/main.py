@@ -15,7 +15,7 @@ import time
 import pandas as pd
 import gc
 from multiprocessing import Pool, Queue, Value, cpu_count, Process
-from tsnkit.models import RTNS2016
+from tsnkit.models import smt_wa
 from tsnkit import utils
 
 FUNC = {
@@ -26,7 +26,7 @@ FUNC = {
     # 'RTNS2017': RTNS2017,
 
     # # # ## ZEN2
-    'RTNS2016': RTNS2016.benchmark,
+    'smt_wa': smt_wa.benchmark,
     # 'RTNS2016_nowait': RTNS2016_nowait,
     # 'RTNS2021': RTNS2021,
     # 'ASPDAC2022': ASPDAC2022,

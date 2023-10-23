@@ -30,7 +30,7 @@ METHOD_TO_ALGO = {
     'CIE2021': 'cplex',
     'RTAS2018': 'z3',
     'IEEETII2020': 'gurobi',
-    'RTNS2016': 'z3',
+    'smt_wa': 'z3',
     'RTCSA2020': 'gurobi',
     'IEEEJAS2021': 'z3',
     'RTNS2016_nowait': 'gurobi',

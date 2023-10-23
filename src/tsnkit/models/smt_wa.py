@@ -1,13 +1,11 @@
 """
 Author: Chuanyu (skewcy@gmail.com)
-RTNS2016.py (c) 2023
+smt_wa.py (c) 2023
 Desc: description
 Created:  2023-10-11T01:17:57.050Z
 """
 
-from typing import Union
-
-from ..utils import *
+from .. import utils
 import z3  # type: ignore
 
 
@@ -15,11 +13,11 @@ def benchmark(name,
               task_path,
               net_path,
               output_path="./",
-              workers=1) -> Statistics:
-    stat = Statistics(name)  ## Init empty stat
+              workers=1) -> utils.Statistics:
+    stat = utils.Statistics(name)  ## Init empty stat
     try:
         ## Change _Method to your method class
-        test = RTNS2016(workers)  # type: ignore
+        test = smt_wa(workers)  # type: ignore
         test.init(task_path, net_path)
         test.prepare()
         stat = test.solve()  ## Update stat
@@ -31,19 +29,19 @@ def benchmark(name,
         return stat
     except Exception as e:
         print("[!]", e, flush=True)
-        stat.result = Result.error
+        stat.result = utils.Result.error
         stat.content(name=name)
         return stat
 
 
-class RTNS2016:
+class smt_wa:
 
     def __init__(self, workers=1) -> None:
         self.workers = workers
 
     def init(self, task_path, net_path):
-        self.task = load_stream(task_path)
-        self.net = load_network(net_path)
+        self.task = utils.load_stream(task_path)
+        self.net = utils.load_network(net_path)
         self.task.set_routings({
             s: self.net.get_shortest_path(s.src, s.dst)
             for s in self.task.streams
@@ -61,22 +59,22 @@ class RTNS2016:
         self.add_frame_isolation_const(self.solver, self.task_vars, self.net,
                                        self.task)
 
+    @utils.check_time_limit
     def solve(self):
-        if is_timeout(T_LIMIT):
-            return Statistics("-", Result.unknown)
-        self.solver.set("timeout", int(T_LIMIT - time_log()) * 1000)
+        self.solver.set("timeout",
+                        int(utils.T_LIMIT - utils.time_log()) * 1000)
         result = self.solver.check()  ## Z3 solving
 
         info = self.solver.statistics()
         algo_time = info.time
         algo_mem = info.max_memory
-        algo_result = Result.schedulable if result == z3.sat else Result.unschedulable
+        algo_result = utils.Result.schedulable if result == z3.sat else utils.Result.unschedulable
 
         self.model_output = self.solver.model()
-        return Statistics("-", algo_result, algo_time, algo_mem)
+        return utils.Statistics("-", algo_result, algo_time, algo_mem)
 
     def output(self):
-        config = Config()
+        config = utils.Config()
         config.gcl = self.get_gcl_list(self.model_output, self.task_vars,
                                        self.task.lcm)
         config.release = self.get_release_time(self.model_output,
@@ -123,7 +121,7 @@ class RTNS2016:
                        s.last_link.t_sync)
 
     @staticmethod
-    def add_link_const(solver, var, net: Network, task: StreamSet):
+    def add_link_const(solver, var, net: utils.Network, task: utils.StreamSet):
         for l in net.links:
             for s1, s2 in task.get_pairs_on_link(l):
                 for f1, f2 in task.get_frame_index_pairs(s1, s2):
@@ -142,7 +140,8 @@ class RTNS2016:
                 solver.add(var[s][l]['p'] < l.q_num)
 
     @staticmethod
-    def add_frame_isolation_const(solver, var, net: Network, task: StreamSet):
+    def add_frame_isolation_const(solver, var, net: utils.Network,
+                                  task: utils.StreamSet):
 
         for s1, s2 in task.get_pairs():
             for pl_1, pl_2, l in task.get_merged_links(s1, s2):
@@ -168,7 +167,7 @@ class RTNS2016:
                         l, queue, release + k * s.period,
                         release + k * s.period + s.t_trans, lcm
                     ])
-        return GCL(gcl)
+        return utils.GCL(gcl)
 
     @staticmethod
     def get_release_time(result, var):
@@ -176,7 +175,7 @@ class RTNS2016:
         for s in var.keys():
             release.append(
                 [s, 0, result[var[s][s.first_link]['phi']].as_long()])
-        return Release(release)
+        return utils.Release(release)
 
     @staticmethod
     def get_queue_assignment(result, var):
@@ -184,7 +183,7 @@ class RTNS2016:
         for s in var.keys():
             for l in var[s].keys():
                 queue.append([s, 0, l, result[var[s][l]['p']].as_long()])
-        return Queue(queue)
+        return utils.Queue(queue)
 
     @staticmethod
     def get_route(var):
@@ -192,7 +191,7 @@ class RTNS2016:
         for s in var.keys():
             for l in var[s].keys():
                 route.append([s, l])
-        return Route(route)
+        return utils.Route(route)
 
     @staticmethod
     def get_delay(result, var):
@@ -201,7 +200,7 @@ class RTNS2016:
             _delay = result[var[s][s.last_link]['phi']].as_long() - result[
                 var[s][s.first_link]['phi']].as_long() + s.t_trans
             delay.append([s, 0, _delay])
-        return Delay(delay)
+        return utils.Delay(delay)
 
 
 if __name__ == "__main__":

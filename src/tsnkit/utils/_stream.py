@@ -5,7 +5,7 @@ Desc: description
 Created:  2023-10-08T06:14:04.079Z
 """
 
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Tuple, Union
 from ._network import Node, Link, Path, load_network, FlexLink, FlexNode
 from ._common import _interface
 from ._constants import T_SLOT
@@ -54,20 +54,26 @@ class Stream():
         self._t_trans: Optional[
             int] = None  ## [NOTE]: Only use for uniform link rate
 
-    id = _interface("id")
-    src = _interface("src")
-    dst = _interface("dst")
-    dst_mul = _interface("dst_mul")
-    size = _interface("size")
-    period = _interface("period")
-    deadline = _interface("deadline")
-    jitter = _interface("jitter")
+    id: int = _interface("id")
+    src: FlexNode = _interface("src")
+    dst: FlexNode = _interface("dst")
+    dst_mul: List[FlexNode] = _interface("dst_mul")
+    size: int = _interface("size")
+    period: int = _interface("period")
+    deadline: int = _interface("deadline")
+    jitter: int = _interface("jitter")
 
     @property
     def t_trans(self) -> int:
         if self._routing_path is None or self._t_trans is None:
             raise Exception("Route not set")
         return self._t_trans
+
+    def get_t_trans(self, link: FlexLink) -> int:
+        if self._routing_path is None:
+            raise Exception("Route not set")
+        _link = self.get_link(link)
+        return int(np.ceil(self._size * 8 / _link.rate))
 
     @property
     def links(self) -> List[Link]:
@@ -168,8 +174,18 @@ class StreamSet:
             raise TypeError("Index must be int or Stream object")
         return self._streams[int(key)]
 
-    streams = _interface("streams")
-    lcm = _interface("lcm")
+    streams: List[Stream] = _interface("streams")
+    lcm: int = _interface("lcm")
+
+    @property
+    def length(self) -> int:
+        return len(self._streams)
+
+    def __iter__(self) -> Iterator[Stream]:
+        return iter(self._streams)
+
+    def __len__(self) -> int:
+        return len(self._streams)
 
     def get_stream(self, stream: Union[int, Stream]) -> Stream:
         return self._streams[int(stream)]
@@ -241,6 +257,18 @@ class StreamSet:
             self,
             link: FlexLink,
             permute: bool = False) -> List[Tuple[Stream, Stream]]:
+        """Return all pairs of streams that share the same link
+
+        Args:
+            link (FlexLink): _description_
+            permute (bool, optional): _description_. Defaults to False. -> only return (i, j) where i < j 
+
+        Raises:
+            Exception: _description_
+
+        Returns:
+            List[Tuple[Stream, Stream]]: _description_
+        """
         if any([not self.is_route_valid(stream) for stream in self._streams]):
             raise Exception("Route not set for all streams")
         if permute:

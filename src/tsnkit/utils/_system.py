@@ -11,7 +11,7 @@ from multiprocessing.sharedctypes import SynchronizedBase, synchronized
 import signal
 import time
 
-from ._constants import METHOD_TO_PROCNUM
+from ._constants import METHOD_TO_PROCNUM, T_LIMIT
 
 import psutil
 import os
@@ -32,6 +32,7 @@ def time_log() -> float:
 
 def is_timeout(thres: float) -> bool:
     return time_log() > thres
+
 
 
 def init_output_folder(path: str) -> None:

@@ -5,7 +5,10 @@ Desc: description
 Created:  2023-10-08T17:51:27.418Z
 """
 
-def _interface(name: str)->property:
+from typing import Any
+
+
+def _interface(name: str)->Any:
     ## Create a property for class
     def getter(self):
         return getattr(self, f"_{name}")

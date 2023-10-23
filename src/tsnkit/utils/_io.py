@@ -5,12 +5,23 @@ Desc: description
 Created:  2023-10-08T06:13:41.041Z
 """
 
-from ._system import time_log, mem_log
+from ._system import time_log, mem_log, is_timeout
+from ._constants import T_LIMIT
 from typing import List, Optional, Union
 
 from enum import Enum
 import inspect
 import time
+
+
+def check_time_limit(func):
+
+    def wrapper(*args, **kwargs):
+        if is_timeout(T_LIMIT):
+            return Statistics("-", Result.unknown)
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 class Result(Enum):
@@ -40,10 +51,10 @@ class Statistics:
             self,
             name: str = "-",  # name of the algorithm
             result: Result = Result.unknown,  # {}
-            algo_time: int = 0,
-            algo_mem: int = 0,
-            extra_time: int = 0,
-            extra_mem: int = 0) -> None:
+            algo_time: float = 0,
+            algo_mem: float = 0,
+            extra_time: float = 0,
+            extra_mem: float = 0) -> None:
         self.name = name
         self.result = result
         self.algo_time = round(algo_time, 3)
@@ -51,7 +62,7 @@ class Statistics:
         self.total_time = round(time_log() + extra_time)
         self.total_mem = round(mem_log() + extra_mem)
 
-    def to_list(self) -> List[Union[str, int]]:
+    def to_list(self) -> List[Union[str, float]]:
         """Convert the statistics to a list
 
         Returns:
