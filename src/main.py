@@ -15,7 +15,7 @@ import time
 import pandas as pd
 import gc
 from multiprocessing import Pool, Queue, Value, cpu_count, Process
-from tsnkit.models import jrs_nw, jrs_wa, smt_wa, smt_nw
+from tsnkit.models import jrs_nw, jrs_wa, smt_wa, smt_nw, jrs_nw_l
 from tsnkit import utils
 
 FUNC = {
@@ -28,12 +28,12 @@ FUNC = {
     # # # ## ZEN2
     # 'smt_wa': smt_wa.benchmark,
     # 'smt_nw': smt_nw.benchmark,
-    'jrs_nw': jrs_nw.benchmark,
+    # 'jrs_nw': jrs_nw.benchmark,
     # 'ASPDAC2022': ASPDAC2022,
 
     # # # ## ZEN3
     # 'IEEETII2020': IEEETII2020,
-    # 'RTCSA2018': RTCSA2018,
+    'jrs_nw_l': jrs_nw_l.benchmark,
     # 'IEEEJAS2021': IEEEJAS2021,
     # 'ACCESS2020': ACCESS2020,
 

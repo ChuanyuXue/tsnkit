@@ -5,6 +5,8 @@ Desc: description
 Created:  2023-10-08T06:13:46.561Z
 """
 
+from enum import Enum
+from tkinter import E
 from typing import Dict, Generator, Iterator, List, Literal, Optional, Union, Tuple, cast
 from ._constants import T_SLOT, E_SYNC, NUM_PORT
 from ._common import _interface
@@ -15,7 +17,7 @@ import networkx as nx
 import warnings
 
 
-class NodeType():
+class NodeType(Enum):
     """
     Sample enum class for node type
     """
@@ -35,10 +37,10 @@ class Node:
         self._sync_error = E_SYNC
         self._num_port = NUM_PORT
 
-    id = _interface("id")
-    type = _interface("type")
-    sync_error = _interface("sync_error")
-    num_port = _interface("num_port")
+    id:int = _interface("id")
+    type: NodeType = _interface("type")
+    sync_error: int = _interface("sync_error")
+    num_port: int = _interface("num_port")
 
     def __hash__(self) -> int:
         return self._id

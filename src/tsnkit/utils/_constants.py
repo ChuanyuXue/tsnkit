@@ -35,7 +35,7 @@ METHOD_TO_ALGO = {
     'IEEEJAS2021': 'z3',
     'smt_nw': 'gurobi',
     'jrs_nw': 'gurobi',
-    'RTCSA2018': 'cplex',
+    'jrs_nw_l': 'cplex',
     'RTAS2020': 'gurobi',
     'GLOBECOM2022': 'custom'
 }
