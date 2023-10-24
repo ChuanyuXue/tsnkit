@@ -5,7 +5,7 @@ Desc: description
 Created:  2023-10-23T20:22:16.816Z
 """
 
-from typing import Dict
+from typing import Dict, Set
 import warnings
 import traceback
 from .. import utils
@@ -92,7 +92,7 @@ class jrs_wa:
         config._delay = self.get_delay()
         return config
 
-    def get_route_space(self, task: utils.Stream) -> set[utils.Link]:
+    def get_route_space(self, task: utils.Stream) -> Set[utils.Link]:
         _paths = self.net.get_all_path(
             task.src,
             task.dst,

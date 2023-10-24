@@ -6,6 +6,7 @@ Created:  2023-10-24T01:34:49.259Z
 """
 
 import traceback
+from typing import Set
 import warnings
 from .. import utils
 import gurobipy as gp
@@ -94,7 +95,7 @@ class jrs_nw:
         config._delay = self.get_delay()
         return config
 
-    def get_route_space(self, task: utils.Stream) -> set[utils.Link]:
+    def get_route_space(self, task: utils.Stream) -> Set[utils.Link]:
         _paths = self.net.get_all_path(
             task.src,
             task.dst,

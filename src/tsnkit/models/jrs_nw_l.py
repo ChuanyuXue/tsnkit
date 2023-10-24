@@ -250,8 +250,8 @@ class jrs_nw_l:
     def get_delay(self) -> utils.Delay:
         delay = []
         for s in self.task:
-            delay = self.model_output.get_value(  # type: ignore
+            _delay = self.model_output.get_value(  # type: ignore
                 sum(self.u[s.id, l.id] * (s.get_t_trans(l) + l.t_proc)
                     for l in self.net.links)) - self.net.max_t_proc
-            delay.append([s, 0, delay])
+            delay.append([s, 0, _delay])
         return utils.Delay(delay)
