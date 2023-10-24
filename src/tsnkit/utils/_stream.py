@@ -81,9 +81,13 @@ class Stream():
         return int(np.ceil(self._size * 8 / 1))
 
     def get_t_trans(self, link: FlexLink) -> int:
-        if self._routing_path is None:
-            raise Exception("Route not set")
-        _link = self.get_link(link)
+        _link: Link
+        if isinstance(link, Link):
+            _link = link
+        else:
+            if self._routing_path is None:
+                raise Exception("Route not set")
+            _link = self.get_link(link)
         return int(np.ceil(self._size * 8 / _link.rate))
 
     @property

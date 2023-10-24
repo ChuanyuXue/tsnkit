@@ -213,16 +213,36 @@ class Network:
 
     @property
     def e_nodes(self) -> List[Node]:
+        """Return all end station nodes
+
+        Returns:
+            List[Node]: _description_
+        """
         return self.get_nodes_es()
 
     def get_nodes_es(self) -> List[Node]:
+        """Return all end station nodes
+
+        Returns:
+            List[Node]: _description_
+        """
         return [x for x in self._nodes if x.type == NodeType.es]
 
     @property
     def s_nodes(self) -> List[Node]:
+        """Return all switch nodes
+
+        Returns:
+            List[Node]: _description_
+        """
         return self.get_nodes_sw()
 
     def get_nodes_sw(self) -> List[Node]:
+        """Return all switch nodes
+
+        Returns:
+            List[Node]: _description_
+        """
         return [x for x in self._nodes if x.type == NodeType.sw]
 
     def get_link(self, lid: FlexLink) -> Link:

@@ -49,6 +49,7 @@ class jrs_wa:
         self.net = utils.load_network(net_path)
         self.solver = gp.Model()
         self.solver.Params.LogToConsole = 0
+        self.solver.Params.Threads = self.workers
 
         self.r = self.solver.addMVar(shape=(len(self.task), self.net.num_l),
                                      vtype=gp.GRB.BINARY,
