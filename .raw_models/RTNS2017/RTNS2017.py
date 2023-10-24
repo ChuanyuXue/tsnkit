@@ -119,7 +119,6 @@ def RTNS2017(DATA, TOPO, NUM_FLOW, INS=-1, OUTPUT="./", workers=1):
                                     (2 + _inte - x_ki - x_li))
 
         for k in task_attr:
-            link = link_in[task_attr[k]['dst']][0]
             m.addConstr(
                 gp.quicksum(t[k][link_to_index[link]]
                             for link in link_in[task_attr[k]['dst']]
@@ -128,7 +127,7 @@ def RTNS2017(DATA, TOPO, NUM_FLOW, INS=-1, OUTPUT="./", workers=1):
                             for link in link_out[task_attr[k]['src']]
                             if link in route_space[k]) <=
                 task_attr[k]['deadline'] - task_attr[k]['t_trans'])
-            
+
         if utils.check_time(utils.t_limit):
             return utils.rprint(INS, NUM_FLOW, "unknown", 0)
         m.setParam('TimeLimit', utils.t_limit - utils.time_log())

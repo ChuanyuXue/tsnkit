@@ -21,7 +21,8 @@ def benchmark(name,
         test.init(task_path, net_path)
         test.prepare()
         stat = test.solve()  ## Update stat
-        test.output().to_csv(name, output_path)
+        if stat.result == utils.Result.schedulable:
+            test.output().to_csv(name, output_path)
         stat.content(name=name)
         return stat
     except KeyboardInterrupt:

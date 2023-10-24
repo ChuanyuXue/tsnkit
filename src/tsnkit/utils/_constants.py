@@ -26,7 +26,7 @@ METHOD_TO_ALGO = {
     'ASPDAC2022': 'z3',
     'SIGBED2019': 'custom',
     'COR2022': 'custom',
-    'RTNS2017': 'gurobi',
+    'jrs_wa': 'gurobi',
     'CIE2021': 'cplex',
     'RTAS2018': 'z3',
     'IEEETII2020': 'gurobi',

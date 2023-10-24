@@ -68,6 +68,17 @@ class Stream():
         if self._routing_path is None or self._t_trans is None:
             raise Exception("Route not set")
         return self._t_trans
+    
+    @property
+    def t_trans_1g(self) -> int:
+        """ Return max(transmission time on all links)
+        Only used for uniform link rate assuming 1Gbps link rate.
+        [NOTE]: This method it depreciated.
+        
+        Returns:
+            int: _description_
+        """
+        return int(np.ceil(self._size * 8 / 1))
 
     def get_t_trans(self, link: FlexLink) -> int:
         if self._routing_path is None:
@@ -309,9 +320,20 @@ class StreamSet:
 
     def get_frame_index_pairs(self, s1: Union[int, Stream], s2: Union[int,
                                                                       Stream]):
+        """Get all frame index pairs of two streams. LCM is calculated from s1.period and s2.period
+
+        Args:
+            s1 (Union[int, Stream]): _description_
+            s2 (Union[int, Stream]): _description_
+
+        Returns:
+            _type_: _description_
+        """
+
         s1, s2 = self._streams[int(s1)], self._streams[int(s2)]
-        return [(f1, f2) for f1 in s1.get_frame_indexes(self._lcm)
-                for f2 in s2.get_frame_indexes(self._lcm)]
+        _lcm = np.lcm(s1._period, s2._period)
+        return [(f1, f2) for f1 in s1.get_frame_indexes(_lcm)
+                for f2 in s2.get_frame_indexes(_lcm)]
 
     def set_routing(self, stream: Union[int, Stream],
                     routing_path: Path) -> None:

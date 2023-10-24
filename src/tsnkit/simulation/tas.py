@@ -220,9 +220,9 @@ def simulation(task_path: str = "./",
 
 if __name__ == '__main__':
     log = simulation(
-        "../data/input/grid/0/30_task.csv",
-        #  "../data/output/grid/RTNS2016-0",
-        "./",
+        "../data/input/grid/0/4_task.csv",
+        "../data/output/grid/jrs_wa-4",
+        # "./",
         it=5,
         verbose=True)
 

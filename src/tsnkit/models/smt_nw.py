@@ -24,7 +24,8 @@ def benchmark(name,
         test.init(task_path, net_path)
         test.prepare()
         stat = test.solve()  ## Update stat
-        test.output().to_csv(name, output_path)
+        if stat.result == utils.Result.schedulable:
+            test.output().to_csv(name, output_path)
         stat.content(name=name)
         return stat
     except KeyboardInterrupt:
@@ -181,7 +182,7 @@ class smt_nw:
                 s.last_link] - self.delay[s][s.first_link]
             delay.append([s, 0, _delay])
         return utils.Delay(delay)
-
+    
 
 if __name__ == "__main__":
     benchmark('-', '../data/input/grid/0/30_task.csv',

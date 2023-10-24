@@ -5,7 +5,7 @@ Desc: description
 Created:  2023-10-08T06:13:46.561Z
 """
 
-from typing import Dict, Generator, Iterator, List, Optional, Union, Tuple, cast
+from typing import Dict, Generator, Iterator, List, Literal, Optional, Union, Tuple, cast
 from ._constants import T_SLOT, E_SYNC, NUM_PORT
 from ._common import _interface
 
@@ -102,15 +102,15 @@ class Link:
                 "Invalid rate: Must in 1(Gbs), 10(100Mbs), 100(10Mbs), 1000(Mbs)"
             )
 
-    id = _interface("id")
-    name = _interface("name")
-    src = _interface("src")
-    dst = _interface("dst")
-    t_proc = _interface("t_proc")
-    t_prop = _interface("t_prop")
-    t_sync = _interface("t_sync")
-    q_num = _interface("q_num")
-    rate = _interface("rate")
+    id: int = _interface("id")
+    name: str = _interface("name")
+    src: Node = _interface("src")
+    dst: Node = _interface("dst")
+    t_proc: int = _interface("t_proc")
+    t_prop: int = _interface("t_prop")
+    t_sync: int = _interface("t_sync")
+    q_num: int = _interface("q_num")
+    rate: Literal[1, 10, 100, 1000] = _interface("rate")
 
     def __hash__(self) -> int:
         return self._id
@@ -191,6 +191,18 @@ class Network:
 
     net_np = _interface("net_np")
     net_nx = _interface("net_nx")
+
+    @property
+    def num_n(self) -> int:
+        return len(self._nodes)
+
+    @property
+    def num_l(self) -> int:
+        return len(self._links)
+
+    @property
+    def max_t_proc(self) -> int:
+        return max([x.t_proc for x in self._links])
 
     @property
     def nodes(self) -> List[Node]:
@@ -628,8 +640,9 @@ if __name__ == "__main__":
     ## Test when initialize with link path, the net is as reference
     path_copy = path
 
-    assert id(path._network) == id(net), "Network is copyed"
-    assert id(path_copy._network) == id(net), "Network is copyed"
+    assert id(path._network) == id(net), "Network is copyed"  # type: ignore
+    assert id(
+        path_copy._network) == id(net), "Network is copyed"  # type: ignore
 
     ## Test the const interface
     try:

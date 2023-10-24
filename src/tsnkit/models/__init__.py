@@ -34,19 +34,16 @@ def benchmark(name: str,
 
     stat = Statistics(name)  ## Init empty stat
     try:
-        ## Change _Method to your method class
+        ## ❕❕[NOTE]❕❕ Change _Method to your method class
         test = _Method(workers)  # type: ignore
         test.init(task_path, net_path)
         test.prepare()
         stat = test.solve()  ## Update stat
-        test.output().to_csv(name, output_path)
+        if stat.result == Result.schedulable:
+            test.output().to_csv(name, output_path)
         stat.content(name=name)
         return stat
     except KeyboardInterrupt:
-        stat.content(name=name)
-        return stat
-    except Exception as e:
-        stat.result = Result.error
         stat.content(name=name)
         return stat
 
