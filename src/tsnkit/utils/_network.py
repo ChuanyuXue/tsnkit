@@ -27,16 +27,20 @@ class NodeType(Enum):
 FlexNode = Union[int, 'Node']
 
 
-class Node:
+class Node(int):
 
-    def __init__(self, id: int, type: int):
+    def __init__(self, id: int, type: NodeType) -> None:
         self._id = id
         self._type = type  ## NodeType
-
         self._sync_error = E_SYNC
         self._num_port = NUM_PORT
 
-    id: int = _interface("id")
+    def __new__(cls, id: int, type: NodeType) -> 'Node':
+        if id < 0:
+            raise ValueError("Node id must be non-negative")
+        return super().__new__(cls, id)
+
+    # id: int = _interface("id")
     type: NodeType = _interface("type")
     sync_error: int = _interface("sync_error")
     num_port: int = _interface("num_port")
@@ -44,8 +48,8 @@ class Node:
     def __hash__(self) -> int:
         return self._id
 
-    def __int__(self) -> int:
-        return self._id
+    # def __int__(self) -> int:
+    #     return self._id
 
     def __eq__(self, other: Union[FlexNode, object]) -> bool:
         if isinstance(other, Node):
@@ -68,7 +72,7 @@ class Node:
 FlexLink = Union[int, 'Link', Tuple[Union[int, Node], Union[int, Node]]]
 
 
-class Link:
+class Link(int):
     """
     Use simple link structure to improve the efficiency
     
@@ -76,6 +80,12 @@ class Link:
     interface. -> Use (0, 1), Link(src=0, dst=1), (Node(0), Node(1)) are
     equivalent in framework.
     """
+
+    def __new__(cls, id: int, src: FlexNode, dst: FlexNode, t_proc: int,
+                t_prop: int, q_num: int, rate: int) -> 'Link':
+        if id < 0 or src < 0 or dst < 0:
+            raise ValueError("Link id must be non-negative")
+        return super().__new__(cls, id)
 
     def __init__(self, id: int, src: FlexNode, dst: FlexNode, t_proc: int,
                  t_prop: int, q_num: int, rate: int) -> None:
@@ -103,7 +113,7 @@ class Link:
                 "Invalid rate: Must in 1(Gbs), 10(100Mbs), 100(10Mbs), 1000(Mbs)"
             )
 
-    id: int = _interface("id")
+    # id: int = _interface("id")
     name: str = _interface("name")
     src: Node = _interface("src")
     dst: Node = _interface("dst")
@@ -116,8 +126,8 @@ class Link:
     def __hash__(self) -> int:
         return self._id
 
-    def __int__(self) -> int:
-        return self._id
+    # def __int__(self) -> int:
+    #     return self._id
 
     def __eq__(self, other: Union[FlexLink, object]) -> bool:
         if isinstance(other, Link):
@@ -163,12 +173,12 @@ class Network:
         self._all_path: Dict[Node, Dict[Node, List[Path]]] = {}
 
     def __getitem__(
-        self, key: Union[int, Node, Tuple[Union[int, Node], Union[int, Node]],
-                         Link]
+        self, key: Union[Node, Tuple[Union[int, Node], Union[int, Node]], Link]
     ) -> Union[Node, Link]:
-        ## Doesn't accept link ID
+        ## [NOTE]: Don't use net[int] which cause umambiguous
+        ## because an ID can be both node_id or link_id
         _result: Union[Node, Link]
-        if isinstance(key, (int, Node)):
+        if isinstance(key, Node):
             _result = self.get_node(key)
         elif isinstance(key, (tuple, Link)):
             _result = self.get_link(key)
@@ -420,7 +430,7 @@ class Path:
     A path can be either a node path or a link path
     Initialize with node path or link path, the other one will be automatically
     
-    No iterator interface to aviod misuse
+    No iterator interface to avoid misuse
     """
 
     def __init__(self, path: List[Union[int, Node, Tuple[Union[int, Node],
@@ -432,17 +442,8 @@ class Path:
             raise TypeError("Not a valid sequence or not enough elements")
 
         evaluated = path[0]
-        if isinstance(evaluated, (int, Node)):
-            ## Node path
-            ## Check if the input path is valid
-            ## [NOTE]: input node list must be ordered
-            for src, dst in zip(path, path[1:]):
-                if self._network.get_link((src, dst)) is None:  # type: ignore
-                    raise Exception("Invalid node path for network: ",
-                                    (src, dst))
-            self._nodes = [network.get_node(x) for x in path]  # type: ignore
-            self._links = self.node_path_to_link_path(self._nodes, network)
-        elif isinstance(evaluated, (tuple, Link)):
+
+        if isinstance(evaluated, (tuple, Link)):
             ## Link path
             ## Check if the input path is valid
             for link in path:
@@ -454,6 +455,18 @@ class Path:
                 for x in path
             ])
             self._nodes = self.link_path_to_node_path(self._links, network)
+        elif isinstance(evaluated, (int, Node)):
+            ## Node path
+            ## Check if the input path is valid
+            ## [NOTE]: input node list must be ordered
+            for src, dst in zip(path, path[1:]):
+                if self._network.get_link((src, dst)) is None:  # type: ignore
+                    raise Exception("Invalid node path for network: ",
+                                    (src, dst))
+            self._nodes = [network.get_node(x) for x in path]  # type: ignore
+            self._links = self.node_path_to_link_path(self._nodes, network)
+        else:
+            raise TypeError(f"Invalid type {type(evaluated)} in the init list")
 
         self._llen = len(self._links)
         self._nlen = len(self._nodes)
@@ -462,10 +475,10 @@ class Path:
         return Path(self._nodes, self._network)  # type: ignore
 
     def __contains__(self, item: Union[int, Node, tuple, Link]) -> bool:
-        if isinstance(item, (int, Node)):
-            return item in self._nodes
-        elif isinstance(item, (tuple, Link)):
+        if isinstance(item, (tuple, Link)):
             return item in self._links
+        elif isinstance(item, (int, Node)):
+            return item in self._nodes
         raise TypeError("Invalid type comparison")
 
     links = _interface("links")
@@ -553,10 +566,10 @@ class Path:
             # Check for circular dependencies
             if link in visited:
                 raise ValueError(
-                    f"Circular dependency detected in path: {link}")
+                    f"Circular dependency detected in path: {links}")
             visited.add(link)
 
-            prev_links = [x for x in links if x.dst == link.src]
+            prev_links = [x for x in current_links if x.dst == link.src]
             if len(prev_links) == 0:
                 sorted_links.append(link)
                 visited.clear(
@@ -577,10 +590,11 @@ class Path:
             return self._nodes == __value._nodes
         elif isinstance(__value, list):
             evaluated = __value[0]
-            if isinstance(evaluated, (int, Node)):
-                return self._nodes == __value
-            elif isinstance(evaluated, (tuple, Link)):
+
+            if isinstance(evaluated, (tuple, Link)):
                 return self._links == __value
+            elif isinstance(evaluated, (int, Node)):
+                return self._nodes == __value
         raise TypeError("Invalid type comparison")
 
     @staticmethod
@@ -652,7 +666,7 @@ if __name__ == "__main__":
         "Shortest link path is not correct"
 
     ## Test Path class
-    path = Path([0, 1, 2], net)
+    path = Path([(0, 1), (1, 2)], net)
     assert list(path.iter_node()) == list(range(3)), "Node path is not correct"
     assert list(
         path.iter_link()) == [net.get_link((0, 1)),
@@ -677,3 +691,12 @@ if __name__ == "__main__":
     ## Test for [link ID] in List[Link]
     assert 0 in net._links, "Link in list is not correct"
     assert net.get_link(0).name in net._links, "Link in list is not correct"
+
+    ## Test for [node ID] in List[Node] and [Node] in List[node ID]
+    assert 0 in net._nodes, "Node in list is not correct"
+    assert net.get_node(0) in [int(x) for x in net._nodes
+                               ], "Node in list is not correct"
+
+    ## Test use stream as index
+    assert [1, 2, 3, 4][net._links[0]] == 1, "Wrong stream index"
+    assert [1, 2, 3, 4][net._nodes[0]] == 1, "Wrong stream index"

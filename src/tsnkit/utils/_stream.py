@@ -37,7 +37,11 @@ def load_stream(path: str) -> 'StreamSet':
     return stream_set
 
 
-class Stream():
+class Stream(int):
+
+    def __new__(cls, id: int, src: FlexNode, dst: List[FlexNode], size: int,
+                period: int, deadline: int, jitter: int) -> "Stream":
+        return int.__new__(cls, id)
 
     def __init__(self, id: int, src: FlexNode, dst: List[FlexNode], size: int,
                  period: int, deadline: int, jitter: int) -> None:
@@ -54,7 +58,7 @@ class Stream():
         self._t_trans: Optional[
             int] = None  ## [NOTE]: Only use for uniform link rate
 
-    id: int = _interface("id")
+    # id: int = _interface("id")
     src: FlexNode = _interface("src")
     dst: FlexNode = _interface("dst")
     dst_mul: List[FlexNode] = _interface("dst_mul")
@@ -68,7 +72,7 @@ class Stream():
         if self._routing_path is None or self._t_trans is None:
             raise Exception("Route not set")
         return self._t_trans
-    
+
     @property
     def t_trans_1g(self) -> int:
         """ Return max(transmission time on all links)
@@ -115,9 +119,10 @@ class Stream():
         return self._routing_path
 
     def is_in_path(self, link: FlexLink) -> bool:
+        _link = self.get_link(link)
         if self._routing_path is None:
             raise Exception("Route not set")
-        if link in self._routing_path:
+        if _link in self._routing_path:
             return True
         return False
 
@@ -419,8 +424,11 @@ if __name__ == "__main__":
     try:
         stream_set.set_routing(1, Path([(1, 3), (2, 4), (5, 5)], network))
     except Exception as e:
-        print(e)
+        print("Expected error:  ", e)
 
     ## Test is in path function
     assert stream_set[0].is_in_path(network.get_link((0, 1))) == False, \
         "Wrong is_in_path function"
+
+    ## Test use stream as index
+    assert [1, 2, 3, 4][stream_set[0]] == 1, "Wrong stream index"

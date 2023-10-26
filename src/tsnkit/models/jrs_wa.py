@@ -103,18 +103,18 @@ class jrs_wa:
     def add_frame_const(self):
         for s in self.task:
             for l in self.routing_space[s]:
-                self.solver.addConstr(0 <= self.t[int(s)][int(l)])
+                self.solver.addConstr(0 <= self.t[s][l])
                 self.solver.addConstr(
-                    self.t[int(s)][int(l)] <= s.period - s.t_trans_1g)
+                    self.t[s][l] <= s.period - s.t_trans_1g)
 
     def add_routing_const(self) -> None:
         ## Ensure pass src and dst
         for s in self.task:
             self.solver.addConstr(
-                gp.quicksum(self.r[int(s)][int(l)]  # type: ignore
+                gp.quicksum(self.r[s][l]  # type: ignore
                             for l in self.net.get_outcome_links(s.src)
                             if l in self.routing_space[s]) -
-                gp.quicksum(self.r[int(s)][int(l)]  # type: ignore
+                gp.quicksum(self.r[s][l]  # type: ignore
                             for l in self.net.get_income_links(s.src)
                             if l in self.routing_space[s]) == 1)
 
@@ -124,10 +124,10 @@ class jrs_wa:
                 if i in {s.src, s.dst}:
                     continue
                 self.solver.addConstr(
-                    gp.quicksum(self.r[int(s)][int(l)]  # type: ignore
+                    gp.quicksum(self.r[s][l]  # type: ignore
                                 for l in self.net.get_outcome_links(i)
                                 if l in self.routing_space[s]) -
-                    gp.quicksum(self.r[int(s)][int(l)]  # type: ignore
+                    gp.quicksum(self.r[s][l]  # type: ignore
                                 for l in self.net.get_income_links(i)
                                 if l in self.routing_space[s]) == 0)
 
@@ -135,15 +135,15 @@ class jrs_wa:
         for s in self.task:
             for i in self.net.nodes:
                 self.solver.addConstr(
-                    gp.quicksum(self.r[int(s)][int(l)]  # type: ignore
+                    gp.quicksum(self.r[s][l]  # type: ignore
                                 for l in self.net.get_outcome_links(i)
                                 if l in self.routing_space[s]) <= 1)
 
     def add_link_present_const(self):
         for s in self.task:
             for l in self.routing_space[s]:
-                self.solver.addConstr(self.t[int(s)][int(l)] <= utils.T_M *
-                                      self.r[int(s)][int(l)])
+                self.solver.addConstr(self.t[s][l] <= utils.T_M *
+                                      self.r[s][l])
 
     def add_flow_trans_const(self):
         for s in self.task:
@@ -152,14 +152,14 @@ class jrs_wa:
                     continue
 
                 self.solver.addConstr(
-                    gp.quicksum(self.t[int(s)][int(l)]  # type: ignore
+                    gp.quicksum(self.t[s][l]  # type: ignore
                                 for l in self.net.get_outcome_links(i)
                                 if l in self.routing_space[s]) -
-                    gp.quicksum(self.t[int(s)][int(l)]  # type: ignore
+                    gp.quicksum(self.t[s][l]  # type: ignore
                                 for l in self.net.get_income_links(i)
                                 if l in self.routing_space[s]) >=
                     (self.net.max_t_proc + s.t_trans_1g) *
-                    gp.quicksum(self.r[int(s)][int(l)]  # type: ignore
+                    gp.quicksum(self.r[s][l]  # type: ignore
                                 for l in self.net.get_outcome_links(i)
                                 if l in self.routing_space[s]))
 
@@ -167,15 +167,15 @@ class jrs_wa:
         for l in self.net.links:
             for s1, s2 in self.task.get_pairs():
                 if l in self.routing_space[s1] and l in self.routing_space[s2]:
-                    t_s1, t_s2 = self.t[int(s1)][int(l)], self.t[int(s2)][int(
-                        l)]
-                    r_s1, r_s2 = self.r[int(s1)][int(l)], self.r[int(s2)][int(
-                        l)]
+                    t_s1, t_s2 = self.t[s1][l], self.t[s2][
+                        l]
+                    r_s1, r_s2 = self.r[s1][l], self.r[s2][
+                        l]
                     for k1, k2 in self.task.get_frame_index_pairs(s1, s2):
                         _temp = self.solver.addVar(
                             vtype=gp.GRB.BINARY,
                             name="%s%d%d%d%d" %
-                            (str(l), int(s1), int(s2), int(k1), int(k2)))
+                            (str(l), s1, s2, k1, k2))
                         self.solver.addConstr(
                             (t_s2 + k2 * s2.period) -
                             (t_s1 + k1 * s1.period) >= s1.t_trans_1g -
@@ -188,10 +188,10 @@ class jrs_wa:
     def add_delay_const(self):
         for s in self.task:
             self.solver.addConstr(
-                gp.quicksum(self.t[int(s)][int(l)]  # type: ignore
+                gp.quicksum(self.t[s][l]  # type: ignore
                             for l in self.net.get_income_links(s.dst)
                             if l in self.routing_space[s]) -
-                gp.quicksum(self.t[int(s)][int(l)]  # type: ignore
+                gp.quicksum(self.t[s][l]  # type: ignore
                             for l in self.net.get_outcome_links(s.src)
                             if l in self.routing_space[s]) <= s.deadline -
                 s.t_trans_1g)
@@ -203,7 +203,7 @@ class jrs_wa:
         for s in self.task:
             self._queue_log[s] = {}
             for l in self.routing_space[s]:
-                if self.r[int(s)][int(l)].x == 1:  # type: ignore
+                if self.r[s][l].x == 1:  # type: ignore
                     self._queue_count.setdefault(l, 0)
                     self._queue_log[s][l] = self._queue_count[l]
                     self._queue_count[l] += 1
@@ -212,14 +212,14 @@ class jrs_wa:
         gcl = []
         for s in self.task:
             for l in self.routing_space[s]:
-                if self.r[int(s)][int(l)].x == 1:  # type: ignore
-                    _start = self.t[int(s)][int(l)].x  # type: ignore
+                if self.r[s][l].x == 1:  # type: ignore
+                    _start = self.t[s][l].x  # type: ignore
                     _end = _start + s.t_trans_1g
                     for k in s.get_frame_indexes(self.task.lcm):
                         gcl.append([
                             l, self._queue_log[s][l],
-                            int(_start + k * s.period),
-                            int(_end + k * s.period), self.task.lcm
+                            _start + k * s.period,
+                            _end + k * s.period, self.task.lcm
                         ])
         return utils.GCL(gcl)
 
@@ -229,7 +229,7 @@ class jrs_wa:
             _start_links = [
                 l for l in self.net.get_outcome_links(s.src)
                 if l in self.routing_space[s]
-                and self.r[int(s)][int(l)].x == 1  # type: ignore
+                and self.r[s][l].x == 1  # type: ignore
             ]  # type: ignore
             if len(_start_links) == 0:
                 raise ValueError("No start link?")
@@ -237,7 +237,7 @@ class jrs_wa:
                 warnings.warn(
                     "Multiple start link? Please check if unicast is used.")
             _start_link = _start_links[0]
-            _start = self.t[int(s)][int(_start_link)].x  # type: ignore
+            _start = self.t[s][_start_link].x  # type: ignore
             offset.append([s, 0, _start])
 
         return utils.Release(offset)
@@ -246,7 +246,7 @@ class jrs_wa:
         route = []
         for s in self.task:
             for l in self.routing_space[s]:
-                if self.r[int(s)][int(l)].x == 1:  # type: ignore
+                if self.r[s][l].x == 1:  # type: ignore
                     route.append([s, l])
         return utils.Route(route)
 
@@ -254,7 +254,7 @@ class jrs_wa:
         queue = []
         for s in self.task:
             for l in self.routing_space[s]:
-                if self.r[int(s)][int(l)].x == 1:  # type: ignore
+                if self.r[s][l].x == 1:  # type: ignore
                     queue.append([s, 0, l, self._queue_log[s][l]])
         return utils.Queue(queue)
 
@@ -264,7 +264,7 @@ class jrs_wa:
             _start_links = [
                 l for l in self.net.get_outcome_links(s.src)
                 if l in self.routing_space[s]
-                and self.r[int(s)][int(l)].x == 1  # type: ignore
+                and self.r[s][l].x == 1  # type: ignore
             ]
             if len(_start_links) == 0:
                 raise ValueError("No start link?")
@@ -272,11 +272,11 @@ class jrs_wa:
                 warnings.warn(
                     "Multiple start link? Please check if unicast is used.")
             _start_link = _start_links[0]
-            _start = self.t[int(s)][int(_start_link)].x  # type: ignore
+            _start = self.t[s][int(_start_link)].x  # type: ignore
             _end_links = [
                 l for l in self.net.get_income_links(s.dst)
                 if l in self.routing_space[s]
-                and self.r[int(s)][int(l)].x == 1  # type: ignore
+                and self.r[s][l].x == 1  # type: ignore
             ]
             if len(_end_links) == 0:
                 raise ValueError("No end link?")
@@ -284,12 +284,12 @@ class jrs_wa:
                 warnings.warn(
                     "Multiple end link? Please check if unicast is used.")
             _end_link = _end_links[0]
-            _end = self.t[int(s)][int(_end_link)].x  # type: ignore
+            _end = self.t[s][int(_end_link)].x  # type: ignore
             delay.append([s, 0, (_end - _start) + s.t_trans_1g])
         return utils.Delay(delay)
 
 
 if __name__ == "__main__":
     # Test for route space
-    benchmark('-', '../data/input/grid/10_task.csv',
-              '../data/input/grid/0/10_topo.csv')
+    benchmark('-', '../data/input/grid/0/3_task.csv',
+              '../data/input/grid/0/3_topo.csv')

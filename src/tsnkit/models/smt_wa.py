@@ -5,8 +5,11 @@ Desc: description
 Created:  2023-10-11T01:17:57.050Z
 """
 
+from typing import Dict
 from .. import utils
 import z3  # type: ignore
+
+VarDict = Dict[utils.Stream, Dict[utils.Link, Dict[str, z3.ArithRef]]]
 
 
 def benchmark(name,
@@ -40,7 +43,7 @@ class smt_wa:
     def __init__(self, workers=1) -> None:
         self.workers = workers
 
-    def init(self, task_path, net_path):
+    def init(self, task_path, net_path) -> None:
         self.task = utils.load_stream(task_path)
         self.net = utils.load_network(net_path)
         self.task.set_routings({
@@ -49,19 +52,18 @@ class smt_wa:
         })
 
         self.solver = z3.Solver()
-        self.task_vars = self.create_task_vars(self.task.streams)
+        self.task_vars = self.create_task_vars(self.task)
 
-    def prepare(self):
+    def prepare(self) -> None:
         self.add_frame_const(self.solver, self.task_vars)
         self.add_flow_trans_const(self.solver, self.task_vars)
         self.add_delay_const(self.solver, self.task_vars)
         self.add_link_const(self.solver, self.task_vars, self.net, self.task)
         self.add_queue_range_const(self.solver, self.task_vars)
-        self.add_frame_isolation_const(self.solver, self.task_vars, self.net,
-                                       self.task)
+        self.add_frame_isolation_const(self.solver, self.task_vars, self.task)
 
     @utils.check_time_limit
-    def solve(self):
+    def solve(self) -> utils.Statistics:
         self.solver.set("timeout",
                         int(utils.T_LIMIT - utils.time_log()) * 1000)
         result = self.solver.check()  ## Z3 solving
@@ -74,7 +76,7 @@ class smt_wa:
         self.model_output = self.solver.model()
         return utils.Statistics("-", algo_result, algo_time, algo_mem)
 
-    def output(self):
+    def output(self) -> utils.Config:
         config = utils.Config()
         config.gcl = self.get_gcl_list(self.model_output, self.task_vars,
                                        self.task.lcm)
@@ -87,8 +89,8 @@ class smt_wa:
         return config
 
     @staticmethod
-    def create_task_vars(tasks):
-        task_var = {}
+    def create_task_vars(tasks: utils.StreamSet) -> VarDict:
+        task_var: VarDict = {}
         for s in tasks:
             task_var.setdefault(s, {})
             for l in s.routing_path.links:
@@ -98,14 +100,14 @@ class smt_wa:
         return task_var
 
     @staticmethod
-    def add_frame_const(solver, var):
+    def add_frame_const(solver: z3.Solver, var: VarDict) -> None:
         for s in var.keys():
             for l in var[s].keys():
                 solver.add(var[s][l]['phi'] >= 0,
                            var[s][l]['phi'] <= s.period - s.t_trans)
 
     @staticmethod
-    def add_flow_trans_const(solver, var):
+    def add_flow_trans_const(solver: z3.Solver, var: VarDict) -> None:
         for s in var.keys():
             for l in var[s].keys():
                 next_hop = s.routing_path.get_next_link(l)
@@ -115,14 +117,15 @@ class smt_wa:
                            next_hop.t_sync <= var[s][next_hop]['phi'])
 
     @staticmethod
-    def add_delay_const(solver, var):
+    def add_delay_const(solver: z3.Solver, var: VarDict) -> None:
         for s in var.keys():
             solver.add(var[s][s.first_link]['phi'] +
                        s.deadline >= var[s][s.last_link]['phi'] + s.t_trans +
                        s.last_link.t_sync)
 
     @staticmethod
-    def add_link_const(solver, var, net: utils.Network, task: utils.StreamSet):
+    def add_link_const(solver: z3.Solver, var: VarDict, net: utils.Network,
+                       task: utils.StreamSet) -> None:
         for l in net.links:
             for s1, s2 in task.get_pairs_on_link(l):
                 for f1, f2 in task.get_frame_index_pairs(s1, s2):
@@ -134,16 +137,15 @@ class smt_wa:
                             var[s1][l]['phi'] + f1 * s1.period + s1.t_trans))
 
     @staticmethod
-    def add_queue_range_const(solver, var):
+    def add_queue_range_const(solver: z3.Solver, var: VarDict) -> None:
         for s in var.keys():
             for l in var[s].keys():
                 solver.add(0 <= var[s][l]['p'])
                 solver.add(var[s][l]['p'] < l.q_num)
 
     @staticmethod
-    def add_frame_isolation_const(solver, var, net: utils.Network,
-                                  task: utils.StreamSet):
-
+    def add_frame_isolation_const(solver: z3.Solver, var: VarDict,
+                                  task: utils.StreamSet) -> None:
         for s1, s2 in task.get_pairs():
             for pl_1, pl_2, l in task.get_merged_links(s1, s2):
                 for f1, f2 in task.get_frame_index_pairs(s1, s2):
@@ -157,7 +159,7 @@ class smt_wa:
                             pl_2.t_proc, var[s1][l]['p'] != var[s2][l]['p']))
 
     @staticmethod
-    def get_gcl_list(result, var, lcm):
+    def get_gcl_list(result, var: VarDict, lcm: int) -> utils.GCL:
         gcl = []
         for s in var.keys():
             for l in var[s].keys():
@@ -171,7 +173,7 @@ class smt_wa:
         return utils.GCL(gcl)
 
     @staticmethod
-    def get_release_time(result, var):
+    def get_release_time(result, var: VarDict) -> utils.Release:
         release = []
         for s in var.keys():
             release.append(
@@ -179,7 +181,7 @@ class smt_wa:
         return utils.Release(release)
 
     @staticmethod
-    def get_queue_assignment(result, var):
+    def get_queue_assignment(result, var) -> utils.Queue:
         queue = []
         for s in var.keys():
             for l in var[s].keys():
@@ -187,7 +189,7 @@ class smt_wa:
         return utils.Queue(queue)
 
     @staticmethod
-    def get_route(var):
+    def get_route(var) -> utils.Route:
         route = []
         for s in var.keys():
             for l in var[s].keys():
@@ -195,7 +197,7 @@ class smt_wa:
         return utils.Route(route)
 
     @staticmethod
-    def get_delay(result, var):
+    def get_delay(result, var) -> utils.Delay:
         delay = []
         for s in var.keys():
             _delay = result[var[s][s.last_link]['phi']].as_long() - result[

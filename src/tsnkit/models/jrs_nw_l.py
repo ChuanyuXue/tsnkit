@@ -102,7 +102,7 @@ class jrs_nw_l:
         for a in self.net.links:
             for b in self.net.links:
                 if a.dst == b.src:
-                    A[a.id][b.id] = 1
+                    A[a][b] = 1
         return A
 
     def get_adj_nodes(self):
@@ -110,17 +110,17 @@ class jrs_nw_l:
 
         for v in self.net.nodes:
             for out in self.net.get_outcome_links(v):
-                self.B[v.id][out.id] = 1
+                self.B[v][out] = 1
             for in_ in self.net.get_income_links(v):
-                self.B[v.id][in_.id] = -1
+                self.B[v][in_] = -1
         return self.B
 
     def add_frame_const(self):
         for s in self.task:
             for l in self.net.links:
-                self.solver.add_constraint(0 <= self.t[s.id, l.id])
+                self.solver.add_constraint(0 <= self.t[s, l])
                 self.solver.add_constraint(
-                    self.t[s.id, l.id] <= s.period - s.t_trans_1g)
+                    self.t[s, l] <= s.period - s.t_trans_1g)
 
     def add_link_const(self):
         for l in self.net.links:
@@ -128,34 +128,34 @@ class jrs_nw_l:
                 for k1, k2 in self.task.get_frame_index_pairs(s1, s2):
                     self.solver.add_constraint(
                         self.solver.logical_or(
-                            self.u[s1.id, l.id] == 0, self.u[
-                                s2.id, l.id] == 0, self.t[s1.id, l.id] +
-                            k1 * s1.period >= self.t[s2.id, l.id] +
+                            self.u[s1, l] == 0, self.u[
+                                s2, l] == 0, self.t[s1, l] +
+                            k1 * s1.period >= self.t[s2, l] +
                             k2 * s2.period + s2.t_trans_1g +
-                            1, self.t[s2.id, l.id] +
-                            k2 * s2.period >= self.t[s1.id, l.id] +
+                            1, self.t[s2, l] +
+                            k2 * s2.period >= self.t[s1, l] +
                             k1 * s1.period + s1.t_trans_1g + 1) == 1)
 
     def add_route_const(self):
         for s in self.task:
             self.solver.add_constraint(
                 self.solver.sum([
-                    self.B[int(s.src)][l.id] * self.u[s.id, l.id]
+                    self.B[s.src][l] * self.u[s, l]
                     for l in self.net.get_outcome_links(s.src)
                 ]) == 1)
             self.solver.add_constraint(
-                self.solver.sum(self.u[s.id, l.id] for l in self.net.links
+                self.solver.sum(self.u[s, l] for l in self.net.links
                                 if self.net.get_node(l.src).type ==
                                 utils.NodeType.es) == 1)
 
         for s in self.task:
             self.solver.add_constraint(
                 self.solver.sum([
-                    self.B[int(s.dst)][l.id] * self.u[s.id, l.id]
+                    self.B[s.dst][l] * self.u[s, l]
                     for l in self.net.get_income_links(s.dst)
                 ]) == -1)
             self.solver.add_constraint(
-                self.solver.sum(self.u[s.id, l.id] for l in self.net.links
+                self.solver.sum(self.u[s, l] for l in self.net.links
                                 if self.net.get_node(l.dst).type ==
                                 utils.NodeType.es) == 1)
 
@@ -163,10 +163,10 @@ class jrs_nw_l:
             for v in self.net.s_nodes:
                 self.solver.add_constraint(
                     self.solver.sum([
-                        self.B[int(v)][l.id] * self.u[s.id, l.id]
+                        self.B[v][l] * self.u[s, l]
                         for l in self.net.get_outcome_links(v)
                     ]) + self.solver.sum([  # type: ignore
-                        self.B[int(v)][l.id] * self.u[s.id, l.id]
+                        self.B[v][l] * self.u[s, l]
                         for l in self.net.get_income_links(v)
                     ]) == 0)
 
@@ -176,19 +176,19 @@ class jrs_nw_l:
                 for s in self.task:
                     self.solver.add_constraint(
                         self.solver.logical_or(
-                            self.u[s.id, l_prev.id] == 0, self.u[s.id,
-                                                                 l_next.id] ==
-                            0, self.t[s.id,
-                                      l_next.id] == self.t[s.id, l_prev.id] +
+                            self.u[s, l_prev] == 0, self.u[s,
+                                                                 l_next] ==
+                            0, self.t[s,
+                                      l_next] == self.t[s, l_prev] +
                             l_next.t_proc +
-                            s.get_t_trans(l_prev), self.t[s.id, l_next.id] +
-                            s.period == self.t[s.id, l_prev.id] +
+                            s.get_t_trans(l_prev), self.t[s, l_next] +
+                            s.period == self.t[s, l_prev] +
                             l_next.t_proc + s.get_t_trans(l_prev)) == 1)
 
     def add_delay_const(self):
         for s in self.task:
             self.solver.add_constraint(
-                self.solver.sum(self.u[s.id, l.id] *  # type: ignore
+                self.solver.sum(self.u[s, l] *  # type: ignore
                                 (s.get_t_trans(l) + l.t_proc)
                                 for l in self.net.links) -
                 self.net.max_t_proc <= s.deadline)
@@ -198,11 +198,11 @@ class jrs_nw_l:
         for s in self.task:
             for link in self.net.links:
                 if self.model_output.get_value(  # type: ignore
-                        self.u[s.id, link.id]) != 1:
+                        self.u[s, link]) != 1:
                     continue
 
                 start = self.model_output.get_value(  # type: ignore
-                    self.t[s.id, link.id])
+                    self.t[s, link])
                 end = start + s.get_t_trans(link)
                 for k in s.get_frame_indexes(self.task.lcm):
                     gcl.append([
@@ -216,8 +216,8 @@ class jrs_nw_l:
         for s in self.task:
             _start_links = [
                 l for l in self.net.get_outcome_links(s.src)
-                if self.model_output.get_value(self.u[s.id,  # type: ignore
-                                                      l.id]) == 1
+                if self.model_output.get_value(self.u[s,  # type: ignore
+                                                      l]) == 1
             ]
             if len(_start_links) == 0:
                 raise ValueError("Start link error")
@@ -225,7 +225,7 @@ class jrs_nw_l:
                 warnings.warn("Multiple start link")
             start_link = _start_links[0]
             start = self.model_output.get_value(  # type: ignore
-                self.t[s.id, start_link.id])  # type: ignore
+                self.t[s, start_link])  # type: ignore
             offset.append([s, 0, start])
         return utils.Release(offset)
 
@@ -234,7 +234,7 @@ class jrs_nw_l:
         for s in self.task:
             for l in self.net.links:
                 if self.model_output.get_value(  # type: ignore
-                        self.u[s.id, l.id]) == 1:
+                        self.u[s, l]) == 1:
                     route.append([s, l])
         return utils.Route(route)
 
@@ -243,7 +243,7 @@ class jrs_nw_l:
         for s in self.task:
             for l in self.net.links:
                 if self.model_output.get_value(  # type: ignore
-                        self.u[s.id, l.id]) == 1:
+                        self.u[s, l]) == 1:
                     queue.append([s, 0, l, 0])
         return utils.Queue(queue)
 
@@ -251,7 +251,7 @@ class jrs_nw_l:
         delay = []
         for s in self.task:
             _delay = self.model_output.get_value(  # type: ignore
-                sum(self.u[s.id, l.id] * (s.get_t_trans(l) + l.t_proc)
+                sum(self.u[s, l] * (s.get_t_trans(l) + l.t_proc)
                     for l in self.net.links)) - self.net.max_t_proc
             delay.append([s, 0, _delay])
         return utils.Delay(delay)
