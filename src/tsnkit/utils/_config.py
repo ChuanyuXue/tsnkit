@@ -155,8 +155,8 @@ class Queue(list):
         if init_list:
             if self.is_valid_queue_format(init_list):
                 self.is_valid_queue_range(init_list)
-                super().__init__(init_list)
                 self.format_queue_type(init_list)
+                super().__init__(init_list)
             else:
                 raise ValueError("Invalid format")
 
@@ -236,6 +236,7 @@ class Route(list):
 
         ## Check if there is any loop
         for item in routes:
+            item = Path.sort_links(item)
             visited = set()
             for link in item:
                 start, end = link

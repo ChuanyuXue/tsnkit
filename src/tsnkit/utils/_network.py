@@ -90,8 +90,8 @@ class Link(int):
     def __init__(self, id: int, src: FlexNode, dst: FlexNode, t_proc: int,
                  t_prop: int, q_num: int, rate: int) -> None:
         id = int(id)
-        src = int(src)
-        dst = int(dst)
+        src = src
+        dst = dst
         t_proc = int(np.ceil(int(t_proc) / T_SLOT))
         t_prop = int(np.ceil(int(t_prop) / T_SLOT))
         q_num = int(q_num)
@@ -129,6 +129,13 @@ class Link(int):
     # def __int__(self) -> int:
     #     return self._id
 
+    def __getitem__(self, key: Literal[0, 1, 'src',
+                                       'dst']) -> Union[int, Node]:
+        if key == 'src' or key == 0:
+            return self._src
+        elif key == 'dst' or key == 1:
+            return self._dst
+
     def __eq__(self, other: Union[FlexLink, object]) -> bool:
         if isinstance(other, Link):
             return self._id == other._id
@@ -147,6 +154,9 @@ class Link(int):
         raise TypeError("Invalid type comparison")
 
     def __repr__(self) -> str:
+        return str(self._name)
+    
+    def __str__(self) -> str:
         return str(self._name)
 
     def __iter__(self) -> Generator[FlexNode, None, None]:
@@ -442,6 +452,8 @@ class Path:
             raise TypeError("Not a valid sequence or not enough elements")
 
         evaluated = path[0]
+        _links: List[Link]
+        _nodes: List[Node]
 
         if isinstance(evaluated, (tuple, Link)):
             ## Link path
@@ -450,11 +462,11 @@ class Path:
                 if self._network.get_link(link) is None:  # type: ignore
                     raise Exception("Invalid link path for network:" +
                                     str(link))
-            self._links = self.sort_links([
-                network.get_link(x)  # type: ignore
-                for x in path
-            ])
-            self._nodes = self.link_path_to_node_path(self._links, network)
+            self._links = self.sort_links([network.get_link(x) for x in path])
+
+            self._nodes = self.link_path_to_node_path(
+                self._links,  # type: ignore
+                network)
         elif isinstance(evaluated, (int, Node)):
             ## Node path
             ## Check if the input path is valid
@@ -464,7 +476,8 @@ class Path:
                     raise Exception("Invalid node path for network: ",
                                     (src, dst))
             self._nodes = [network.get_node(x) for x in path]  # type: ignore
-            self._links = self.node_path_to_link_path(self._nodes, network)
+            self._links = self.node_path_to_link_path(self._nodes,
+                                                      network)  # type: ignore
         else:
             raise TypeError(f"Invalid type {type(evaluated)} in the init list")
 
@@ -487,7 +500,7 @@ class Path:
     nlen = _interface("nlen")
 
     def iter_link(self) -> Iterator[Link]:
-        return iter(self._links)
+        return iter(self._links)  # type: ignore
 
     def iter_node(self) -> Iterator[Node]:
         return iter(self._nodes)
@@ -554,7 +567,9 @@ class Path:
         return self._network.get_link((_next_src, _next_dst))
 
     @staticmethod
-    def sort_links(links: List[Link]) -> List[Link]:
+    def sort_links(
+        links: List[Union[Link, Tuple[Union[int, Node], Union[int, Node]]]]
+    ) -> List[Union[Link, Tuple[Union[int, Node], Union[int, Node]]]]:
         ## Find the first link
         current_links = links.copy()
         sorted_links = []
@@ -569,7 +584,7 @@ class Path:
                     f"Circular dependency detected in path: {links}")
             visited.add(link)
 
-            prev_links = [x for x in current_links if x.dst == link.src]
+            prev_links = [x for x in current_links if x[1] == link[0]]
             if len(prev_links) == 0:
                 sorted_links.append(link)
                 visited.clear(
@@ -647,6 +662,7 @@ if __name__ == "__main__":
     node_0 = net.get_node(0)
     node_1 = net.get_node(1)
     link_0 = net.get_link(0)  ## (0, 1)
+
     assert node_0 == node_0._id == 0, "Node id is not correct"
     assert link_0 == link_0._id == 0, "Link id is not correct"
     assert net.get_link((node_0, node_1)) == link_0, "Link name is not correct"
