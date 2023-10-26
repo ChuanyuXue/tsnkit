@@ -111,9 +111,9 @@ class smt_nw:
     def add_frame_const(self) -> None:
         for s in self.task:
             end_link = s.last_link
-            self.solver.addConstr(0 <= self.release[int(s)])
+            self.solver.addConstr(0 <= self.release[s])
             self.solver.addConstr(
-                self.release[int(s)] <= s.period - self.delay[s][end_link])
+                self.release[s] <= s.period - self.delay[s][end_link])
 
     def add_delay_const(self) -> None:
         for s in self.task:
@@ -128,15 +128,15 @@ class smt_nw:
                     temp = self.solver.addVar(
                         vtype=gp.GRB.BINARY,
                         name="%s%d%d%d%d" %
-                        (str(link), int(s1), int(s2), int(k1), int(k2)))
+                        (str(link), s1, s2, k1, k2))
                     self.solver.addConstr(
-                        (self.release[int(s2)] + k2 * s2.period) -
-                        (self.release[int(s1)] + k1 * s1.period) -
+                        (self.release[s2] + k2 * s2.period) -
+                        (self.release[s1] + k1 * s1.period) -
                         self.delay[s1][link] + s1.get_t_trans(link) +
                         self.delay[s2][link] <= utils.T_M * temp)
                     self.solver.addConstr(
-                        (self.release[int(s1)] + k1 * s1.period) -
-                        (self.release[int(s2)] + k2 * s2.period) -
+                        (self.release[s1] + k1 * s1.period) -
+                        (self.release[s2] + k2 * s2.period) -
                         self.delay[s2][link] + s2.get_t_trans(link) +
                         self.delay[s1][link] <= utils.T_M * (1 - temp))
 
@@ -144,7 +144,7 @@ class smt_nw:
         gcl = []
         for s in self.task:
             for link in s.routing_path.iter_link():
-                _release = self.release[int(s)].x  # type: ignore
+                _release = self.release[s].x  # type: ignore
                 _start = _release + self.delay[s][link] - s.get_t_trans(link)
                 _end = _start + s.get_t_trans(link)
                 for k in s.get_frame_indexes(self.task.lcm):
@@ -157,7 +157,7 @@ class smt_nw:
     def get_offset(self) -> utils.Release:
         offset = []
         for s in self.task:
-            _release = self.release[int(s)].x  # type: ignore
+            _release = self.release[s].x  # type: ignore
             offset.append([s, 0, _release])
         return utils.Release(offset)
 
@@ -178,7 +178,7 @@ class smt_nw:
     def get_delay(self) -> utils.Delay:
         delay = []
         for s in self.task:
-            _delay = self.release[int(s)].x + self.delay[s][  # type: ignore
+            _delay = self.release[s].x + self.delay[s][  # type: ignore
                 s.last_link] - self.delay[s][s.first_link]
             delay.append([s, 0, _delay])
         return utils.Delay(delay)

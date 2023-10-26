@@ -14,7 +14,7 @@ Resource isolation:
 \item Ramon et al. (RTAS18): AT (Window-based, Assignment and Array theory) \han{What does R stand for?}
 <!-- \item Eike et al. (RTNS17): JRS-WA (Jount routing) -->
 <!-- \item David et al. (RTNS21): JRS-NW (No-wait joint routing) -->
-\item Jonathan et al. (RTCSA18): JRS-NW-L (No-wait joint routing with Logical indicator)
+<!-- \item Jonathan et al. (RTCSA18): JRS-NW-L (No-wait joint routing with Logical indicator) -->
 \item Eike et al. (RTCSA20): JRS-MC (Jount-routing with Multicast)
 \item Marek et al. (COR22): LS-TB (List Scheduler with TraceBack)
 \item Maryam et al. (SIGBED19): LS (List Scheduler)
