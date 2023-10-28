@@ -58,7 +58,7 @@ class jrs_wa:
                                      vtype=gp.GRB.INTEGER,
                                      name="time_start")
 
-    def prepare(self):
+    def prepare(self) -> None:
         self.routing_space = {s: self.get_route_space(s) for s in self.task}
         self.add_frame_const()
         self.add_routing_const()
@@ -68,7 +68,7 @@ class jrs_wa:
         self.add_delay_const()
 
     @utils.check_time_limit
-    def solve(self):
+    def solve(self) -> utils.Statistics:
         self.solver.setParam('TimeLimit', (utils.T_LIMIT - utils.time_log()))
         self.solver.optimize()
         run_time = self.solver.Runtime
@@ -82,7 +82,7 @@ class jrs_wa:
             result = utils.Result.schedulable
         return utils.Statistics("-", result, run_time, memory)
 
-    def output(self):
+    def output(self) -> utils.Config:
         self.set_queue()
         config = utils.Config()
         config.gcl = self.get_gcl()
@@ -100,7 +100,7 @@ class jrs_wa:
         _route_space = set([x for y in _paths for x in y.iter_link()])
         return _route_space
 
-    def add_frame_const(self):
+    def add_frame_const(self) -> None:
         for s in self.task:
             for l in self.routing_space[s]:
                 self.solver.addConstr(0 <= self.t[s][l])
@@ -161,7 +161,7 @@ class jrs_wa:
                                 for l in self.net.get_outcome_links(i)
                                 if l in self.routing_space[s]))
 
-    def add_link_const(self):
+    def add_link_const(self) -> None:
         for l in self.net.links:
             for s1, s2 in self.task.get_pairs():
                 if l in self.routing_space[s1] and l in self.routing_space[s2]:
@@ -180,7 +180,7 @@ class jrs_wa:
                             (t_s2 + k2 * s2.period) >= s2.t_trans_1g -
                             utils.T_M * (2 + _temp - r_s1 - r_s2))
 
-    def add_delay_const(self):
+    def add_delay_const(self) -> None:
         for s in self.task:
             self.solver.addConstr(
                 gp.quicksum(self.t[s][l]  # type: ignore

@@ -309,6 +309,16 @@ class Delay(list):
         result.to_csv(path, index=False)
 
 
+class Size(list):
+    """This i only used for FRAG based model now
+    [NOTE]: No type check for 
+    """
+
+    def to_csv(self, path: str) -> None:
+        result = pd.DataFrame(self, dtype=int)
+        result.columns = ['stream', 'ins', 'size']
+
+
 class Config:
 
     def __init__(self):
@@ -317,6 +327,7 @@ class Config:
         self.queue: Union[None, Queue] = None
         self.route: Union[None, Route] = None
         self._delay: Union[None, Delay] = None
+        self._size: Union[None, Size] = None
 
     def to_csv(self, name, path):
         if not self.gcl:
@@ -327,14 +338,15 @@ class Config:
             raise ValueError("Queue is empty")
         if not self.route:
             raise ValueError("Route is empty")
-        if not self._delay:
-            raise ValueError("Delay is empty")
 
         self.gcl.to_csv(path + name + "-GCL.csv")
         self.release.to_csv(path + name + "-OFFSET.csv")
         self.queue.to_csv(path + name + "-QUEUE.csv")
         self.route.to_csv(path + name + "-ROUTE.csv")
-        self._delay.to_csv(path + name + "-DELAY.csv")
+        if self._delay:
+            self._delay.to_csv(path + name + "-DELAY.csv")
+        if self._size:
+            self._size.to_csv(path + name + "-SIZE.csv")
 
 
 if __name__ == "__main__":
