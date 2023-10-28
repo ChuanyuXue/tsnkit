@@ -37,7 +37,7 @@ class jrs_mc:
     def __init__(self, workers=1) -> None:
         self.workers = workers
 
-    def init(self, task_path, net_path) -> None:
+    def init(self, task_path: str, net_path: str) -> None:
         self.task = utils.load_stream(task_path)
         self.net = utils.load_network(net_path)
         self.solver = gp.Model()
@@ -52,7 +52,7 @@ class jrs_mc:
                                      vtype=gp.GRB.INTEGER,
                                      name="t")
 
-    def prepare(self):
+    def prepare(self) -> None:
         self.routing_space = {s: self.get_route_space(s) for s in self.task}
         self.add_frame_const()
         self.add_route_const()
@@ -75,7 +75,7 @@ class jrs_mc:
             result = utils.Result.schedulable
         return utils.Statistics("-", result, run_time, memory)
 
-    def output(self):
+    def output(self) -> utils.Config:
         self.set_queue()
         config = utils.Config()
         config.gcl = self.get_gcl()
@@ -97,8 +97,8 @@ class jrs_mc:
         for s in self.task:
             for l in self.routing_space[s]:
                 self.solver.addConstr(self.t[s, l] >= 0)
-                self.solver.addConstr(
-                    self.t[s, l] <= s.period - s.get_t_trans(l))
+                self.solver.addConstr(self.t[s,
+                                             l] <= s.period - s.get_t_trans(l))
                 self.solver.addConstr(self.t[s, l] <= utils.T_M * self.p[s, l])
 
     def add_route_const(self):

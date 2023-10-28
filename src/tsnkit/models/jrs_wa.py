@@ -104,8 +104,7 @@ class jrs_wa:
         for s in self.task:
             for l in self.routing_space[s]:
                 self.solver.addConstr(0 <= self.t[s][l])
-                self.solver.addConstr(
-                    self.t[s][l] <= s.period - s.t_trans_1g)
+                self.solver.addConstr(self.t[s][l] <= s.period - s.t_trans_1g)
 
     def add_routing_const(self) -> None:
         ## Ensure pass src and dst
@@ -142,8 +141,7 @@ class jrs_wa:
     def add_link_present_const(self):
         for s in self.task:
             for l in self.routing_space[s]:
-                self.solver.addConstr(self.t[s][l] <= utils.T_M *
-                                      self.r[s][l])
+                self.solver.addConstr(self.t[s][l] <= utils.T_M * self.r[s][l])
 
     def add_flow_trans_const(self):
         for s in self.task:
@@ -167,15 +165,12 @@ class jrs_wa:
         for l in self.net.links:
             for s1, s2 in self.task.get_pairs():
                 if l in self.routing_space[s1] and l in self.routing_space[s2]:
-                    t_s1, t_s2 = self.t[s1][l], self.t[s2][
-                        l]
-                    r_s1, r_s2 = self.r[s1][l], self.r[s2][
-                        l]
+                    t_s1, t_s2 = self.t[s1][l], self.t[s2][l]
+                    r_s1, r_s2 = self.r[s1][l], self.r[s2][l]
                     for k1, k2 in self.task.get_frame_index_pairs(s1, s2):
-                        _temp = self.solver.addVar(
-                            vtype=gp.GRB.BINARY,
-                            name="%s%d%d%d%d" %
-                            (str(l), s1, s2, k1, k2))
+                        _temp = self.solver.addVar(vtype=gp.GRB.BINARY,
+                                                   name="%s%d%d%d%d" %
+                                                   (str(l), s1, s2, k1, k2))
                         self.solver.addConstr(
                             (t_s2 + k2 * s2.period) -
                             (t_s1 + k1 * s1.period) >= s1.t_trans_1g -
@@ -217,8 +212,7 @@ class jrs_wa:
                     _end = _start + s.t_trans_1g
                     for k in s.get_frame_indexes(self.task.lcm):
                         gcl.append([
-                            l, self._queue_log[s][l],
-                            _start + k * s.period,
+                            l, self._queue_log[s][l], _start + k * s.period,
                             _end + k * s.period, self.task.lcm
                         ])
         return utils.GCL(gcl)

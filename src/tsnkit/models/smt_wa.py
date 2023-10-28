@@ -51,6 +51,8 @@ class smt_wa:
             for s in self.task.streams
         })
 
+        z3.set_param('parallel.enable', True)
+        z3.set_param('parallel.threads.max', self.workers)
         self.solver = z3.Solver()
         self.task_vars = self.create_task_vars(self.task)
 
