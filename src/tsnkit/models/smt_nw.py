@@ -6,7 +6,6 @@ Created:  2023-10-22T17:59:16.407Z
 """
 
 from typing import Dict
-from unittest import result
 import traceback
 from .. import utils
 import gurobipy as gp
