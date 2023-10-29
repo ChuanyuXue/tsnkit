@@ -7,7 +7,7 @@ Created:  2023-10-29T02:22:54.275Z
 
 from os import name
 import traceback
-from typing import Dict, List
+from typing import Dict, List, Optional
 from webbrowser import get
 
 import numpy as np
@@ -58,7 +58,7 @@ class i_ilp:
         self.task = utils.load_stream(task_path)
         self.net = utils.load_network(net_path)
 
-        self.solution: List[int] = [None for _ in self.task]
+        self.solution: List[Optional[int]] = [None for _ in self.task]
 
     def routing(self):
         paths = {}
