@@ -219,7 +219,7 @@ def ASPDAC2022(DATA, TOPO, NUM_FLOW, INS=-1, OUTPUT="./", workers=1, U=3):
             e = list(task_var[i].keys())[0]
             for j in range(int(LCM / task_attr[i]['period'])):
                 OFFSET.append([
-                    i, 0,
+                    i, j,
                     (task_attr[i]['period'] -
                      result[task_var[i][e][j]['r'][0]].as_long()) *
                     utils.t_slot

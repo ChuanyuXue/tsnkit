@@ -268,7 +268,8 @@ class StreamSet:
 
     def get_pairs(self, permute: bool = False) -> List[Tuple[Stream, Stream]]:
         if permute:
-            return [(i, j) for i in self._streams for j in self._streams]
+            return [(i, j) for i in self._streams for j in self._streams
+                    if i != j]
         else:
             return [(i, j) for i in self._streams for j in self._streams
                     if i < j]
@@ -293,7 +294,7 @@ class StreamSet:
             raise Exception("Route not set for all streams")
         if permute:
             return [(i, j) for i in self._streams for j in self._streams
-                    if i.is_in_path(link) and j.is_in_path(link)]
+                    if i != j and i.is_in_path(link) and j.is_in_path(link)]
         else:
             return [(i, j) for i in self._streams for j in self._streams
                     if i < j and i.is_in_path(link) and j.is_in_path(link)]
