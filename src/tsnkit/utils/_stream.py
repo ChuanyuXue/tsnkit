@@ -206,6 +206,12 @@ class StreamSet:
 
     def __len__(self) -> int:
         return len(self._streams)
+    
+    @property
+    def num_frames(self) -> int:
+        if not all([not self.is_route_valid(stream) for stream in self._streams]):
+            raise Exception("Route not set for all streams")
+        return sum([int(self._lcm / s._period) for s in self._streams])
 
     def get_stream(self, stream: Union[int, Stream]) -> Stream:
         return self._streams[int(stream)]
