@@ -14,6 +14,10 @@ DESC:
 from ..utils import Statistics, Config, Result
 from abc import ABC, abstractmethod
 
+from .at import at
+from .cp_wa import cp_wa
+
+
 
 def benchmark(name: str,
               task_path: str,

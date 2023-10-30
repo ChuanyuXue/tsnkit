@@ -1,9 +1,14 @@
 __pycache__/
+tsntest/
+build/
+**/*.ipynb_checkpoints/
 *.py[cod]
 *.csv
-**/*.ipynb_checkpoints/
 *.pyc
 *.err
 *.log
 *.out
 *.DS_Store
+*.egg
+*.egg-info
+

@@ -4,19 +4,36 @@ A simple scheduling toolkit for time-sensitive network in Python.
 
 ## Install
 
+Install from source:
+
+```
+git clone https://github.com/ChuanyuXue/tsnkit
+cd tsnkit
+python setup.py install
+```
+
+
+or install from pip:
+
 `pip install -U tsnkit `
 
 ## Usage
 
 **Testing**
 
+`python3 -m tsnkit.models.[METHOD] [STREAM PATH] [NETWORK PATH]`
+
+**Available methods:**
+
+**Run complete benchmark:**
 
 
-`python3 -m tsnkit.models.smt_nw [STREAM PATH] [NETWORK PATH]`
 
 
 
-## IO
+
+
+## IO format
 
 ### Input:
 
@@ -92,3 +109,5 @@ A simple scheduling toolkit for time-sensitive network in Python.
 
 
 ## Contribute
+
+**Add your work**
