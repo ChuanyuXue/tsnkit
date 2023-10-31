@@ -1,5 +1,5 @@
 """
-Author: Chuanyu (skewcy@gmail.com)
+Author: XXX (XXX@gmail.com)
 __init__.py (c) 2023
 Desc: description
 Created:  2023-10-09T00:02:25.471Z
@@ -18,14 +18,11 @@ from .at import at
 from .cp_wa import cp_wa
 
 
+def benchmark(
+    name: str, task_path: str, net_path: str, output_path: str = "./", workers: int = 1
+) -> Statistics:
+    """Implement this function to benchmark your method
 
-def benchmark(name: str,
-              task_path: str,
-              net_path: str,
-              output_path: str = "./",
-              workers: int = 1) -> Statistics:
-    """ Implement this function to benchmark your method
-    
     Args:
         name (str): experiment name
         task_path (str): file path of the task
@@ -53,7 +50,6 @@ def benchmark(name: str,
 
 
 class _Method(ABC):
-
     def __init__(self, name) -> None:
         self.name = name
 
@@ -83,7 +79,7 @@ class _Method(ABC):
     def solve(self) -> Statistics:
         """
         Solve the problem and return the statistics
-        
+
         Returns:
             Statistics object
         """

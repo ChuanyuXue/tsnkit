@@ -1,5 +1,5 @@
 """
-Author: Chuanyu (skewcy@gmail.com)
+Author: XXX (XXX@gmail.com)
 _common.py (c) 2023
 Desc: description
 Created:  2023-10-08T17:51:27.418Z
@@ -23,7 +23,6 @@ def flatten(list2d: Sequence[Sequence[Any]]) -> Sequence[Any]:
 if __name__ == "__main__":
     ## Test _interface
     class Test:
-
         def __init__(self):
             self._a = 1
 

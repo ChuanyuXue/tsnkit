@@ -1,5 +1,5 @@
 """
-Author: Chuanyu (skewcy@gmail.com)
+Author: XXX (XXX@gmail.com)
 _io.py (c) 2023
 Desc: description
 Created:  2023-10-08T06:13:41.041Z
@@ -15,7 +15,6 @@ import time
 
 
 def check_time_limit(func):
-
     def wrapper(*args, **kwargs):
         if is_timeout(T_LIMIT):
             return Statistics("-", Result.unknown)
@@ -44,17 +43,17 @@ class Result(Enum):
 
 
 class Statistics:
-
     output_format = "| {:<13} | {:<13} | {:<6} | {:<10} | {:<10} | {:<10}"
 
     def __init__(
-            self,
-            name: str = "-",  # name of the algorithm
-            result: Result = Result.unknown,  # {}
-            algo_time: float = 0,
-            algo_mem: float = 0,
-            extra_time: float = 0,
-            extra_mem: float = 0) -> None:
+        self,
+        name: str = "-",  # name of the algorithm
+        result: Result = Result.unknown,  # {}
+        algo_time: float = 0,
+        algo_mem: float = 0,
+        extra_time: float = 0,
+        extra_mem: float = 0,
+    ) -> None:
         self.name = name
         self.result = result
         self.algo_time = round(algo_time, 3)
@@ -77,12 +76,14 @@ class Statistics:
             self.total_mem,
         ]
 
-    def update(self,
-               result: Result,
-               algo_time: int,
-               algo_mem: int,
-               extra_time: int = 0,
-               extra_mem: int = 0) -> None:
+    def update(
+        self,
+        result: Result,
+        algo_time: int,
+        algo_mem: int,
+        extra_time: int = 0,
+        extra_mem: int = 0,
+    ) -> None:
         self.result = result
         self.algo_time = round(algo_time, 3)
         self.algo_mem = round(algo_mem, 3)
@@ -91,29 +92,33 @@ class Statistics:
 
     def header(self) -> None:
         """Print the header of the output"""
-        print(self.output_format.format(
-            "time",
-            "name",
-            "flag",
-            "solve_time",
-            "total_time",
-            "total_mem",
-        ),
-              flush=True)
+        print(
+            self.output_format.format(
+                "time",
+                "name",
+                "flag",
+                "solve_time",
+                "total_time",
+                "total_mem",
+            ),
+            flush=True,
+        )
 
     def content(self, name: str = "-") -> None:
         """Print the content of the output"""
         if name != "-":
             self.name = name
-        print(self.output_format.format(
-            time.strftime("%d~%H:%M:%S"),
-            self.name,
-            str(self.result),
-            self.algo_time,
-            self.total_time,
-            self.total_mem,
-        ),
-              flush=True)
+        print(
+            self.output_format.format(
+                time.strftime("%d~%H:%M:%S"),
+                self.name,
+                str(self.result),
+                self.algo_time,
+                self.total_time,
+                self.total_mem,
+            ),
+            flush=True,
+        )
 
 
 def get_caller_name() -> str:

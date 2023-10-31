@@ -1,5 +1,5 @@
 """
-Author: <Chuanyu> (skewcy@gmail.com)
+Author: <XXX> (XXX@gmail.com)
 smt_fr.py (c) 2023
 Desc: description
 Created:  2023-10-28T13:58:46.205Z
@@ -14,11 +14,9 @@ import z3  # type: ignore
 DelayDict = Dict[utils.Stream, Dict[int, Dict[utils.Link, z3.ArithRef]]]
 
 
-def benchmark(name,
-              task_path,
-              net_path,
-              output_path="./",
-              workers=1) -> utils.Statistics:
+def benchmark(
+    name, task_path, net_path, output_path="./", workers=1
+) -> utils.Statistics:
     stat = utils.Statistics(name)  ## Init empty stat
     try:
         ## Change _Method to your method class
@@ -42,7 +40,6 @@ def benchmark(name,
 
 
 class smt_fr:
-
     def __init__(self, workers=1, u=5, mss=1500) -> None:
         self.workers = workers
         self.num_segs = u
@@ -51,13 +48,12 @@ class smt_fr:
     def init(self, task_path, net_path) -> None:
         self.task = utils.load_stream(task_path)
         self.net = utils.load_network(net_path)
-        self.task.set_routings({
-            s: self.net.get_shortest_path(s.src, s.dst)
-            for s in self.task.streams
-        })
+        self.task.set_routings(
+            {s: self.net.get_shortest_path(s.src, s.dst) for s in self.task.streams}
+        )
 
-        z3.set_param('parallel.enable', True)
-        z3.set_param('parallel.threads.max', self.workers)
+        z3.set_param("parallel.enable", True)
+        z3.set_param("parallel.threads.max", self.workers)
         self.solver = z3.Solver()
         self.s: Dict[utils.Stream, Dict[int, z3.ArithRef]] = {}
         self.w: Dict[utils.Stream, Dict[int, z3.ArithRef]] = {}
@@ -67,9 +63,9 @@ class smt_fr:
             self.w.setdefault(s, {})
             self.u.setdefault(s, {})
             for l in range(self.num_segs):
-                self.s[s][l] = z3.Int('s_{}_{}'.format(s, l))
-                self.w[s][l] = z3.Int('w_{}_{}'.format(s, l))
-                self.u[s][l] = z3.Int('u_{}_{}'.format(s, l))
+                self.s[s][l] = z3.Int("s_{}_{}".format(s, l))
+                self.w[s][l] = z3.Int("w_{}_{}".format(s, l))
+                self.u[s][l] = z3.Int("u_{}_{}".format(s, l))
 
     def prepare(self) -> None:
         self.delay = self.get_delay_perhop()
@@ -80,14 +76,15 @@ class smt_fr:
 
     @utils.check_time_limit
     def solve(self) -> utils.Statistics:
-        self.solver.set("timeout",
-                        int(utils.T_LIMIT - utils.time_log()) * 1000)
+        self.solver.set("timeout", int(utils.T_LIMIT - utils.time_log()) * 1000)
         result = self.solver.check()  ## Z3 solving
 
         info = self.solver.statistics()
         algo_time = info.time
         algo_mem = info.max_memory
-        algo_result = utils.Result.schedulable if result == z3.sat else utils.Result.unschedulable
+        algo_result = (
+            utils.Result.schedulable if result == z3.sat else utils.Result.unschedulable
+        )
 
         self.model_output = self.solver.model()
         return utils.Statistics("-", algo_result, algo_time, algo_mem)
@@ -115,32 +112,41 @@ class smt_fr:
                         _prev_hop = s.get_prev_link(l)
                         if _prev_hop is None:
                             raise Exception(
-                                'Link {} is not in the routing of stream {}'.
-                                format(l, s))
-                        A[s][u][l] = A[s][u][_prev_hop] + self.s[s][
-                            u] + l.t_proc + l.t_sync
+                                "Link {} is not in the routing of stream {}".format(
+                                    l, s
+                                )
+                            )
+                        A[s][u][l] = (
+                            A[s][u][_prev_hop] + self.s[s][u] + l.t_proc + l.t_sync
+                        )
         return A
 
     def add_seg_const(self) -> None:
         for s in self.task:
             for u in range(self.num_segs):
                 self.solver.add(
-                    self.s[s][u] >= 0, self.s[s][u] <= self.mss * 8,
-                    self.w[s][u] >= 0, self.w[s][u] < s.period,
-                    self.w[s][u] < self.w[s][u + 1]
-                    if u + 1 < self.num_segs else True, self.u[s][u] >= 0,
-                    self.u[s][u] <= 1, self.u[s][u] >= self.u[s][u + 1]
-                    if u + 1 < self.num_segs else True)
+                    self.s[s][u] >= 0,
+                    self.s[s][u] <= self.mss * 8,
+                    self.w[s][u] >= 0,
+                    self.w[s][u] < s.period,
+                    self.w[s][u] < self.w[s][u + 1] if u + 1 < self.num_segs else True,
+                    self.u[s][u] >= 0,
+                    self.u[s][u] <= 1,
+                    self.u[s][u] >= self.u[s][u + 1] if u + 1 < self.num_segs else True,
+                )
 
     def add_frame_const(self) -> None:
         for s in self.task:
             self.solver.add(
-                z3.Sum([self.s[s][u]
-                        for u in range(self.num_segs)]) == s.t_trans)
+                z3.Sum([self.s[s][u] for u in range(self.num_segs)]) == s.t_trans
+            )
             for u in range(self.num_segs):
                 self.solver.add(
-                    z3.Or(z3.And(self.s[s][u] > 0, self.u[s][u] == 1),
-                          z3.And(self.s[s][u] == 0, self.u[s][u] == 0)))
+                    z3.Or(
+                        z3.And(self.s[s][u] > 0, self.u[s][u] == 1),
+                        z3.And(self.s[s][u] == 0, self.u[s][u] == 0),
+                    )
+                )
 
     def add_delay_const(self) -> None:
         for s in self.task:
@@ -148,17 +154,24 @@ class smt_fr:
                 self.solver.add(
                     z3.Or(
                         self.u[s][u] == 0,
-                        (self.s[s][u] + s.first_link.t_proc + utils.E_SYNC)\
-                            * len(s.links) - s.first_link.t_proc <= s.deadline
+                        (self.s[s][u] + s.first_link.t_proc + utils.E_SYNC)
+                        * len(s.links)
+                        - s.first_link.t_proc
+                        <= s.deadline,
                     )
                 )
             _hop_s = s.first_link
             _hop_e = s.last_link
             for u in range(self.num_segs):
                 self.solver.add(
-                    z3.Or(self.u[s][u] == 0,
-                          (self.delay[s][u][_hop_e] - self.delay[s][0][_hop_s]
-                           <= s.deadline)))
+                    z3.Or(
+                        self.u[s][u] == 0,
+                        (
+                            self.delay[s][u][_hop_e] - self.delay[s][0][_hop_s]
+                            <= s.deadline
+                        ),
+                    )
+                )
 
     def add_link_const(self) -> None:
         for l in self.net.links:
@@ -169,15 +182,14 @@ class smt_fr:
                             continue
                         self.solver.add(
                             z3.Or(
-                                self.delay[s1][u1][l] + self.s[s1][u1] +
-                                k1 * s1.period <=
-                                self.delay[s2][u2][l] + k2 * s2.period,
-                                self.delay[s2][u2][l] + self.s[s2][u2] +
-                                k2 * s2.period <=
-                                self.delay[s1][u1][l] + k1 * s1.period,
+                                self.delay[s1][u1][l] + self.s[s1][u1] + k1 * s1.period
+                                <= self.delay[s2][u2][l] + k2 * s2.period,
+                                self.delay[s2][u2][l] + self.s[s2][u2] + k2 * s2.period
+                                <= self.delay[s1][u1][l] + k1 * s1.period,
                                 self.u[s1][u1] == 0,
                                 self.u[s2][u2] == 0,
-                            ))
+                            )
+                        )
 
     def get_gcl_list(self) -> utils.GCL:
         gcl = []
@@ -186,15 +198,19 @@ class smt_fr:
                 for u in range(self.num_segs):
                     if self.model_output[self.s[s][u]] == 0:
                         continue
-                    start = self.model_output.eval(
-                        self.delay[s][u][l]).as_long()
+                    start = self.model_output.eval(self.delay[s][u][l]).as_long()
                     size = self.model_output.eval(self.s[s][u]).as_long()
                     end = start + size
                     for k in s.get_frame_indexes(self.task.lcm):
-                        gcl.append([
-                            l, 0, start + k * s.period, end + k * s.period,
-                            self.task.lcm
-                        ])
+                        gcl.append(
+                            [
+                                l,
+                                0,
+                                start + k * s.period,
+                                end + k * s.period,
+                                self.task.lcm,
+                            ]
+                        )
         return utils.GCL(gcl)
 
     def get_release_time(self) -> utils.Release:
@@ -204,7 +220,8 @@ class smt_fr:
                 if self.model_output[self.s[self.task[0]][u]] == 0:
                     continue
                 _start = self.model_output.eval(
-                    self.delay[s][u][s.first_link]).as_long()
+                    self.delay[s][u][s.first_link]
+                ).as_long()
                 offset.append([s, u, _start])
         return utils.Release(offset)
 
@@ -233,11 +250,11 @@ class smt_fr:
             for u in range(self.num_segs):
                 if self.model_output[self.s[s][u]] == 0:
                     continue
-                _delay = self.model_output.eval(
-                    self.delay[s][u]
-                    [_hop_e]).as_long() - self.model_output.eval(
-                        self.delay[s][u][_hop_s]).as_long(
-                        ) + self.model_output.eval(self.s[s][u]).as_long()
+                _delay = (
+                    self.model_output.eval(self.delay[s][u][_hop_e]).as_long()
+                    - self.model_output.eval(self.delay[s][u][_hop_s]).as_long()
+                    + self.model_output.eval(self.s[s][u]).as_long()
+                )
                 delay.append([s, u, _delay])
         return utils.Delay(delay)
 
@@ -253,5 +270,4 @@ class smt_fr:
 
 
 if __name__ == "__main__":
-    benchmark('-', '../data/input/grid/0/3_task.csv',
-              '../data/input/grid/0/3_topo.csv')
+    benchmark("-", "../data/input/grid/0/3_task.csv", "../data/input/grid/0/3_topo.csv")

@@ -1,22 +1,3 @@
-If you use this software in a scholarly publication, please cite the following paper:
-
-Title: Real-Time Scheduling for Time-Sensitive Networking: A Systematic Review and Experimental Study
-Author: Chuanyu Xue, Tianyu Zhang, Yuanbin Zhou, Mark Nixon, Andrew Loveless, Song Han
-Year: 2023
-URL: https://arxiv.org/abs/2305.16772
-
-BibTeX entry:
-
-@article{xue2023real,
-  title={Real-Time Scheduling for Time-Sensitive Networking: A Systematic Review and Experimental Study},
-  author={Xue, Chuanyu and Zhang, Tianyu and Zhou, Yuanbin and Han, Song},
-  journal={arXiv preprint arXiv:2305.16772},
-  year={2023}
-}
-
-
--------------------------------------------------------------------------
-
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007

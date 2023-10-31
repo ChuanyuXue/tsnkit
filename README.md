@@ -2,23 +2,11 @@
 
 A simple scheduling toolkit and benchmark for Time-Sensitive Networking in Python.
 
-```
-@article{xue2023real,
-  title={Real-Time Scheduling for Time-Sensitive Networking: A Systematic Review and Experimental Study},
-  author={Xue, Chuanyu and Zhang, Tianyu and Zhou, Yuanbin and Han, Song},
-  journal={arXiv preprint arXiv:2305.16772},
-  year={2023}
-}
-```
-
-
-
 ## Install
 
 Install from source:
 
 ```
-git clone https://github.com/ChuanyuXue/tsnkit
 cd tsnkit
 python setup.py install
 ```
@@ -29,6 +17,7 @@ From pip:
 ```
 pip install -U tsnkit
 ```
+
 
 
 

@@ -1,5 +1,5 @@
 """
-Author: <Chuanyu> (skewcy@gmail.com)
+Author: <XXX> (XXX@gmail.com)
 ls_tb.py (c) 2023
 Desc: description
 Created:  2023-10-31T02:34:04.531Z

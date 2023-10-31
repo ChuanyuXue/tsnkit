@@ -2,7 +2,7 @@
 name = "tsnkit"
 version = "0.1.0"
 authors = [
-  { name="Chuanyu Xue", email="skewcy@gmail.com" },
+  { name="XXX XXX", email="XXX@gmail.com" },
 ]
 description = "A simple scheduling toolkit for time-sensitive network in Python."
 readme = "README.md"
@@ -27,6 +27,6 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/ChuanyuXue/tsnkit"
-"Bug Tracker" = "https://github.com/ChuanyuXue/tsnkit"
+"Homepage" = "https://github.com/XXXXXX/tsnkit"
+"Bug Tracker" = "https://github.com/XXXXXX/tsnkit"
 
