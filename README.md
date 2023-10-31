@@ -25,13 +25,13 @@ or install from pip:
 
 **Available methods:**
 
-**Run complete benchmark:**
+**Reproduce the paper results:**
 
+1. Check out to `legacy` branch.
+2. Download `data.gz` from git-lfs, and unzip it to `data` folder.
+3. Go `src` foder and run `python main.py --method=ALL --start=0 --end=38400`.
 
-
-
-
-
+*Both `main` and `legacy` branches use the same logic (models & algorithms). We have enhanced the organization of the `main` branch by introducing a common interface and standardized type notation, aiming to improve maintainability and ease of extension. The `legacy` branch contains the source code used in the paper.*
 
 ## IO format
 
