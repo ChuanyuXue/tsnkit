@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "utils.h": "c"
-    },
-    "C_Cpp.errorSquiggles": "Enabled",
-    "python.formatting.provider": "yapf",
-    "python.analysis.typeCheckingMode": "basic"
-}
