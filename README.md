@@ -1,2 +1,1 @@
-# Time-Sensitive-Network-Benchmark
-[Private Now] The benchmark for scheduling algorithms in Time-Sensitive Network.
+A simple scheduling toolkit for time-sensitive network in Python
