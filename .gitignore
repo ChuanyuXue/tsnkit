@@ -1,6 +1,7 @@
 __pycache__/
 tsntest/
 build/
+dist/
 **/*.ipynb_checkpoints/
 *.py[cod]
 *.csv
