@@ -59,6 +59,7 @@ class i_omt:
     def prepare(self) -> None:
         self.queue_assignment()
 
+    @utils.check_time_limit
     def solve(self) -> utils.Statistics:
         total_time = 0
         algo_mem = 0

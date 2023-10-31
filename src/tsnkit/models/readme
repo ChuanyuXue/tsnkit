@@ -22,7 +22,7 @@ Resource isolation:
 % \item Ayman et al. (TII20): I-ILP (Iterative-ILP)
 % \item Marek et al. (CIE21): CP-WA (Constraint Programming)
 % \item Yuanbin et al. (ASPDAC22): SMT-PR (SMT with Preemption)
-\item Xi et al. (ACCESS20): I-OMT (Iterative-OMT)
+<!-- \item Xi et al. (ACCESS20): I-OMT (Iterative-OMT) -->
 \item Jonathan et al. (RTAS20): CG (Conflict-graph)
 \item Yanzhou et al. (GLOBECOM22): DT (Divisibility Theory)
 LS-PL
