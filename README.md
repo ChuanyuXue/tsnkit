@@ -164,6 +164,6 @@ Following are the output files (gcl, offset, route, queuing assignment) from the
 
 ## Contribute
 
-Contributions are welcome! Feel free to add your own scheduling algorithm.
+Contributions are welcome! Feel free to add your own scheduling algorithm. Contact me to update your new scheduling method in our benchmark paper!
 
 Refer to `src/tsnkit/models/__init__.py` to implement the required interface and benchmark entrance.
