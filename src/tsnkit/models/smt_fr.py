@@ -253,5 +253,5 @@ class smt_fr:
 
 
 if __name__ == "__main__":
-    benchmark('-', '../data/input/grid/0/3_task.csv',
-              '../data/input/grid/0/3_topo.csv')
+    args = utils.parse_command_line_args()
+    benchmark(args.name, args.task, args.net, args.output, args.workers)

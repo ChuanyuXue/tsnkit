@@ -255,3 +255,8 @@ class jrs_nw_l:
                     for l in self.net.links)) - self.net.max_t_proc
             delay.append([s, 0, _delay])
         return utils.Delay(delay)
+
+if __name__ == "__main__":
+    # Test for route space
+    args = utils.parse_command_line_args()
+    benchmark(args.name, args.task, args.net, args.output, args.workers)

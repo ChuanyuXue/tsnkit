@@ -11,4 +11,4 @@ from ._system import time_log, mem_log, oom_manager, kill_if, is_timeout, init_o
 from ._io import get_caller_name, Result, Statistics, check_time_limit
 from ._config import Config, GCL, Release, Queue, Route, Delay, Size
 from ._constants import T_SLOT, T_M, E_SYNC, MAX_NUM_QUEUE, NUM_PORT, SEED, T_LIMIT, M_LIMIT, NUM_CORE_LIMIT, METHOD_TO_ALGO, METHOD_TO_PROCNUM
-from ._common import flatten
+from ._common import flatten, parse_command_line_args

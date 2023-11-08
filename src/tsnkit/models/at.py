@@ -13,11 +13,9 @@ from .. import utils
 import z3  # type: ignore
 
 
-def benchmark(name,
-              task_path,
-              net_path,
-              output_path="./",
-              workers=1) -> utils.Statistics:
+def benchmark(
+    name, task_path, net_path, output_path="./", workers=1
+) -> utils.Statistics:
     stat = utils.Statistics(name)  ## Init empty stat
     try:
         ## Change _Method to your method class
@@ -41,7 +39,6 @@ def benchmark(name,
 
 
 class at:
-
     def __init__(self, workers=1, num_window=5) -> None:
         self.workers = workers
         self.num_window = num_window
@@ -49,25 +46,24 @@ class at:
     def init(self, task_path: str, net_path: str) -> None:
         self.task = utils.load_stream(task_path)
         self.net = utils.load_network(net_path)
-        self.task.set_routings({
-            s: self.net.get_shortest_path(s.src, s.dst)
-            for s in self.task.streams
-        })
+        self.task.set_routings(
+            {s: self.net.get_shortest_path(s.src, s.dst) for s in self.task.streams}
+        )
 
-        z3.set_param('parallel.enable', True)
-        z3.set_param('parallel.threads.max', self.workers)
+        z3.set_param("parallel.enable", True)
+        z3.set_param("parallel.threads.max", self.workers)
         self.solver = z3.Solver()
 
         self.phi = {
-            link: z3.Array(str(link) + '_phi', z3.IntSort(), z3.IntSort())
+            link: z3.Array(str(link) + "_phi", z3.IntSort(), z3.IntSort())
             for link in self.net.links
         }
         self.tau = {
-            link: z3.Array(str(link) + '_tau', z3.IntSort(), z3.IntSort())
+            link: z3.Array(str(link) + "_tau", z3.IntSort(), z3.IntSort())
             for link in self.net.links
         }
         self.k = {
-            link: z3.Array(str(link) + '_k', z3.IntSort(), z3.IntSort())
+            link: z3.Array(str(link) + "_k", z3.IntSort(), z3.IntSort())
             for link in self.net.links
         }
 
@@ -78,7 +74,8 @@ class at:
                 self.w[s].setdefault(l, [])
                 for k in s.get_frame_indexes(self.task.lcm):
                     self.w[s][l].append(
-                        z3.Int('w_' + str(s) + '_' + str(l) + '_' + str(k)))
+                        z3.Int("w_" + str(s) + "_" + str(l) + "_" + str(k))
+                    )
 
     def prepare(self) -> None:
         self.add_window_order_const()
@@ -101,14 +98,15 @@ class at:
 
     @utils.check_time_limit
     def solve(self) -> utils.Statistics:
-        self.solver.set("timeout",
-                        int(utils.T_LIMIT - utils.time_log()) * 1000)
+        self.solver.set("timeout", int(utils.T_LIMIT - utils.time_log()) * 1000)
         result = self.solver.check()  ## Z3 solving
 
         info = self.solver.statistics()
         algo_time = info.time
         algo_mem = info.max_memory
-        algo_result = utils.Result.schedulable if result == z3.sat else utils.Result.unschedulable
+        algo_result = (
+            utils.Result.schedulable if result == z3.sat else utils.Result.unschedulable
+        )
 
         self.model_output = self.solver.model()
         return utils.Statistics("-", algo_result, algo_time, algo_mem)
@@ -121,13 +119,15 @@ class at:
         for s in self.task:
             for l in s.links:
                 for k in self.w[s][l]:
-                    self.tau[l] = z3.Store(self.tau[l], k,
-                                           self.tau[l][k] + s.get_t_trans(l))
+                    self.tau[l] = z3.Store(
+                        self.tau[l], k, self.tau[l][k] + s.get_t_trans(l)
+                    )
 
     def add_window_const(self) -> None:
         for l in self.net.links:
-            self.solver.add(self.phi[l][0] >= 0, self.tau[l][-1]
-                            < z3.IntVal(str(self.task.lcm)))
+            self.solver.add(
+                self.phi[l][0] >= 0, self.tau[l][-1] < z3.IntVal(str(self.task.lcm))
+            )
             for w in range(self.num_window):
                 self.solver.add(self.k[l][w] >= 0, self.k[l][w] < l.q_num)
 
@@ -137,7 +137,8 @@ class at:
                 for k in s.get_frame_indexes(self.task.lcm):
                     self.solver.add(
                         self.phi[l][self.w[s][l][k]] >= k * s.period,
-                        self.tau[l][self.w[s][l][k]] < (k + 1) * s.period)
+                        self.tau[l][self.w[s][l][k]] < (k + 1) * s.period,
+                    )
 
     def add_window_overlap_const(self) -> None:
         for l in self.net.links:
@@ -148,19 +149,21 @@ class at:
         for s in self.task:
             for l in s.links:
                 for k in s.get_frame_indexes(self.task.lcm):
-                    self.solver.add(self.w[s][l][k] >= 0, self.w[s][l][k]
-                                    < self.num_window)
+                    self.solver.add(
+                        self.w[s][l][k] >= 0, self.w[s][l][k] < self.num_window
+                    )
 
     def add_flow_tran_const(self) -> None:
         for s in self.task:
             for l in s.links[:-1]:
                 _next = s.get_next_link(l)
                 if _next is None:
-                    raise ValueError('No next link')
+                    raise ValueError("No next link")
                 for k in s.get_frame_indexes(self.task.lcm):
                     self.solver.add(
-                        self.tau[l][self.w[s][l][k]] + l.t_proc +
-                        l.t_sync <= self.phi[_next][self.w[s][_next][k]])
+                        self.tau[l][self.w[s][l][k]] + l.t_proc + l.t_sync
+                        <= self.phi[_next][self.w[s][_next][k]]
+                    )
 
     def add_frame_isolation_const(self) -> None:
         for s1, s2 in self.task.get_pairs():
@@ -168,21 +171,24 @@ class at:
                 for f1, f2 in self.task.get_frame_index_pairs(s1, s2):
                     self.solver.add(
                         z3.Or(
-                            self.tau[l][self.w[s1][l][f1]] + pl_2.t_proc +
-                            l.t_sync < self.phi[pl_2][self.w[s2][pl_2][f2]],
-                            self.tau[l][self.w[s2][l][f2]] + pl_1.t_proc +
-                            l.t_sync < self.phi[pl_1][self.w[s1][pl_1][f1]],
+                            self.tau[l][self.w[s1][l][f1]] + pl_2.t_proc + l.t_sync
+                            < self.phi[pl_2][self.w[s2][pl_2][f2]],
+                            self.tau[l][self.w[s2][l][f2]] + pl_1.t_proc + l.t_sync
+                            < self.phi[pl_1][self.w[s1][pl_1][f1]],
                             self.k[l][self.w[s1][l][f1]]
                             != self.k[l][self.w[s2][l][f2]],
-                            self.w[s1][l][f1] == self.w[s2][l][f2]))
+                            self.w[s1][l][f1] == self.w[s2][l][f2],
+                        )
+                    )
 
     def add_delay_const(self) -> None:
         for s in self.task:
             for k in s.get_frame_indexes(self.task.lcm):
                 self.solver.add(
-                    self.tau[s.last_link][self.w[s][s.last_link][k]] -
-                    self.phi[s.first_link][self.w[s][s.first_link][k]] <=
-                    s.deadline - utils.E_SYNC)
+                    self.tau[s.last_link][self.w[s][s.last_link][k]]
+                    - self.phi[s.first_link][self.w[s][s.first_link][k]]
+                    <= s.deadline - utils.E_SYNC
+                )
 
     def get_gcl(self) -> utils.GCL:
         gcl = []
@@ -199,11 +205,15 @@ class at:
         offset = []
         for s in self.task:
             for k in s.get_frame_indexes(self.task.lcm):
-                offset.append([
-                    s, k,
-                    self.model_output.eval(self.phi[s.first_link][self.w[s][
-                        s.first_link][k]]).as_long()
-                ])
+                offset.append(
+                    [
+                        s,
+                        k,
+                        self.model_output.eval(
+                            self.phi[s.first_link][self.w[s][s.first_link][k]]
+                        ).as_long(),
+                    ]
+                )
         return utils.Release(offset)
 
     def get_route(self) -> utils.Route:
@@ -218,26 +228,33 @@ class at:
         for s in self.task:
             for l in s.links:
                 for k in s.get_frame_indexes(self.task.lcm):
-                    queue.append([
-                        s, k, l,
-                        self.model_output.eval(
-                            self.k[l][self.w[s][l][k]]).as_long()
-                    ])
+                    queue.append(
+                        [
+                            s,
+                            k,
+                            l,
+                            self.model_output.eval(
+                                self.k[l][self.w[s][l][k]]
+                            ).as_long(),
+                        ]
+                    )
         return utils.Queue(queue)
 
     def get_delay(self) -> utils.Delay:
         delay = []
         for s in self.task:
             for k in s.get_frame_indexes(self.task.lcm):
-                start = self.model_output.eval(self.phi[s.first_link][
-                    self.w[s][s.first_link][k]]).as_long()
-                end = self.model_output.eval(self.tau[s.last_link][self.w[s][
-                    s.last_link][k]]).as_long()
+                start = self.model_output.eval(
+                    self.phi[s.first_link][self.w[s][s.first_link][k]]
+                ).as_long()
+                end = self.model_output.eval(
+                    self.tau[s.last_link][self.w[s][s.last_link][k]]
+                ).as_long()
                 delay.append([s, k, end - start])
         return utils.Delay(delay)
 
 
 if __name__ == "__main__":
     # Test for route space
-    benchmark('-', '../data/input/grid/0/3_task.csv',
-              '../data/input/grid/0/3_topo.csv')
+    args = utils.parse_command_line_args()
+    benchmark(args.name, args.task, args.net, args.output, args.workers)

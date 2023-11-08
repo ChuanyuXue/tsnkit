@@ -15,36 +15,56 @@ import numpy as np
 import warnings
 
 
-def load_stream(path: str) -> 'StreamSet':
+def load_stream(path: str) -> "StreamSet":
     stream_set = StreamSet()
 
     try:
-        stream_df = pd.read_csv(
-            path)  ## id,src,dst,size,period,deadline,jitter
+        stream_df = pd.read_csv(path)  ## id,src,dst,size,period,deadline,jitter
     except FileNotFoundError:
         raise Exception("Stream file not found")
 
     for i, row in stream_df.iterrows():
-        if row['dst'][0] + row['dst'][-1] != '[]':
-            raise Exception(
-                "Destination must be a single-element list for unicast")
+        if row["dst"][0] + row["dst"][-1] != "[]":
+            raise Exception("Destination must be a single-element list for unicast")
         stream_set._streams.append(
-            Stream(row['id'], row['src'], eval(row['dst']), row['size'],
-                   row['period'], row['deadline'], row['jitter']))
-    stream_set._lcm = np.lcm.reduce(
-        [stream._period for stream in stream_set._streams])
+            Stream(
+                row["id"],
+                row["src"],
+                eval(row["dst"]),
+                row["size"],
+                row["period"],
+                row["deadline"],
+                row["jitter"],
+            )
+        )
+    stream_set._lcm = np.lcm.reduce([stream._period for stream in stream_set._streams])
 
     return stream_set
 
 
 class Stream(int):
-
-    def __new__(cls, id: int, src: FlexNode, dst: List[FlexNode], size: int,
-                period: int, deadline: int, jitter: int) -> "Stream":
+    def __new__(
+        cls,
+        id: int,
+        src: FlexNode,
+        dst: List[FlexNode],
+        size: int,
+        period: int,
+        deadline: int,
+        jitter: int,
+    ) -> "Stream":
         return int.__new__(cls, id)
 
-    def __init__(self, id: int, src: FlexNode, dst: List[FlexNode], size: int,
-                 period: int, deadline: int, jitter: int) -> None:
+    def __init__(
+        self,
+        id: int,
+        src: FlexNode,
+        dst: List[FlexNode],
+        size: int,
+        period: int,
+        deadline: int,
+        jitter: int,
+    ) -> None:
         self._id = int(id)
         self._src = src
         self._dst = dst[0]
@@ -55,8 +75,7 @@ class Stream(int):
         self._jitter = int(np.ceil(int(jitter) / T_SLOT))
 
         self._routing_path: Optional[Path] = None
-        self._t_trans: Optional[
-            int] = None  ## [NOTE]: Only use for uniform link rate
+        self._t_trans: Optional[int] = None  ## [NOTE]: Only use for uniform link rate
 
     # id: int = _interface("id")
     src: FlexNode = _interface("src")
@@ -75,10 +94,10 @@ class Stream(int):
 
     @property
     def t_trans_1g(self) -> int:
-        """ Return max(transmission time on all links)
+        """Return max(transmission time on all links)
         Only used for uniform link rate assuming 1Gbps link rate.
         [NOTE]: This method it depreciated.
-        
+
         Returns:
             int: _description_
         """
@@ -184,7 +203,6 @@ class Stream(int):
 
 
 class StreamSet:
-
     def __init__(self):
         self._streams: List[Stream] = []
         self._lcm: int = 0
@@ -206,7 +224,7 @@ class StreamSet:
 
     def __len__(self) -> int:
         return len(self._streams)
-    
+
     @property
     def num_frames(self) -> int:
         if all([self.is_route_valid(stream) for stream in self._streams]):
@@ -216,7 +234,9 @@ class StreamSet:
     def get_stream(self, stream: Union[int, Stream]) -> Stream:
         return self._streams[int(stream)]
 
-    def get_streams(self, ) -> List[Stream]:
+    def get_streams(
+        self,
+    ) -> List[Stream]:
         return self._streams
 
     def is_route_valid(self, stream: Union[int, Stream]):
@@ -224,26 +244,30 @@ class StreamSet:
             return False
         return True
 
-    def get_next_link(self, stream: Union[int, Stream],
-                      link: FlexLink) -> Optional[Link]:
+    def get_next_link(
+        self, stream: Union[int, Stream], link: FlexLink
+    ) -> Optional[Link]:
         if not self.is_route_valid(stream):
             raise Exception("Route not set")
         return self.get_stream(stream).get_next_link(link)
 
-    def get_prev_link(self, stream: Union[int, Stream],
-                      link: FlexLink) -> Optional[Link]:
+    def get_prev_link(
+        self, stream: Union[int, Stream], link: FlexLink
+    ) -> Optional[Link]:
         if not self.is_route_valid(stream):
             raise Exception("Route not set")
         return self.get_stream(stream).get_prev_link(link)
 
-    def get_next_node(self, stream: Union[int, Stream],
-                      node: FlexNode) -> Optional[Node]:
+    def get_next_node(
+        self, stream: Union[int, Stream], node: FlexNode
+    ) -> Optional[Node]:
         if not self.is_route_valid(stream):
             raise Exception("Route not set")
         return self.get_stream(stream).get_next_node(node)
 
-    def get_prev_node(self, stream: Union[int, Stream],
-                      node: FlexNode) -> Optional[Node]:
+    def get_prev_node(
+        self, stream: Union[int, Stream], node: FlexNode
+    ) -> Optional[Node]:
         if not self.is_route_valid(stream):
             raise Exception("Route not set")
         return self.get_stream(stream).get_prev_node(node)
@@ -254,41 +278,38 @@ class StreamSet:
         _link = self.get_stream(stream).get_link(link)
         return int(np.ceil(self.get_stream(stream)._size * 8 / _link.rate))
 
-    def get_shared_links(self, stream1: Union[int, Stream],
-                         stream2: Union[int, Stream]) -> List[Link]:
+    def get_shared_links(
+        self, stream1: Union[int, Stream], stream2: Union[int, Stream]
+    ) -> List[Link]:
         if not self.is_route_valid(stream1):
             raise Exception("stream1: Route not set")
         if not self.is_route_valid(stream2):
             raise Exception("stream2: Route not set")
         return list(
             set(self._streams[int(stream1)].links)
-            & set(self._streams[int(stream2)].links))
+            & set(self._streams[int(stream2)].links)
+        )
 
     def get_streams_on_link(self, link: FlexLink) -> List[Stream]:
-        if all([not self.is_route_valid(stream) for stream in self._streams]):
-            return [
-                stream for stream in self._streams if stream.is_in_path(link)
-            ]
+        if all([self.is_route_valid(stream) for stream in self._streams]):
+            return [stream for stream in self._streams if stream.is_in_path(link)]
         else:
             raise Exception("Route not set for all streams")
 
     def get_pairs(self, permute: bool = False) -> List[Tuple[Stream, Stream]]:
         if permute:
-            return [(i, j) for i in self._streams for j in self._streams
-                    if i != j]
+            return [(i, j) for i in self._streams for j in self._streams if i != j]
         else:
-            return [(i, j) for i in self._streams for j in self._streams
-                    if i < j]
+            return [(i, j) for i in self._streams for j in self._streams if i < j]
 
     def get_pairs_on_link(
-            self,
-            link: FlexLink,
-            permute: bool = False) -> List[Tuple[Stream, Stream]]:
+        self, link: FlexLink, permute: bool = False
+    ) -> List[Tuple[Stream, Stream]]:
         """Return all pairs of streams that share the same link
 
         Args:
             link (FlexLink): _description_
-            permute (bool, optional): _description_. Defaults to False. -> only return (i, j) where i < j 
+            permute (bool, optional): _description_. Defaults to False. -> only return (i, j) where i < j
 
         Raises:
             Exception: _description_
@@ -299,15 +320,23 @@ class StreamSet:
         if any([not self.is_route_valid(stream) for stream in self._streams]):
             raise Exception("Route not set for all streams")
         if permute:
-            return [(i, j) for i in self._streams for j in self._streams
-                    if i != j and i.is_in_path(link) and j.is_in_path(link)]
+            return [
+                (i, j)
+                for i in self._streams
+                for j in self._streams
+                if i != j and i.is_in_path(link) and j.is_in_path(link)
+            ]
         else:
-            return [(i, j) for i in self._streams for j in self._streams
-                    if i < j and i.is_in_path(link) and j.is_in_path(link)]
+            return [
+                (i, j)
+                for i in self._streams
+                for j in self._streams
+                if i < j and i.is_in_path(link) and j.is_in_path(link)
+            ]
 
     def get_merged_links(
-            self, s1: Union[int, Stream],
-            s2: Union[int, Stream]) -> List[Tuple[Link, Link, Link]]:
+        self, s1: Union[int, Stream], s2: Union[int, Stream]
+    ) -> List[Tuple[Link, Link, Link]]:
         """This function is often used in queue isolation constraint.
         Example:
             Path1 = (a, b), (b, c)
@@ -334,8 +363,7 @@ class StreamSet:
             result.append((pre_1, pre_2, l))
         return result
 
-    def get_frame_index_pairs(self, s1: Union[int, Stream], s2: Union[int,
-                                                                      Stream]):
+    def get_frame_index_pairs(self, s1: Union[int, Stream], s2: Union[int, Stream]):
         """Get all frame index pairs of two streams. LCM is calculated from s1.period and s2.period
 
         Args:
@@ -348,11 +376,13 @@ class StreamSet:
 
         s1, s2 = self._streams[int(s1)], self._streams[int(s2)]
         _lcm = np.lcm(s1._period, s2._period)
-        return [(f1, f2) for f1 in s1.get_frame_indexes(_lcm)
-                for f2 in s2.get_frame_indexes(_lcm)]
+        return [
+            (f1, f2)
+            for f1 in s1.get_frame_indexes(_lcm)
+            for f2 in s2.get_frame_indexes(_lcm)
+        ]
 
-    def set_routing(self, stream: Union[int, Stream],
-                    routing_path: Path) -> None:
+    def set_routing(self, stream: Union[int, Stream], routing_path: Path) -> None:
         """_summary_
 
         Args:
@@ -369,10 +399,10 @@ class StreamSet:
 
         self._streams[int(stream)]._routing_path = routing_path
         self._streams[int(stream)]._t_trans = self.get_t_trans(
-            stream, routing_path.links[0])
+            stream, routing_path.links[0]
+        )
 
-    def set_routings(self, routings: Union[Dict[Union[int, Stream], Path],
-                                           List[Path]]):
+    def set_routings(self, routings: Union[Dict[Union[int, Stream], Path], List[Path]]):
         """_summary_
 
         Args:
@@ -386,8 +416,7 @@ class StreamSet:
                     raise TypeError("routing_path: Must be Path Object")
                 self.set_routing(stream, path)
         elif isinstance(routings, list):
-            warnings.warn(
-                "Using list of paths is deprecated, use dict instead")
+            warnings.warn("Using list of paths is deprecated, use dict instead")
             for stream, path in enumerate(routings):
                 if not isinstance(path, Path):
                     raise TypeError("routing_path: Must be Path Object")
@@ -409,23 +438,28 @@ if __name__ == "__main__":
     ## Test for routing path allocation
     network = load_network("../data/input/test_topo.csv")
     stream_set.set_routing(
-        0, network.get_shortest_path(stream_set[0]._src, stream_set[0]._dst))
-    assert stream_set[
-        0]._routing_path.llen == 3, "Routing path is wrong"  # type: ignore
-    assert stream_set[
-        0]._routing_path.nlen == 4, "Routing path is wrong"  # type: ignore
+        0, network.get_shortest_path(stream_set[0]._src, stream_set[0]._dst)
+    )
+    assert (
+        stream_set[0]._routing_path.llen == 3
+    ), "Routing path is wrong"  # type: ignore
+    assert (
+        stream_set[0]._routing_path.nlen == 4
+    ), "Routing path is wrong"  # type: ignore
 
     stream_set.set_routing(1, Path([15, 5, 4, 3, 2, 1, 11], network))
     assert stream_set[1]._routing_path == network.get_shortest_path(
-        stream_set[1]._src, stream_set[1]._dst)
+        stream_set[1]._src, stream_set[1]._dst
+    )
 
     ## Test for transit time
     try:
         print(stream_set.get_t_trans(2, network.get_link((0, 1))))
     except Exception as e:
         assert str(e) == "Route not set", "Wrong exception message"
-    assert stream_set.get_t_trans(0, network.get_link((0, 1))) == 40, \
-        "Wrong transit time"
+    assert (
+        stream_set.get_t_trans(0, network.get_link((0, 1))) == 40
+    ), "Wrong transit time"
 
     ## Try to allocate wrong routing path
     try:
@@ -434,8 +468,9 @@ if __name__ == "__main__":
         print("Expected error:  ", e)
 
     ## Test is in path function
-    assert stream_set[0].is_in_path(network.get_link((0, 1))) == False, \
-        "Wrong is_in_path function"
+    assert (
+        stream_set[0].is_in_path(network.get_link((0, 1))) == False
+    ), "Wrong is_in_path function"
 
     ## Test use stream as index
     assert [1, 2, 3, 4][stream_set[0]] == 1, "Wrong stream index"
