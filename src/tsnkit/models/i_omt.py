@@ -122,10 +122,10 @@ class i_omt:
 
     def queue_assignment(self) -> None:
         self.q = {s: {l: 0 for l in s.links} for s in self.task}
-        frame_weight = {}
+        _frame_weight = {}
         for s in self.task:
             for k in s.get_frame_indexes(self.task.lcm):
-                frame_weight[s, k] = s.deadline + k * s.period
+                _frame_weight[s, k] = s.deadline + k * s.period
 
         phat: Dict[utils.Link, List[float]] = {}
         min_queue = utils.MAX_NUM_QUEUE
@@ -145,7 +145,7 @@ class i_omt:
                 self.q[s][l] = min_h
 
         ## Taskset decomposition
-        frame_weight = [x[0] for x in sorted(frame_weight.items(), key=lambda x: x[1])]
+        frame_weight = [x[0] for x in sorted(_frame_weight.items(), key=lambda x: x[1])]
         group_size = int(np.ceil(len(frame_weight) / self.num_group))
         frame_group = [
             frame_weight[i * group_size : (i + 1) * group_size]
@@ -289,7 +289,7 @@ class i_omt:
                                     self.w[s][l][k] == x,
                                     z3.Or(
                                         self.t[l][x] == self.alpha[s][l][k],
-                                        self.alpha[s][_pre_link][k]
+                                        self.alpha[s][_pre_link][k]  # type: ignore
                                         + s.get_t_trans(l)
                                         + l.t_proc
                                         == self.alpha[s][l][k]  # type: ignore

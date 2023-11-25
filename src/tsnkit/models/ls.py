@@ -28,9 +28,9 @@ class ls:
             ),
             reverse=True,
         )
-        self._delay = {} ## ARVT in legacy code
-        self._result = {} ## GCL in legacy code
-        
+        self._delay = {}  ## ARVT in legacy code
+        self._result = {}  ## GCL in legacy code
+
     def prepare(self) -> None:
         pass
 
@@ -51,7 +51,6 @@ class ls:
         left = 0
         right = len(gate_time) - 1
 
-     
         if gate_time[right] <= t < sche[-1][1]:
             return right
         elif sche[-1][1] <= t:
@@ -66,9 +65,8 @@ class ls:
             elif gate_time[left] <= t < gate_time[median]:
                 right = median
             else:
-                left = median 
+                left = median
 
-                
     def find_inject_time(self, s: utils.Stream, path: utils.Path):
         delay = len(path.links) * (self.net.max_t_proc + s.t_trans_1g)
         period = s.period
@@ -80,13 +78,7 @@ class ls:
                 _prev_end = _start + l.t_proc + s.t_trans_1g
                 for k in s.get_frame_indexes(self.task.lcm):
                     match_start = self.match_time(_start + k * period, self._result[l])
-                    match_end = self.match_time(_prev_end - l.t_proc + k * period, self._result[l])
+                    match_end = self.match_time(
+                        _prev_end - l.t_proc + k * period, self._result[l]
+                    )
                     
-                
-                
-                
-                
-                
-                
-                
-                
