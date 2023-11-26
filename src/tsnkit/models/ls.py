@@ -67,6 +67,7 @@ class ls:
     def prepare(self) -> None:
         pass
 
+    @utils.check_time_limit
     def solve(self) -> utils.Statistics:
         start_time = utils.time_log()
         for s in self.task_order:
