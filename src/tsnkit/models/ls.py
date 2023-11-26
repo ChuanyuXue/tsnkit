@@ -5,8 +5,35 @@ Desc: description
 Created:  2023-11-06T00:26:19.423Z
 """
 
-from turtle import left
+import traceback
+from typing import Dict, List
 from .. import utils
+
+
+def benchmark(
+    name, task_path, net_path, output_path="./", workers=1
+) -> utils.Statistics:
+    stat = utils.Statistics(name)  ## Init empty stat
+    try:
+        ## Change _Method to your method class
+        test = ls(workers)  # type: ignore
+        test.init(task_path, net_path)
+        test.prepare()
+        stat = test.solve()  ## Update stat
+        if stat.result == utils.Result.schedulable:
+            test.output().to_csv(name, output_path)
+            pass
+        stat.content(name=name)
+        return stat
+    except KeyboardInterrupt:
+        stat.content(name=name)
+        return stat
+    except Exception as e:
+        print("[!]", e, flush=True)
+        traceback.print_exc()
+        stat.result = utils.Result.error
+        stat.content(name=name)
+        return stat
 
 
 class ls:
@@ -28,11 +55,42 @@ class ls:
             ),
             reverse=True,
         )
-        self._delay = {}  ## ARVT in legacy code
-        self._result = {}  ## GCL in legacy code
+        self._delay: Dict[utils.Stream, int] = {}  ## ARVT in legacy code
+        self._result: Dict[utils.Link, List] = {
+            l: [] for l in self.net.links
+        }  ## GCL in legacy code
+        self._paths: Dict[
+            utils.Stream, utils.Path
+        ] = {}  ## Only used in recording result
+        self._offset: Dict[utils.Stream, int] = {}  ## Only used in recording result
 
     def prepare(self) -> None:
         pass
+
+    def solve(self) -> utils.Statistics:
+        start_time = utils.time_log()
+        for s in self.task_order:
+            succ = self.schedule(s)
+            end_time = utils.time_log()
+            if not succ:
+                return utils.Statistics(
+                    "-", utils.Result.unschedulable, end_time - start_time
+                )
+            if end_time - start_time > utils.T_LIMIT:
+                return utils.Statistics(
+                    "-", utils.Result.unknown, end_time - start_time
+                )
+        end_time = utils.time_log()
+        return utils.Statistics("-", utils.Result.schedulable, end_time - start_time)
+
+    def output(self) -> utils.Config:
+        config = utils.Config()
+        config.gcl = self.get_gcl()
+        config.release = self.get_offset()
+        config.route = self.get_route()
+        config.queue = self.get_queue()
+        config._delay = self.get_delay()
+        return config
 
     @staticmethod
     def match_time(t, sche) -> int:
@@ -81,4 +139,104 @@ class ls:
                     match_end = self.match_time(
                         _prev_end - l.t_proc + k * period, self._result[l]
                     )
-                    
+                    if (
+                        match_start == -1
+                        and self._result[l]
+                        and _prev_end - l.t_proc + k * period > self._result[l][0][0]
+                    ):
+                        _flag = False
+                        break
+                    if (
+                        match_start == -2
+                        and self._result[l]
+                        and _start + k * period < self._result[l][-1][1]
+                    ):
+                        _flag = False
+                        break
+                    if match_start >= 0 and (
+                        match_start != match_end
+                        or (
+                            self._result[l]
+                            and self._result[l][match_start][1] > _start + k * period
+                        )
+                    ):
+                        _flag = False
+                        break
+                if _flag:
+                    ## Current hop is available
+                    continue
+                else:
+                    break
+            else:
+                ## All hops on the path are available
+                return it
+        return -1
+
+    def schedule(self, task: utils.Stream) -> bool:
+        self._delay[task] = 0
+        for path in self.task_routes[task]:
+            inject_time = self.find_inject_time(task, path)
+            _delay = sum([l.t_proc + task.get_t_trans(l) for l in path.links])
+            if inject_time == -1 or _delay > task.deadline:
+                continue
+            if self._delay[task] == 0 or _delay < self._delay[task]:
+                self._delay[task] = _delay
+                self._paths[task] = path
+                self._offset[task] = inject_time
+        if self._delay[task] == 0:
+            return False
+
+        ## Update GCL
+        _prev_end = self._offset[task]
+        for l in self._paths[task].links:
+            _start = _prev_end
+            _prev_end = _start + l.t_proc + task.get_t_trans(l)
+            for k in task.get_frame_indexes(self.task.lcm):
+                self._result[l].append(
+                    (
+                        _start + k * task.period,
+                        _prev_end - l.t_proc + k * task.period,
+                        0,
+                    )
+                )
+            ## Sort GCL
+            self._result[l].sort(key=lambda x: x[0], reverse=False)
+        return True
+
+    def get_gcl(self) -> utils.GCL:
+        gcl = []
+        for l in self._result:
+            for _entry in self._result[l]:
+                gcl.append([l, 0, _entry[0], _entry[1], self.task.lcm])
+        return utils.GCL(gcl)
+
+    def get_offset(self) -> utils.Release:
+        offset = []
+        for s in self._offset:
+            offset.append([s, 0, self._offset[s]])
+        return utils.Release(offset)
+
+    def get_queue(self) -> utils.Queue:
+        queue = []
+        for s in self._paths:
+            for l in self._paths[s].links:
+                queue.append([s, 0, l, 0])
+        return utils.Queue(queue)
+
+    def get_delay(self) -> utils.Delay:
+        delay = []
+        for s in self._delay:
+            delay.append([s, 0, self._delay[s]])
+        return utils.Delay(delay)
+
+    def get_route(self) -> utils.Route:
+        route = []
+        for s in self._paths:
+            for l in self._paths[s].links:
+                route.append([s, l])
+        return utils.Route(route)
+
+
+if __name__ == "__main__":
+    args = utils.parse_command_line_args()
+    benchmark(args.name, args.task, args.net, args.output, args.workers)
