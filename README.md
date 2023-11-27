@@ -15,7 +15,7 @@ A simple scheduling toolkit and benchmark for Time-Sensitive Networking in Pytho
 
 ## Install
 
-Install from source (recommanded):
+Install from source (recommended):
 
 ```
 git clone https://github.com/ChuanyuXue/tsnkit
