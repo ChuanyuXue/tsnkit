@@ -41,7 +41,7 @@ def benchmark(
 
 
 class NodeCG:
-    def __init__(self, id: int, f: utils.Stream, path: utils.Path, offset: int):
+    def __init__(self, id: int, f: utils.Stream, path: utils.Path, offset: int) -> None:
         self.i = id
         self.f = f
         self.pi = f.period
@@ -51,7 +51,7 @@ class NodeCG:
         self.offset = offset
         self.init()
 
-    def init(self):
+    def init(self) -> None:
         self.r = np.zeros(max(self.path._network.links) + 1)
         self.t = np.zeros(max(self.path._network.links) + 1)
         for l in self.path.links:
@@ -186,7 +186,12 @@ class cg:
                         self.result_streams.add(self.CG.nodes[i]["config"].f)
                         self.result_nodes.append(i)
 
-                return utils.Statistics("-", utils.Result.schedulable, utils.time_log() - start)
+                return utils.Statistics(
+                    "-", utils.Result.schedulable, utils.time_log() - start
+                )
+        return utils.Statistics(
+            "-", utils.Result.unschedulable, utils.time_log() - start
+        )
 
     def output(self) -> utils.Config:
         config = utils.Config()
@@ -217,7 +222,7 @@ class cg:
             return None
 
     def add_vertex(self, v: NodeCG):
-        self.CG.add_node(v.i, config = v)
+        self.CG.add_node(v.i, config=v)
         for node in self.CG.nodes:
             if node == v.i:
                 continue
@@ -237,7 +242,7 @@ class cg:
             flag = True
         return flag
 
-    def luby(self):
+    def luby(self) -> Tuple[bool, Optional[Set[int]]]:
         a = 0.7
         CG_copy = self.CG.copy()
         I = set()
@@ -273,7 +278,7 @@ class cg:
             CG_copy.remove_nodes_from(Y)
         return True, I
 
-    def ILP(self):
+    def ILP(self) -> Tuple[bool, Optional[Set[int]]]:
         CG_copy = self.CG.copy()
         m = gp.Model("ILP")
         m.setParam("OutputFlag", False)
@@ -302,13 +307,13 @@ class cg:
         else:
             return True, set([k for k in CG_copy.nodes if xv[k].x == 1])
 
-    def nods_to_streams(self, nodes):
+    def nods_to_streams(self, nodes: Set[int]) -> Set[utils.Stream]:
         streams = set()
         for node in nodes:
             streams.add(self.CG.nodes[node]["config"].f)
         return streams
 
-    def trigger_sure(self):
+    def trigger_sure(self) -> bool: 
         opt_window_size = min(self.opt_w, self.max_w)
         window = self.num_covered[-opt_window_size:]
         d_past = np.sum(np.diff(window))
@@ -319,7 +324,7 @@ class cg:
             opt_window_size = 10
             return True
 
-    def trigger_completion(self, miss_num):
+    def trigger_completion(self, miss_num: int) -> bool:
         graph_window_size = min(self.opt_w, self.max_w)
         window_old = self.num_covered[-(graph_window_size + 1) : -1]
         window_new = self.num_covered[-graph_window_size:]
