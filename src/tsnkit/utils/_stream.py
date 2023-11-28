@@ -60,7 +60,7 @@ class Stream(int):
             else:
                 raise TypeError("Invalid stream init")
             return super().__new__(cls, _id)
-            
+
     ## def __new__(
     ##     cls,
     ##     id: int,

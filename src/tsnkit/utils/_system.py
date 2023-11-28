@@ -34,7 +34,6 @@ def is_timeout(thres: float) -> bool:
     return time_log() > thres
 
 
-
 def init_output_folder(path: str) -> None:
     if os.path.isdir(path):
         pass
@@ -45,24 +44,30 @@ def init_output_folder(path: str) -> None:
 
 
 def oom_manager(name: str) -> subprocess.Popen:
-    kill = open('../logs/' + name + '_kill.log', 'w')
-    kill_err = open('../logs/' + name + '_kill.err', 'w')
+    kill = open("../logs/" + name + "_kill.log", "w")
+    kill_err = open("../logs/" + name + "_kill.err", "w")
 
-    return subprocess.Popen([
-        'bash', './killif.sh',
-        str(METHOD_TO_PROCNUM[name] * 1024 * 1024),
-        str(os.getpid())
-    ],
-                            stdout=kill,
-                            stderr=kill_err)
+    return subprocess.Popen(
+        [
+            "bash",
+            "./killif.sh",
+            str(METHOD_TO_PROCNUM[name] * 1024 * 1024),
+            str(os.getpid()),
+        ],
+        stdout=kill,
+        stderr=kill_err,
+    )
 
 
 def find_files_with_prefix(directory: str, prefix: str):
     matching_files = []
     for file in os.listdir(directory):
         full_path = os.path.join(directory, file)
-        if os.path.isfile(full_path) and file.startswith(
-                prefix) and ".csv" in full_path:
+        if (
+            os.path.isfile(full_path)
+            and file.startswith(prefix)
+            and ".csv" in full_path
+        ):
             matching_files.append(full_path)
     return matching_files
 
@@ -75,15 +80,14 @@ async def kill_process(proc: psutil.Process, time_limit: float):
         await asyncio.sleep(time_limit)
 
 
-def kill_if(main_proc: int, mem_limit: int, time_limit: int,
-            sig: SynchronizedBase):
-    '''
+def kill_if(main_proc: int, mem_limit: int, time_limit: int, sig: SynchronizedBase):
+    """
     Kill the process if it uses more than mem memory or more than time seconds
     Args:
         main_proc: the main process id
         mem_limit: the memory limit, uint: GB
         time_limit: the time limit, uint: seconds
-    '''
+    """
     time.sleep(1)
     BREAK_TIME = 0.5  ## Check every 0.5 seconds
     WAIT_TIME = 60  ## Wait for 1 mins before next killing
@@ -111,19 +115,23 @@ def kill_if(main_proc: int, mem_limit: int, time_limit: int,
         _current_time = time.time()
         ## kill the process if it uses more than mem memory or more than time seconds
         for proc in psutil.process_iter(
-            ['pid', 'name', 'username', 'ppid', 'cpu_times', 'status']):
+            ["pid", "name", "username", "ppid", "cpu_times", "status"]
+        ):
             proc_info = proc.info  # type: ignore
-            if 'python' not in proc_info[
-                    'name'] and 'cpoptimizer' not in proc_info['name']:
+            if (
+                "python" not in proc_info["name"]
+                and "cpoptimizer" not in proc_info["name"]
+            ):
                 continue
-            if proc_info[
-                    'ppid'] != main_proc and 'cpoptimizer' not in proc_info[
-                        'name']:
+            if (
+                proc_info["ppid"] != main_proc
+                and "cpoptimizer" not in proc_info["name"]
+            ):
                 # print('ppid: ', proc_info['ppid'], flush=True)
                 continue
-            if proc_info['pid'] == main_proc:
+            if proc_info["pid"] == main_proc:
                 continue
-            if proc_info['pid'] == self_proc:
+            if proc_info["pid"] == self_proc:
                 continue
             # if proc_info['username'] != sys_user:
             #     continue
@@ -131,9 +139,11 @@ def kill_if(main_proc: int, mem_limit: int, time_limit: int,
             #       proc_info['cpu_percent'],
             #       proc_info['pid'],
             #       flush=True)
-            if 'python' in proc_info[
-                    'name'] and proc_info['cpu_times'].user > 0 and proc_info[
-                        'status'] != psutil.STATUS_ZOMBIE:
+            if (
+                "python" in proc_info["name"]
+                and proc_info["cpu_times"].user > 0
+                and proc_info["status"] != psutil.STATUS_ZOMBIE
+            ):
                 # print('PID, CPU TIME, STATUS: ',
                 #       proc_info['pid'],
                 #       proc_info['cpu_times'],
@@ -141,9 +151,10 @@ def kill_if(main_proc: int, mem_limit: int, time_limit: int,
                 #       flush=True)
                 _keep_alive = True
 
-            if proc_info[
-                    'pid'] in pids_killed and _current_time - pids_killed_time[
-                        proc_info['pid']] < WAIT_TIME:
+            if (
+                proc_info["pid"] in pids_killed
+                and _current_time - pids_killed_time[proc_info["pid"]] < WAIT_TIME
+            ):
                 continue
 
             try:
@@ -151,16 +162,19 @@ def kill_if(main_proc: int, mem_limit: int, time_limit: int,
                 start_time = proc.create_time()
                 elasp_time = _current_time - start_time
                 if elasp_time > time_limit * 1.1 or mem > mem_limit:
-                    if proc_info[
-                            'status'] == psutil.STATUS_ZOMBIE or elasp_time > time_limit * 1.2 or mem > mem_limit * 1.1:
+                    if (
+                        proc_info["status"] == psutil.STATUS_ZOMBIE
+                        or elasp_time > time_limit * 1.2
+                        or mem > mem_limit * 1.1
+                    ):
                         proc.send_signal(signal.SIGKILL)
 
                     # kill_process(proc, WAIT_TIME)
                     proc.send_signal(signal.SIGINT)
                     # os.kill(proc_info['pid'], signal.SIGINT)
 
-                    pids_killed.add(proc_info['pid'])
-                    pids_killed_time[proc_info['pid']] = _current_time
+                    pids_killed.add(proc_info["pid"])
+                    pids_killed_time[proc_info["pid"]] = _current_time
                     # print('Killed process: ',
                     #       proc_info['pid'],
                     #       mem,
@@ -169,8 +183,7 @@ def kill_if(main_proc: int, mem_limit: int, time_limit: int,
                     #       flush=True)
                     # print('len of pids_killed: ', len(pids_killed))
 
-            except (psutil.NoSuchProcess, psutil.AccessDenied,
-                    psutil.ZombieProcess):
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
             except Exception as e:
                 pass
