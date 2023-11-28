@@ -40,6 +40,8 @@ def load_stream(path: str) -> "StreamSet":
         )
     stream_set._lcm = np.lcm.reduce([stream._period for stream in stream_set._streams])
 
+    ## Sort streams by its ID
+    stream_set._streams.sort(key=lambda x: x._id, reverse=False)
     return stream_set
 
 

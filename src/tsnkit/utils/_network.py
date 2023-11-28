@@ -59,9 +59,8 @@ class Node(int):
                 _id = kwargs["id"]
             else:
                 raise TypeError("Invalid node init")
-            return super().__new__(cls, _id) 
-        
-        
+            return super().__new__(cls, _id)
+
     ## def __new__(cls, id: int, type: NodeType) -> "Node":
     ##     if id < 0:
     ##         raise ValueError("Node id must be non-negative")
@@ -266,8 +265,8 @@ class Network:
         else:
             raise TypeError("Unsupported node type")
 
-    net_np = _interface("net_np")
-    net_nx = _interface("net_nx")
+    net_np: np.ndarray = _interface("net_np")
+    net_nx: nx.DiGraph = _interface("net_nx")
 
     @property
     def num_n(self) -> int:
