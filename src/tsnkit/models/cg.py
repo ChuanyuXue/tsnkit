@@ -1,5 +1,5 @@
 """
-Author: <Chuanyu> (skewcy@gmail.com)
+Author: <XXX> (XXX@gmail.com)
 cg.py (c) 2023
 Desc: description
 Created:  2023-11-25T22:06:52.279Z
@@ -186,7 +186,9 @@ class cg:
                         self.result_streams.add(self.CG.nodes[i]["config"].f)
                         self.result_nodes.append(i)
 
-                return utils.Statistics("-", utils.Result.schedulable, utils.time_log() - start)
+                return utils.Statistics(
+                    "-", utils.Result.schedulable, utils.time_log() - start
+                )
 
     def output(self) -> utils.Config:
         config = utils.Config()
@@ -217,7 +219,7 @@ class cg:
             return None
 
     def add_vertex(self, v: NodeCG):
-        self.CG.add_node(v.i, config = v)
+        self.CG.add_node(v.i, config=v)
         for node in self.CG.nodes:
             if node == v.i:
                 continue
