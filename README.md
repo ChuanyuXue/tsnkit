@@ -15,7 +15,7 @@ A simple scheduling toolkit and benchmark for Time-Sensitive Networking in Pytho
 
 ## Install
 
-Install from source:
+Install from source (recommended):
 
 ```
 git clone https://github.com/ChuanyuXue/tsnkit
@@ -164,6 +164,6 @@ Following are the output files (gcl, offset, route, queuing assignment) from the
 
 ## Contribute
 
-Contributions are welcome! Feel free to add your own scheduling algorithm.
+Contributions are welcome! Feel free to add your own scheduling algorithm in this toolkit. And contact me to update your new scheduling method into our benchmark paper!
 
-Refer to `src/tsnkit/models/__init__.py` to implement the required interface and benchmark entrance.
+*Refer to `src/tsnkit/models/__init__.py` to implement the required interface and benchmark entrance.*
