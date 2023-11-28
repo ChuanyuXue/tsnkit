@@ -219,8 +219,5 @@ class smt_wa:
 
 
 if __name__ == "__main__":
-    benchmark(
-        "RTNS2016",
-        "../data/input/grid/0/300_task.csv",
-        "../data/input/grid/0/300_topo.csv",
-    )
+    args = utils.parse_command_line_args()
+    benchmark(args.name, args.task, args.net, args.output, args.workers)

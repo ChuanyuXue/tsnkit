@@ -5,6 +5,7 @@ Desc: description
 Created:  2023-10-08T06:14:04.079Z
 """
 
+import copy
 from typing import Dict, Iterator, List, Optional, Tuple, Union
 from ._network import Node, Link, Path, load_network, FlexLink, FlexNode
 from ._common import _interface
@@ -39,21 +40,38 @@ def load_stream(path: str) -> "StreamSet":
         )
     stream_set._lcm = np.lcm.reduce([stream._period for stream in stream_set._streams])
 
+    ## Sort streams by its ID
+    stream_set._streams.sort(key=lambda x: x._id, reverse=False)
     return stream_set
 
 
 class Stream(int):
-    def __new__(
-        cls,
-        id: int,
-        src: FlexNode,
-        dst: List[FlexNode],
-        size: int,
-        period: int,
-        deadline: int,
-        jitter: int,
-    ) -> "Stream":
-        return int.__new__(cls, id)
+    def __new__(cls, *args, **kwargs):
+        if len(args) == 1 and isinstance(args[0], Stream):
+            src_instance = args[0]
+            instance = super().__new__(cls, src_instance._id)
+            instance.__dict__ = copy.deepcopy(src_instance.__dict__)
+            return instance
+        else:
+            if len(args) >= 1:
+                _id = args[0]
+            elif "id" in kwargs:
+                _id = kwargs["id"]
+            else:
+                raise TypeError("Invalid stream init")
+            return super().__new__(cls, _id)
+            
+    ## def __new__(
+    ##     cls,
+    ##     id: int,
+    ##     src: FlexNode,
+    ##     dst: List[FlexNode],
+    ##     size: int,
+    ##     period: int,
+    ##     deadline: int,
+    ##     jitter: int,
+    ## ) -> "Stream":
+    ##     return int.__new__(cls, id)
 
     def __init__(
         self,
@@ -209,7 +227,7 @@ class StreamSet:
 
     def __getitem__(self, key: Union[int, Stream]) -> Stream:
         if not isinstance(key, (int, Stream)):
-            raise TypeError("Index must be int or Stream object")
+            raise stream("Index must be int or Stream object")
         return self._streams[int(key)]
 
     streams: List[Stream] = _interface("streams")
@@ -291,7 +309,7 @@ class StreamSet:
         )
 
     def get_streams_on_link(self, link: FlexLink) -> List[Stream]:
-        if all([not self.is_route_valid(stream) for stream in self._streams]):
+        if all([self.is_route_valid(stream) for stream in self._streams]):
             return [stream for stream in self._streams if stream.is_in_path(link)]
         else:
             raise Exception("Route not set for all streams")

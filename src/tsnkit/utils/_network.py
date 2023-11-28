@@ -5,6 +5,7 @@ Desc: description
 Created:  2023-10-08T06:13:46.561Z
 """
 
+import copy
 from enum import Enum
 from typing import (
     Dict,
@@ -45,10 +46,25 @@ class Node(int):
         self._sync_error = E_SYNC
         self._num_port = NUM_PORT
 
-    def __new__(cls, id: int, type: NodeType) -> "Node":
-        if id < 0:
-            raise ValueError("Node id must be non-negative")
-        return super().__new__(cls, id)
+    def __new__(cls, *args, **kwargs):
+        if len(args) == 1 and isinstance(args[0], Node):
+            src_instance = args[0]
+            instance = super().__new__(cls, src_instance._id)
+            instance.__dict__ = copy.deepcopy(src_instance.__dict__)
+            return instance
+        else:
+            if len(args) >= 1:
+                _id = args[0]
+            elif "id" in kwargs:
+                _id = kwargs["id"]
+            else:
+                raise TypeError("Invalid node init")
+            return super().__new__(cls, _id)
+
+    ## def __new__(cls, id: int, type: NodeType) -> "Node":
+    ##     if id < 0:
+    ##         raise ValueError("Node id must be non-negative")
+    ##     return super().__new__(cls, id)
 
     # id: int = _interface("id")
     type: NodeType = _interface("type")
@@ -91,19 +107,34 @@ class Link(int):
     equivalent in framework.
     """
 
-    def __new__(
-        cls,
-        id: int,
-        src: FlexNode,
-        dst: FlexNode,
-        t_proc: int,
-        t_prop: int,
-        q_num: int,
-        rate: int,
-    ) -> "Link":
-        if id < 0 or src < 0 or dst < 0:
-            raise ValueError("Link id must be non-negative")
-        return super().__new__(cls, id)
+    def __new__(cls, *args, **kwargs):
+        if len(args) == 1 and isinstance(args[0], Link):
+            src_instance = args[0]
+            instance = super().__new__(cls, src_instance._id)
+            instance.__dict__ = copy.deepcopy(src_instance.__dict__)
+            return instance
+        else:
+            if len(args) >= 1:
+                _id = args[0]
+            elif "id" in kwargs:
+                _id = kwargs["id"]
+            else:
+                raise TypeError("Invalid link init")
+            return super().__new__(cls, _id)
+
+    ## def __new__(
+    ##     cls,
+    ##     id: int,
+    ##     src: FlexNode,
+    ##     dst: FlexNode,
+    ##     t_proc: int,
+    ##     t_prop: int,
+    ##     q_num: int,
+    ##     rate: int,
+    ## ) -> "Link":
+    ##     if id < 0 or src < 0 or dst < 0:
+    ##         raise ValueError("Link id must be non-negative")
+    ##     return super().__new__(cls, id)
 
     def __init__(
         self,
@@ -234,8 +265,8 @@ class Network:
         else:
             raise TypeError("Unsupported node type")
 
-    net_np = _interface("net_np")
-    net_nx = _interface("net_nx")
+    net_np: np.ndarray = _interface("net_np")
+    net_nx: nx.DiGraph = _interface("net_nx")
 
     @property
     def num_n(self) -> int:

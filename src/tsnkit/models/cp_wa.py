@@ -117,7 +117,7 @@ class cp_wa:
     def add_frame_const(self):
         for s in self.task:
             for l in s.links:
-                for k in s.get_frame_indexes(self.task.lcm):
+                for k in s.get_frame_indexes(self.task.lcm)[:-1]:
                     self.solver.add(
                         self.solver.start_at_start(
                             self.phi[s][l][k], self.phi[s][l][k + 1], s.period
@@ -231,3 +231,9 @@ class cp_wa:
             ).end
             delay.append([s, 0, end - start])
         return utils.Delay(delay)
+
+
+if __name__ == "__main__":
+    # Test for route space
+    args = utils.parse_command_line_args()
+    benchmark(args.name, args.task, args.net, args.output, args.workers)

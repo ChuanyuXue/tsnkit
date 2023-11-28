@@ -251,7 +251,13 @@ class i_ilp:
         gcl = []
         for s in self.task:
             for l in s.links:
-                start = self.solution[s] + self.delay[s][l] - s.get_t_trans(l)
+                if self.solution[s] is None:
+                    raise ValueError("Solution not found")
+                start = (
+                    self.solution[s]  # type: ignore
+                    + self.delay[s][l]
+                    - s.get_t_trans(l)
+                )
                 end = start + s.get_t_trans(l)
                 for k in s.get_frame_indexes(self.task.lcm):
                     gcl.append(
@@ -289,4 +295,5 @@ class i_ilp:
 
 if __name__ == "__main__":
     # Test for route space
-    benchmark("-", "../data/input/grid/0/3_task.csv", "../data/input/grid/0/3_topo.csv")
+    args = utils.parse_command_line_args()
+    benchmark(args.name, args.task, args.net, args.output, args.workers)
