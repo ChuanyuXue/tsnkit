@@ -11,6 +11,7 @@ A simple scheduling toolkit and benchmark for Time-Sensitive Networking in Pytho
 }
 ```
 Paper link: https://arxiv.org/abs/2305.16772
+
 Documentation (work-in-progress): https://tsnkit.readthedocs.io
 
 ## Install
