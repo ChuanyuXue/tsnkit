@@ -220,4 +220,5 @@ class smt_wa:
 
 if __name__ == "__main__":
     args = utils.parse_command_line_args()
+    utils.Statistics().header()
     benchmark(args.name, args.task, args.net, args.output, args.workers)

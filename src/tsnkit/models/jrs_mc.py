@@ -285,4 +285,5 @@ class jrs_mc:
 if __name__ == "__main__":
     # Test for route space
     args = utils.parse_command_line_args()
+    utils.Statistics().header()
     benchmark(args.name, args.task, args.net, args.output, args.workers)
