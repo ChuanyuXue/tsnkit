@@ -1,3 +1,4 @@
 sphinx-rtd-theme>=2.0.0
 recommonmark>=0.7.1
 myst-parser>=2.0.0
+pandas>=1.0.0
