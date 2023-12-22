@@ -10,9 +10,6 @@ import traceback
 from docplex.cp.model import CpoModel
 from .. import utils
 
-CPO_PATH = "/home/ubuntu/Cplex/cpoptimizer/bin/x86-64_linux/cpoptimizer"
-
-
 def benchmark(
     name, task_path, net_path, output_path="./", workers=1
 ) -> utils.Statistics:
@@ -59,6 +56,9 @@ class cp_wa:
             for l in s.links:
                 self.phi[s].setdefault(l, [])
                 self.p[s][l] = self.solver.integer_var()
+                self.solver.add(
+                    self.p[s][l] >= 0, self.p[s][l] <= l.q_num
+                )
                 for k in s.get_frame_indexes(self.task.lcm):
                     self.phi[s][l].append(
                         self.solver.interval_var(
@@ -79,7 +79,6 @@ class cp_wa:
         self.model_output = self.solver.solve(
             agent="local",
             # execfile='/home/ubuntu/Cplex/cpoptimizer/bin/x86-64_linux/cpoptimizer',
-            execfile=CPO_PATH,
             LogVerbosity="Quiet",
             Workers=self.workers,
             # SearchType='DepthFirst',
