@@ -12,7 +12,10 @@ Created:  2023-11-28T20:57:28.080Z
 Currently, the following scheduling algorithms are implemented in `tsnkit`. You can use them by running 
 
 ```
-python3 -m tsnkit.models.<algorithm> <task_file> <topo_file>
+## python3 -m tsnkit.models.<algorithm> <task_file> <topo_file>
+## For example:
+
+python3 -m tsnkit.models.smt_wa ./task.csv ./topo.csv
 ```
 
 
