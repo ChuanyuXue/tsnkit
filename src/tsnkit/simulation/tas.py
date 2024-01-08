@@ -243,9 +243,16 @@ if __name__ == "__main__":
     parser.add_argument(
         "config", type=str, help="The file path to the folder that contains configs."
     )
+    parser.add_argument("iter", type=int, help="The number of iterations.", default=10)
+    parser.add_argument(
+        "verbose", type=bool, help="Whether to print the log.", default=True
+    )
 
     log = simulation(
-        parser.parse_args().task, parser.parse_args().config, it=5, verbose=True
+        parser.parse_args().task,
+        parser.parse_args().config,
+        it=parser.parse_args().iter,
+        verbose=parser.parse_args().verbose,
     )
 
     ### Check error
