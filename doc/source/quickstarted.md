@@ -57,7 +57,7 @@ Follow these steps for a basic use case:
 3. If the result is succ, four configuration files are generated, each distinguished by its suffix:
 
 
-   - --GCL.csv: Gate Control List for each network bridge.
+   -  --GCL.csv: Gate Control List for each network bridge.
    -  --OFFSET.csv: Release time for each flow at the end-station.
    -  --QUEUE.csv: Queue assignments for each flow at each hop.
    -  --ROUTE.csv: Routing paths for each flow.
