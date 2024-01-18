@@ -61,7 +61,7 @@ class GCL(list):
                 int(row[1]),
                 int(row[2]),
                 int(row[3]),
-                int(row[4])
+                int(row[4]),
             ]
         return True
 
@@ -101,8 +101,8 @@ class GCL(list):
 
     def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self)
-        result.columns = ['link', 'queue', 'start', 'end',
-                          'cycle']  # type: ignore
+        result.columns = ["link", "queue", "start", "end", "cycle"]  # type: ignore
+        result = result.sort_values(by=["link", "queue"])
         result.to_csv(path, index=False)
 
 
@@ -139,14 +139,15 @@ class Release(list):
 
     def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self)
-        result.columns = ['stream', 'ins', 'offset']  # type: ignore
+        result.columns = ["stream", "ins", "offset"]  # type: ignore
+        result = result.sort_values(by=["stream", "ins"])
         result.to_csv(path, index=False)
 
 
 class Queue(list):
     """
     A list of [stream_id, frame_id, link, queue]
-    
+
     Args:
         init_list (List[List[stream_id, frame_id, link, queue]]): [description]
     """
@@ -190,7 +191,8 @@ class Queue(list):
 
     def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self)
-        result.columns = ['stream', 'ins', 'link', 'queue']  # type: ignore
+        result.columns = ["stream", "ins", "link", "queue"]  # type: ignore
+        result = result.sort_values(by=["stream", "ins"])
         result.to_csv(path, index=False)
 
 
@@ -265,7 +267,7 @@ class Route(list):
 
     def to_csv(self, path):
         result = pd.DataFrame(self)
-        result.columns = ['stream', 'link']
+        result.columns = ["stream", "link"]
         result.to_csv(path, index=False)
 
 
@@ -305,22 +307,23 @@ class Delay(list):
 
     def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self, dtype=int)
-        result.columns = ['stream', 'ins', 'delay']  # type: ignore
+        result.columns = ["stream", "ins", "delay"]  # type: ignore
+        result = result.sort_values(by=["stream", "ins"])
         result.to_csv(path, index=False)
 
 
 class Size(list):
     """This i only used for FRAG based model now
-    [NOTE]: No type check for 
+    [NOTE]: No type check for
     """
 
     def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self, dtype=int)
-        result.columns = ['stream', 'ins', 'size']
+        result = result.sort_values(by=["stream", "ins"])
+        result.columns = ["stream", "ins", "size"]
 
 
 class Config:
-
     def __init__(self):
         self.gcl: Union[None, GCL] = None
         self.release: Union[None, Release] = None
