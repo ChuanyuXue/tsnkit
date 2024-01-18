@@ -93,7 +93,7 @@ if __name__ == "__main__":
         "--size",
         type=int,
         choices=[1, 2, 3, 4, 5],
-        default=1,
+        default=2,
         help="Size specification",
     )
     parser.add_argument(
