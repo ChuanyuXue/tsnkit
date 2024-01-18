@@ -12,11 +12,9 @@ from .. import utils
 import gurobipy as gp
 
 
-def benchmark(name,
-              task_path,
-              net_path,
-              output_path="./",
-              workers=1) -> utils.Statistics:
+def benchmark(
+    name, task_path, net_path, output_path="./", workers=1
+) -> utils.Statistics:
     stat = utils.Statistics(name)  ## Init empty stat
     try:
         ## Change _Method to your method class
@@ -40,7 +38,6 @@ def benchmark(name,
 
 
 class jrs_wa:
-
     def __init__(self, workers=1) -> None:
         self.workers = workers
 
@@ -51,12 +48,14 @@ class jrs_wa:
         self.solver.Params.LogToConsole = 0
         self.solver.Params.Threads = self.workers
 
-        self.r = self.solver.addMVar(shape=(len(self.task), self.net.num_l),
-                                     vtype=gp.GRB.BINARY,
-                                     name="routing")
-        self.t = self.solver.addMVar(shape=(len(self.task), self.net.num_l),
-                                     vtype=gp.GRB.INTEGER,
-                                     name="time_start")
+        self.r = self.solver.addMVar(
+            shape=(len(self.task), self.net.num_l), vtype=gp.GRB.BINARY, name="routing"
+        )
+        self.t = self.solver.addMVar(
+            shape=(len(self.task), self.net.num_l),
+            vtype=gp.GRB.INTEGER,
+            name="time_start",
+        )
 
     def prepare(self) -> None:
         self.routing_space = {s: self.get_route_space(s) for s in self.task}
@@ -69,7 +68,7 @@ class jrs_wa:
 
     @utils.check_time_limit
     def solve(self) -> utils.Statistics:
-        self.solver.setParam('TimeLimit', (utils.T_LIMIT - utils.time_log()))
+        self.solver.setParam("TimeLimit", (utils.T_LIMIT - utils.time_log()))
         self.solver.optimize()
         run_time = self.solver.Runtime
         memory = utils.mem_log()
@@ -110,12 +109,18 @@ class jrs_wa:
         ## Ensure pass src and dst
         for s in self.task:
             self.solver.addConstr(
-                gp.quicksum(self.r[s][l]  # type: ignore
-                            for l in self.net.get_outcome_links(s.src)
-                            if l in self.routing_space[s]) -
-                gp.quicksum(self.r[s][l]  # type: ignore
-                            for l in self.net.get_income_links(s.src)
-                            if l in self.routing_space[s]) == 1)
+                gp.quicksum(
+                    self.r[s][l]  # type: ignore
+                    for l in self.net.get_outcome_links(s.src)
+                    if l in self.routing_space[s]
+                )
+                - gp.quicksum(
+                    self.r[s][l]  # type: ignore
+                    for l in self.net.get_income_links(s.src)
+                    if l in self.routing_space[s]
+                )
+                == 1
+            )
 
         ## Ensure path connectivity
         for s in self.task:
@@ -123,20 +128,30 @@ class jrs_wa:
                 if i in {s.src, s.dst}:
                     continue
                 self.solver.addConstr(
-                    gp.quicksum(self.r[s][l]  # type: ignore
-                                for l in self.net.get_outcome_links(i)
-                                if l in self.routing_space[s]) -
-                    gp.quicksum(self.r[s][l]  # type: ignore
-                                for l in self.net.get_income_links(i)
-                                if l in self.routing_space[s]) == 0)
+                    gp.quicksum(
+                        self.r[s][l]  # type: ignore
+                        for l in self.net.get_outcome_links(i)
+                        if l in self.routing_space[s]
+                    )
+                    - gp.quicksum(
+                        self.r[s][l]  # type: ignore
+                        for l in self.net.get_income_links(i)
+                        if l in self.routing_space[s]
+                    )
+                    == 0
+                )
 
         ## Prune loop
         for s in self.task:
             for i in self.net.nodes:
                 self.solver.addConstr(
-                    gp.quicksum(self.r[s][l]  # type: ignore
-                                for l in self.net.get_outcome_links(i)
-                                if l in self.routing_space[s]) <= 1)
+                    gp.quicksum(
+                        self.r[s][l]  # type: ignore
+                        for l in self.net.get_outcome_links(i)
+                        if l in self.routing_space[s]
+                    )
+                    <= 1
+                )
 
     def add_link_present_const(self):
         for s in self.task:
@@ -150,16 +165,23 @@ class jrs_wa:
                     continue
 
                 self.solver.addConstr(
-                    gp.quicksum(self.t[s][l]  # type: ignore
-                                for l in self.net.get_outcome_links(i)
-                                if l in self.routing_space[s]) -
-                    gp.quicksum(self.t[s][l]  # type: ignore
-                                for l in self.net.get_income_links(i)
-                                if l in self.routing_space[s]) >=
-                    (self.net.max_t_proc + s.t_trans_1g) *
-                    gp.quicksum(self.r[s][l]  # type: ignore
-                                for l in self.net.get_outcome_links(i)
-                                if l in self.routing_space[s]))
+                    gp.quicksum(
+                        self.t[s][l]  # type: ignore
+                        for l in self.net.get_outcome_links(i)
+                        if l in self.routing_space[s]
+                    )
+                    - gp.quicksum(
+                        self.t[s][l]  # type: ignore
+                        for l in self.net.get_income_links(i)
+                        if l in self.routing_space[s]
+                    )
+                    >= (self.net.max_t_proc + s.t_trans_1g)
+                    * gp.quicksum(
+                        self.r[s][l]  # type: ignore
+                        for l in self.net.get_outcome_links(i)
+                        if l in self.routing_space[s]
+                    )
+                )
 
     def add_link_const(self) -> None:
         for l in self.net.links:
@@ -168,30 +190,38 @@ class jrs_wa:
                     t_s1, t_s2 = self.t[s1][l], self.t[s2][l]
                     r_s1, r_s2 = self.r[s1][l], self.r[s2][l]
                     for k1, k2 in self.task.get_frame_index_pairs(s1, s2):
-                        _temp = self.solver.addVar(vtype=gp.GRB.BINARY,
-                                                   name="%s%d%d%d%d" %
-                                                   (str(l), s1, s2, k1, k2))
+                        _temp = self.solver.addVar(
+                            vtype=gp.GRB.BINARY,
+                            name="%s%d%d%d%d" % (str(l), s1, s2, k1, k2),
+                        )
                         self.solver.addConstr(
-                            (t_s2 + k2 * s2.period) -
-                            (t_s1 + k1 * s1.period) >= s1.t_trans_1g -
-                            utils.T_M * (3 - _temp - r_s1 - r_s2))
+                            (t_s2 + k2 * s2.period) - (t_s1 + k1 * s1.period)
+                            >= s1.t_trans_1g - utils.T_M * (3 - _temp - r_s1 - r_s2)
+                        )
                         self.solver.addConstr(
-                            (t_s1 + k1 * s1.period) -
-                            (t_s2 + k2 * s2.period) >= s2.t_trans_1g -
-                            utils.T_M * (2 + _temp - r_s1 - r_s2))
+                            (t_s1 + k1 * s1.period) - (t_s2 + k2 * s2.period)
+                            >= s2.t_trans_1g - utils.T_M * (2 + _temp - r_s1 - r_s2)
+                        )
 
     def add_delay_const(self) -> None:
         for s in self.task:
             self.solver.addConstr(
-                gp.quicksum(self.t[s][l]  # type: ignore
-                            for l in self.net.get_income_links(s.dst)
-                            if l in self.routing_space[s]) -
-                gp.quicksum(self.t[s][l]  # type: ignore
-                            for l in self.net.get_outcome_links(s.src)
-                            if l in self.routing_space[s]) <= s.deadline -
-                s.t_trans_1g)
+                gp.quicksum(
+                    self.t[s][l]  # type: ignore
+                    for l in self.net.get_income_links(s.dst)
+                    if l in self.routing_space[s]
+                )
+                - gp.quicksum(
+                    self.t[s][l]  # type: ignore
+                    for l in self.net.get_outcome_links(s.src)
+                    if l in self.routing_space[s]
+                )
+                <= s.deadline - s.t_trans_1g
+            )
 
-    def set_queue(self, ) -> None:
+    def set_queue(
+        self,
+    ) -> None:
         self._queue_count: Dict[utils.Link, int] = {}
         self._queue_log: Dict[utils.Stream, Dict[utils.Link, int]] = {}
 
@@ -211,25 +241,29 @@ class jrs_wa:
                     _start = self.t[s][l].x  # type: ignore
                     _end = _start + s.t_trans_1g
                     for k in s.get_frame_indexes(self.task.lcm):
-                        gcl.append([
-                            l, self._queue_log[s][l], _start + k * s.period,
-                            _end + k * s.period, self.task.lcm
-                        ])
+                        gcl.append(
+                            [
+                                l,
+                                self._queue_log[s][l],
+                                _start + k * s.period,
+                                _end + k * s.period,
+                                self.task.lcm,
+                            ]
+                        )
         return utils.GCL(gcl)
 
     def get_offset(self) -> utils.Release:
         offset = []
         for s in self.task:
             _start_links = [
-                l for l in self.net.get_outcome_links(s.src)
-                if l in self.routing_space[s]
-                and self.r[s][l].x == 1  # type: ignore
+                l
+                for l in self.net.get_outcome_links(s.src)
+                if l in self.routing_space[s] and self.r[s][l].x == 1  # type: ignore
             ]  # type: ignore
             if len(_start_links) == 0:
                 raise ValueError("No start link?")
             if len(_start_links) > 1:
-                warnings.warn(
-                    "Multiple start link? Please check if unicast is used.")
+                warnings.warn("Multiple start link? Please check if unicast is used.")
             _start_link = _start_links[0]
             _start = self.t[s][_start_link].x  # type: ignore
             offset.append([s, 0, _start])
@@ -256,30 +290,28 @@ class jrs_wa:
         delay = []
         for s in self.task:
             _start_links = [
-                l for l in self.net.get_outcome_links(s.src)
-                if l in self.routing_space[s]
-                and self.r[s][l].x == 1  # type: ignore
+                l
+                for l in self.net.get_outcome_links(s.src)
+                if l in self.routing_space[s] and self.r[s][l].x == 1  # type: ignore
             ]
             if len(_start_links) == 0:
                 raise ValueError("No start link?")
             if len(_start_links) > 1:
-                warnings.warn(
-                    "Multiple start link? Please check if unicast is used.")
+                warnings.warn("Multiple start link? Please check if unicast is used.")
             _start_link = _start_links[0]
             _start = self.t[s][int(_start_link)].x  # type: ignore
             _end_links = [
-                l for l in self.net.get_income_links(s.dst)
-                if l in self.routing_space[s]
-                and self.r[s][l].x == 1  # type: ignore
+                l
+                for l in self.net.get_income_links(s.dst)
+                if l in self.routing_space[s] and self.r[s][l].x == 1  # type: ignore
             ]
             if len(_end_links) == 0:
                 raise ValueError("No end link?")
             if len(_end_links) > 1:
-                warnings.warn(
-                    "Multiple end link? Please check if unicast is used.")
+                warnings.warn("Multiple end link? Please check if unicast is used.")
             _end_link = _end_links[0]
             _end = self.t[s][int(_end_link)].x  # type: ignore
-            delay.append([s, 0, (_end - _start) + s.t_trans_1g])
+            delay.append([s, 0, (_end - _start)])
         return utils.Delay(delay)
 
 
@@ -288,4 +320,3 @@ if __name__ == "__main__":
     args = utils.parse_command_line_args()
     utils.Statistics().header()
     benchmark(args.name, args.task, args.net, args.output, args.workers)
-

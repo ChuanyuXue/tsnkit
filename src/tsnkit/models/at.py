@@ -250,7 +250,7 @@ class at:
                 end = self.model_output.eval(
                     self.tau[s.last_link][self.w[s][s.last_link][k]]
                 ).as_long()
-                delay.append([s, k, end - start])
+                delay.append([s, k, end - start - s.get_t_trans(s.last_link)])
         return utils.Delay(delay)
 
 

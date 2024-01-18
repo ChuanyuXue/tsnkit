@@ -286,7 +286,7 @@ class smt_pr:
                 _end = self.model_output[
                     self.f[s][s.last_link][j][-1]
                 ].as_long()  # type: ignore
-                _delay = _end - _start + self.net.max_t_proc
+                _delay = _end - _start
                 delay.append([s, j, _delay])
         return utils.Delay(delay)
 
@@ -294,4 +294,4 @@ class smt_pr:
 if __name__ == "__main__":
     args = utils.parse_command_line_args()
     utils.Statistics().header()
-    benchmark(args.name, args.task, args.net, args.output, args.workers) 
+    benchmark(args.name, args.task, args.net, args.output, args.workers)

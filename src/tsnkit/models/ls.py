@@ -7,6 +7,8 @@ Created:  2023-11-06T00:26:19.423Z
 
 import traceback
 from typing import Dict, List
+
+from zmq import NULL
 from .. import utils
 
 
@@ -55,7 +57,7 @@ class ls:
             ),
             reverse=True,
         )
-        self._delay: Dict[utils.Stream, int] = {}  ## ARVT in legacy code
+        self._delay: Dict[utils.Stream, int] = {}
         self._result: Dict[utils.Link, List] = {
             l: [] for l in self.net.links
         }  ## GCL in legacy code
@@ -95,7 +97,7 @@ class ls:
 
     @staticmethod
     def match_time(t, sche) -> int:
-        """Find the entry covering time t with binary search
+        """Find the index of entry that starts just before t
 
         Args:
             t (_type_): _description_
@@ -126,40 +128,46 @@ class ls:
             else:
                 left = median
 
+    @staticmethod
+    def get_nw_delay(task: utils.Stream, path: utils.Path):
+        return sum([l.t_proc + task.get_t_trans(l) for l in path.links])
+
     def find_inject_time(self, s: utils.Stream, path: utils.Path):
-        delay = len(path.links) * (self.net.max_t_proc + s.t_trans_1g)
+        delay = self.get_nw_delay(s, path)
         period = s.period
         for it in range(0, period - delay + 1):
             _prev_end = it
             for l in path.links:
                 _flag = True
                 _start = _prev_end
-                _prev_end = _start + l.t_proc + s.t_trans_1g
+                _end = _start + s.get_t_trans(l)
+                _prev_end = _start + l.t_proc + s.get_t_trans(l)
+
                 for k in s.get_frame_indexes(self.task.lcm):
                     match_start = self.match_time(_start + k * period, self._result[l])
-                    match_end = self.match_time(
-                        _prev_end - l.t_proc + k * period, self._result[l]
-                    )
+                    match_end = self.match_time(_end + k * period, self._result[l])
                     if (
-                        match_start == -1
+                        match_start == -1  ## _start is before the first entry
                         and self._result[l]
-                        and _prev_end - l.t_proc + k * period > self._result[l][0][0]
+                        and _end + k * period
+                        > self._result[l][0][0]  ## _end overlaps with the first entry
                     ):
                         _flag = False
                         break
                     if (
-                        match_start == -2
+                        match_start == -2  ## _start is after the last entry
                         and self._result[l]
-                        and _start + k * period < self._result[l][-1][1]
+                        and _start + k * period
+                        < self._result[l][-1][1]  ## _start overlaps with the last entry
                     ):
                         _flag = False
                         break
                     if match_start >= 0 and (
-                        match_start != match_end
+                        match_start != match_end  ## A entry is between _start and _end
                         or (
                             self._result[l]
                             and self._result[l][match_start][1] > _start + k * period
-                        )
+                        )  ## _start overlaps with the matched entry
                     ):
                         _flag = False
                         break
@@ -174,29 +182,38 @@ class ls:
         return -1
 
     def schedule(self, task: utils.Stream) -> bool:
-        self._delay[task] = 0
+        self._delay[task] = NULL
         for path in self.task_routes[task]:
-            inject_time = self.find_inject_time(task, path)
-            _delay = sum([l.t_proc + task.get_t_trans(l) for l in path.links])
-            if inject_time == -1 or _delay > task.deadline:
+            ## Check if the path is schedulable
+            _delay = self.get_nw_delay(task, path)
+            if _delay > task.deadline:
                 continue
-            if self._delay[task] == 0 or _delay < self._delay[task]:
+
+            ## Try to find the inject time
+            inject_time = self.find_inject_time(task, path)
+            if inject_time == -1:
+                continue
+
+            if self._delay[task] == NULL or _delay < self._delay[task]:
                 self._delay[task] = _delay
                 self._paths[task] = path
                 self._offset[task] = inject_time
-        if self._delay[task] == 0:
+
+        if self._delay[task] == NULL:
             return False
 
         ## Update GCL
         _prev_end = self._offset[task]
         for l in self._paths[task].links:
             _start = _prev_end
+            _end = _start + task.get_t_trans(l)
             _prev_end = _start + l.t_proc + task.get_t_trans(l)
+
             for k in task.get_frame_indexes(self.task.lcm):
                 self._result[l].append(
                     (
                         _start + k * task.period,
-                        _prev_end - l.t_proc + k * task.period,
+                        _end + k * task.period,
                         0,
                     )
                 )
@@ -227,7 +244,10 @@ class ls:
     def get_delay(self) -> utils.Delay:
         delay = []
         for s in self._delay:
-            delay.append([s, 0, self._delay[s]])
+            start_link = self._paths[s].links[0]
+            delay.append(
+                [s, 0, self._delay[s] - start_link.t_proc - s.get_t_trans(start_link)]
+            )
         return utils.Delay(delay)
 
     def get_route(self) -> utils.Route:

@@ -1,14 +1,13 @@
 import argparse
-from enum import Enum
-import re
-from ..utils import find_files_with_prefix, T_SLOT, SEED
-
-from typing import Any, Dict, List, Tuple
 import pandas as pd
 import numpy as np
+from enum import Enum
 from tqdm import tqdm
+from typing import Set, Dict, List, Tuple
+from ..utils import find_files_with_prefix, T_SLOT, T_PROC
 
-np.random.seed(SEED)
+DEBUG_FLAG = 0
+DEBUG_FLOWSET: Set[int] = set([0])
 
 
 def match_time(t: int, gcl: List[Tuple[int, int, int]]) -> int:
@@ -152,13 +151,9 @@ def simulation(
 
     NUM_QUEUES = max(max(queue["queue"]), max(gcl["queue"])) + 1
 
-    PROC = 1_000
-
     ## Global setting
-    T_SLOT = 100
     period = list(task["period"])
     size = list(task["size"])
-    deadline = list(task["deadline"])
     hyper_period = np.lcm.reduce(period)
     log: List[List[List[int]]] = [[[], []] for i in range(len(task))]
     instance_count = [0 for i in range(len(task))]
@@ -178,6 +173,7 @@ def simulation(
                 for v in ROUTE[flow][SRC[flow]]:
                     link = (SRC[flow], v)
                     egress_q[link][QUEUE[frame][link]].append(frame)
+
                 instance_count[flow] = instance_count[flow] + 1
 
         ## Timer - TODO: Replace by heap
@@ -188,23 +184,23 @@ def simulation(
                 if t >= ct:
                     if link[0] == SRC[flow]:
                         log[flow][0].append(t)
-                        if verbose:
+                        if verbose and (DEBUG_FLAG == 0 or flow in DEBUG_FLOWSET):
                             print(
                                 ("[Talker %d]:" % link[0]).ljust(20)
                                 + "Flow %d - Send at %d" % (flow, t)
                             )
-                    if link[-1] in DST[flow]:
-                        log[flow][1].append(t)
-                        if verbose:
+                    if link[1] in DST[flow]:
+                        log[flow][1].append(t - T_PROC)
+                        if verbose and (DEBUG_FLAG == 0 or flow in DEBUG_FLOWSET):
                             print(
                                 ("[Listener %d]:" % link[-1]).ljust(20)
-                                + "Flow %d - Receive at %d" % (flow, t)
+                                + "Flow %d - Receive at %d" % (flow, t - T_PROC)
                             )
                         continue
                     try:
                         for v in ROUTE[flow][link[-1]]:
                             new_link = (link[-1], v)
-                            if verbose:
+                            if verbose and (DEBUG_FLAG == 0 or flow in DEBUG_FLOWSET):
                                 print(
                                     ("[Bridge %s]:" % str(new_link)).ljust(20)
                                     + "Flow %d - Arrive at %d" % (flow, t)
@@ -228,8 +224,13 @@ def simulation(
                 trans_delay = size[egress_q[link][q][0][0]] * 8
                 if e - current_t >= trans_delay:
                     out = egress_q[link][q].pop(0)
-                    _pool[link].append((t + trans_delay + PROC, out))
+                    _pool[link].append((t + trans_delay + T_PROC, out))
                     available_t[link] = t + trans_delay
+                    if verbose and (DEBUG_FLAG == 0 or out[0] in DEBUG_FLOWSET):
+                        print(
+                            ("[Bridge %s]:" % str(link)).ljust(20)
+                            + "Flow %d - Trans at %d" % (out[0], t)
+                        )
     return log
 
 
@@ -243,9 +244,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "config", type=str, help="The file path to the folder that contains configs."
     )
-    parser.add_argument("iter", type=int, help="The number of iterations.", default=10)
     parser.add_argument(
-        "verbose", type=bool, help="Whether to print the log.", default=True
+        "iter", type=int, help="The number of iterations.", default=10, nargs="?"
+    )
+    parser.add_argument(
+        "verbose", type=bool, help="Whether to print the log.", default=True, nargs="?"
     )
 
     log = simulation(
@@ -265,5 +268,26 @@ if __name__ == "__main__":
             if len(x) == 0 or np.var(x) > 0
         ],
     )
+
+    if parser.parse_args().verbose:
+        print("\n\n\n")
+        print("[Log]:")
+        for flow_id, flow_log in enumerate(log):
+            print("Flow %d:" % flow_id)
+            print("Send time:", flow_log[0])
+            print("Receive time:", flow_log[1])
+
     print("\n\n\n")
-    print(log)
+    print("[Statistics]:")
+    for flow_id, flow_log in enumerate(log):
+        average_delay = np.mean(
+            [flow_log[1][i] - flow_log[0][i] for i in range(len(flow_log[1]))]
+        )
+        average_jitter = np.std(
+            [flow_log[1][i] - flow_log[0][i] for i in range(len(flow_log[1]))]
+        )
+        print(
+            f"Flow {flow_id:>4}: ",
+            f"Average delay: {average_delay:<10.2f}",
+            f"Average jitter: {average_jitter:<10.2f}",
+        )

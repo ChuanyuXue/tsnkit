@@ -221,7 +221,7 @@ class dt:
         delay = []
         for s in self.task:
             l = s.last_link
-            delay.append([s, l, self._delay[s][l]])
+            delay.append([s, l, self._delay[s][l] - s.get_t_trans(l)])
         return utils.Delay(delay)
 
 

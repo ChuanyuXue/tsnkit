@@ -180,10 +180,10 @@ class ls_tb:
                 raise Exception("prev_link is None")
             _prev_ins = (s, pre_link)
             if _prev_ins in self.af:
-                _prov_task = self.assign[self.af.index(_prev_ins)]
-                if _prov_task is None:
+                _prev_task = self.assign[self.af.index(_prev_ins)]
+                if _prev_task is None:
                     raise Exception("prev_ins is not assigned")
-                self.est[s][l] = _prov_task[0] + s.get_t_trans(l) + l.t_proc
+                self.est[s][l] = _prev_task[0] + s.get_t_trans(l) + l.t_proc
                 self.cs[k].add(self.af.index(_prev_ins))
         return (self.est[s][l], 0)
 
@@ -208,7 +208,7 @@ class ls_tb:
                 for a, b in self.task.get_frame_index_pairs(s, s2):
                     frame_iso = (
                         _val[0] + a * s.period
-                        <= self.assign[k2_prec][0] + b * s2.period  # type: ignore
+                        <= self.assign[k2_prec][0] + b * s2.period + l.t_proc  # type: ignore
                         or self.assign[k2][0] + b * s2.period  # type: ignore
                         <= self.assign[k_prec][0] + a * s.period + l2.t_proc  # type: ignore
                     )  # type: ignore
@@ -232,7 +232,7 @@ class ls_tb:
                     self.cs[k].add(k2)
                     _val = [_val[0] + s2.get_t_trans(l2) + d1, 0]
                     success = False
-                elif d1 < s2.get_t_trans(l2):
+                elif d2 < s2.get_t_trans(l2):
                     self.cs[k].add(k2)
                     _val = [_val[0] + s2.get_t_trans(l2) - d2, 0]
                     success = False
@@ -289,7 +289,7 @@ class ls_tb:
                 if self.af[index][0] == s and self.af[index][1] == start_hop:
                     start_time = start
                 if self.af[index][0] == s and self.af[index][1] == end_hop:
-                    end_time = start + s.get_t_trans(end_hop)
+                    end_time = start
             delay.append([s, 0, end_time - start_time])
         return utils.Delay(delay)
 

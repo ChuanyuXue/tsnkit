@@ -212,7 +212,6 @@ class smt_wa:
             _delay = (
                 result[var[s][s.last_link]["phi"]].as_long()
                 - result[var[s][s.first_link]["phi"]].as_long()
-                + s.t_trans
             )
             delay.append([s, 0, _delay])
         return utils.Delay(delay)

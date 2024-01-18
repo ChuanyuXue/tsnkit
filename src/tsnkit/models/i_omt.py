@@ -381,7 +381,7 @@ class i_omt:
                 for iter, res in enumerate(self.results):
                     if self.group[s][end_link][k] == iter:
                         end = res[self.alpha[s][end_link][k]].as_long()
-                delay.append([s, k, end - start + s.t_trans_1g])
+                delay.append([s, k, end - start])
         return utils.Delay(delay)
 
 
