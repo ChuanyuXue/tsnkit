@@ -120,7 +120,7 @@ class jrs_nw_l:
             for l in self.net.links:
                 self.solver.add_constraint(0 <= self.t[s, l])
                 self.solver.add_constraint(
-                    self.t[s, l] <= s.period - s.t_trans_1g)
+                    self.t[s, l] <= s.period - s.get_t_trans(l))
 
     def add_link_const(self):
         for l in self.net.links:
@@ -131,10 +131,10 @@ class jrs_nw_l:
                             self.u[s1, l] == 0, self.u[
                                 s2, l] == 0, self.t[s1, l] +
                             k1 * s1.period >= self.t[s2, l] +
-                            k2 * s2.period + s2.t_trans_1g +
+                            k2 * s2.period + s2.get_t_trans(l) +
                             1, self.t[s2, l] +
                             k2 * s2.period >= self.t[s1, l] +
-                            k1 * s1.period + s1.t_trans_1g + 1) == 1)
+                            k1 * s1.period + s1.get_t_trans(l) + 1) == 1)
 
     def add_route_const(self):
         for s in self.task:
@@ -253,7 +253,7 @@ class jrs_nw_l:
             _delay = self.model_output.get_value(  # type: ignore
                 sum(self.u[s, l] * (s.get_t_trans(l) + l.t_proc)
                     for l in self.net.links)) - self.net.max_t_proc
-            delay.append([s, 0, _delay])
+            delay.append([s, 0, _delay - self.net.max_t_proc - s.t_trans_1g])
         return utils.Delay(delay)
 
 if __name__ == "__main__":

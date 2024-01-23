@@ -228,7 +228,7 @@ class cp_wa:
             end = self.model_output.get_value(  # type: ignore
                 self.phi[s][s.last_link][0]
             ).end
-            delay.append([s, 0, end - start])
+            delay.append([s, 0, end - start - s.get_t_trans(s.last_link) - s.last_link.t_proc])
         return utils.Delay(delay)
 
 
