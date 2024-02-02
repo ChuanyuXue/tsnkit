@@ -91,7 +91,7 @@ Following are the output files (gcl, offset, route, queuing assignment) from the
 The data generator is a python script that generates random stream set and network description files. The script is located at `data/generator.py`. The script takes the following arguments:
 
 - **--num_ins:** Number of problem instances to generate, default is 1.
-- **--num_flows:** Number of flows in each problem instance, default is 8.
+- **--num_stream:** Number of flows in each problem instance, default is 8.
 - **--num_sw:** Number of network bridge in each problem instance, default is 8.
 - **--period:** Period pattern of stream set.
 - **--size:** Size pattern of stream set.
@@ -99,10 +99,38 @@ The data generator is a python script that generates random stream set and netwo
 - **--topo:** Topology pattern of network.
 - **--output:** Output directory for generated files.
 
-To use the script, execute a command like:
+To generate a single dataset:
 
 ```
-python3 data/generator.py --num_ins 1 --num_flows 8 --num_sw 8 --period 1 --size 1 --deadline 1 --topo 1
+python3.10 -m tsnkit.data.generator --num_ins 1 --num_stream 8 --num_sw 8 --period 1 --size 1 --deadline 1 --topo 1
 ```
 
-The specific size/deadline/period/topology patterns can be found in `data/dataset_spec.py` or in our paper.
+To generate multiple datasets:
+
+```
+## Generate 6 datasets with combinations of [4,8,18] flows, [1,2] payload, and repeat 2 times. (Total 6*2=12)
+python3.10 -m tsnkit.data.generator --num_ins 2 --num_stream 4,8,18 --num_sw 8 --period 1 --size 1,2 --deadline 1 --topo 1
+
+## Output:
+## Generating dataset - ins0: 100%|███████████████████████████████████| 6/6 [00:00<00:00, 360.29it/s]
+## Generating dataset - ins1: 100%|███████████████████████████████████| 6/6 [00:00<00:00, 405.10it/s]
+```
+
+In the output file `dataset_logs.csv`:
+
+```
+id,size,period,deadline,topo,num_stream,num_sw
+1,1,1,1,1,4,8
+2,2,1,1,1,4,8
+3,1,1,1,1,8,8
+4,2,1,1,1,8,8
+5,1,1,1,1,18,8
+6,2,1,1,1,18,8
+7,1,1,1,1,4,8
+8,2,1,1,1,4,8
+9,1,1,1,1,8,8
+10,2,1,1,1,8,8
+11,1,1,1,1,18,8
+12,2,1,1,1,18,8
+```
+The specific size/deadline/period/topology patterns can be found in `src/tsnkit/data/dataset_spec.py` or in our paper.
