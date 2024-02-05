@@ -55,17 +55,18 @@ if __name__ == "__main__":
     parser.add_argument("--ins", type=int, default=0)
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=5)
+    parser.add_argument("--path", type=str, default=f"../data/grid/0/")
 
     args = parser.parse_args()
 
     ins = args.ins
     EXP = "grid"
-    directory = pd.read_csv(f"../data/{EXP}/{ins}/dataset_logs.csv")[
+    directory = pd.read_csv(args.path + "dataset_logs.csv")[
         args.start : args.end
     ]
 
-    DATA = "../data/%s/%s/{}_task.csv" % (EXP, ins)
-    TOPO = "../data/%s/%s/{}_topo.csv" % (EXP, ins)
+    DATA = args.path + "{}_task.csv" 
+    TOPO = args.path + "{}_topo.csv" 
 
     for name, method in [
         (name, method)
