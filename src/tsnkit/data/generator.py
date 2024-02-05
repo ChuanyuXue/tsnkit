@@ -46,7 +46,7 @@ class DatasetGenerator:
                             deadline,
                             topo) in enumerate(param_combinations, 1):
                     try:
-                        header = f"{count + i * param_combination_size:04d}"
+                        header = f"{count + i * param_combination_size}"
                         net = TOPO_FUNC[topo](
                             num_sw,
                             num_queue=8,
