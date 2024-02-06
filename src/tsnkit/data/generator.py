@@ -11,8 +11,8 @@ import itertools
 import pandas as pd
 from tqdm import tqdm
 import networkx as nx
-from tsnkit.data.dataset_spec import generate_flowset
-from tsnkit.data.dataset_spec import TOPO_FUNC
+from .dataset_spec import generate_flowset
+from .dataset_spec import TOPO_FUNC
 
 
 class DatasetGenerator:
