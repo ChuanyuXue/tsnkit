@@ -254,10 +254,10 @@ def COR2022(task_path, net_path, piid, config_path="./", workers=1):
             e_hop = str(tuple(task_attr[i]['s_path'][-2:]))
             for index, (start, _) in enumerate(assign):
                 if af[index][0] == i and af[index][1] == s_hop:
-                    start_time = start
+                    entry_start_time = start
                 if af[index][0] == i and af[index][1] == e_hop:
-                    end_time = start + task_attr[i]['t_trans']
-            DELAY.append([i, 0, (end_time - start_time) * utils.t_slot])
+                    entry_end_time = start + task_attr[i]['t_trans']
+            DELAY.append([i, 0, (entry_end_time - entry_start_time) * utils.t_slot])
 
         utils.write_result(utils.myname(), piid, GCL, OFFSET, ROUTE, QUEUE,
                            DELAY, config_path)
