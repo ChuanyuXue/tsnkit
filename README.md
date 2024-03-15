@@ -3,11 +3,12 @@
 A simple scheduling toolkit and benchmark for Time-Sensitive Networking in Python.
 
 ```
-@article{xue2023real,
-  title={Real-Time Scheduling for Time-Sensitive Networking: A Systematic Review and Experimental Study},
-  author={Xue, Chuanyu and Zhang, Tianyu and Zhou, Yuanbin and Han, Song},
-  journal={arXiv preprint arXiv:2305.16772},
-  year={2023}
+@inproceedings{xue2024real,
+  title={Real-Time Scheduling for 802.1Qbv Time-Sensitive Networking (TSN): A Systematic Review and Experimental Study},
+  author={Chuanyu Xue and Tianyu Zhang and Yuanbin Zhou and Mark Nixon and Andrew Loveless and Song Han},
+  booktitle={Proceedings of the 30th IEEE Real-Time and Embedded Technology and Applications Symposium (RTAS)},
+  year={2024},
+  organization={IEEE}
 }
 ```
 Paper link: https://arxiv.org/abs/2305.16772
