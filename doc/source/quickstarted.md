@@ -91,3 +91,7 @@ Follow these steps for a basic use case:
     # This line shows the sending and receiving time of each flow.
     [[[1400, 2001400, 4001400, 6001400, 8001400], [23800, 2023800, 4023800, 6023800, 8023800]],..., [15400, 2015400, 4015400, 6015400, 8015400]]]
     ```
+
+    The script also draws statistics for each flow, including delay and jitter.
+
+    ![image](fig/simulation_results.png)
