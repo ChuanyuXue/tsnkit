@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from enum import Enum
 from tqdm import tqdm
+from .draw import *
 from typing import Set, Dict, List, Tuple
 from ..utils import find_files_with_prefix, T_SLOT, T_PROC
 
@@ -106,9 +107,9 @@ def simulation(
     offset = match_config_type(configs, ConfigTypes.OFFSET)
     queue = match_config_type(configs, ConfigTypes.QUEUE)
 
-    GCL: Dict[
-        Tuple[int, int], List[Tuple[int, int, int]]
-    ] = {}  ## (src, dst) -> [(start, end, queue)]
+    GCL: Dict[Tuple[int, int], List[Tuple[int, int, int]]] = (
+        {}
+    )  ## (src, dst) -> [(start, end, queue)]
     CYCLE: Dict[Tuple[int, int], int] = {}
     for i, row in gcl.iterrows():
         GCL.setdefault(eval(row["link"]), [])
@@ -251,6 +252,13 @@ if __name__ == "__main__":
         "verbose", type=bool, help="Whether to print the log.", default=True, nargs="?"
     )
 
+    # log: [
+    #    Release time,  Arrival time
+    #      |             |
+    #      V             V
+    #    [[0,10,20,30], [5,15,25,35]] <-- Each flow
+    #    [[2,12,22,32], [7,17,27,37]]
+    # ]
     log = simulation(
         parser.parse_args().task,
         parser.parse_args().config,
@@ -291,3 +299,5 @@ if __name__ == "__main__":
             f"Average delay: {average_delay:<10.2f}",
             f"Average jitter: {average_jitter:<10.2f}",
         )
+
+    draw(log)
