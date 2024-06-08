@@ -33,7 +33,7 @@ Follow these steps for a basic use case:
 1. **Generate Input Data:** Run the script `data/generator.py` to create a random stream set and network description. Following command uses the default arguments:
 
     ```
-    python3 data/generator.py
+    python3 -m tsnkit.data.generator
     ```
 
     This generates `1_task.csv` (streamset) and 1_topo.csv (topology) in the current directory, along with dataset_logs.csv which logs the details of each streamset/topology. The detailed format of these files can be found in [next section](dataprep.md).
