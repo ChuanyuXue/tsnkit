@@ -240,17 +240,41 @@ if __name__ == "__main__":
         description="Process the stream and configs paths."
     )
 
-    # Add the positional arguments
-    parser.add_argument("--task", type=str, help="The file path to the stream CSV file.")
+    # Add positional arguments with defaults set to None
     parser.add_argument(
-        "--config", type=str, help="The file path to the folder that contains configs."
+        "task",
+        type=str,
+        nargs="?",
+        default=None,
+        help="The file path to the stream CSV file.",
     )
     parser.add_argument(
-        "--iter", type=int, help="The number of iterations.", default=10, nargs="?"
+        "config",
+        type=str,
+        nargs="?",
+        default=None,
+        help="The file path to the folder that contains configs.",
+    )
+
+    # Add optional arguments corresponding to the positional arguments
+    parser.add_argument(
+        "--task",
+        dest="task_opt",
+        type=str,
+        help="The file path to the stream CSV file (optional).",
     )
     parser.add_argument(
-        "--verbose", type=bool, help="Whether to print the log.", default=True, nargs="?"
+        "--config",
+        dest="config_opt",
+        type=str,
+        help="The file path to the folder that contains configs (optional).",
     )
+
+    # Add other optional arguments
+    parser.add_argument(
+        "--iter", type=int, help="Number of iterations to run.", default=1
+    )
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output.")
 
     # log: [
     #    Release time,  Arrival time
@@ -259,11 +283,21 @@ if __name__ == "__main__":
     #    [[0,10,20,30], [5,15,25,35]] <-- Each flow
     #    [[2,12,22,32], [7,17,27,37]]
     # ]
+
+    # Parse the arguments
+    args = parser.parse_args()
+    task_path = args.task_opt if args.task_opt is not None else args.task
+    config_path = args.config_opt if args.config_opt is not None else args.config
+
+    # Handle cases where neither positional nor optional arguments are provided for required fields
+    if task_path is None or config_path is None:
+        parser.error("the following arguments are required: task, config")
+
     log = simulation(
-        parser.parse_args().task,
-        parser.parse_args().config,
-        it=parser.parse_args().iter,
-        verbose=parser.parse_args().verbose,
+        task_path,
+        config_path,
+        it=args.iter,
+        verbose=args.verbose,
     )
 
     ### Check error
