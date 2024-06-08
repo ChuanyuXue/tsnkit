@@ -241,15 +241,15 @@ if __name__ == "__main__":
     )
 
     # Add the positional arguments
-    parser.add_argument("task", type=str, help="The file path to the stream CSV file.")
+    parser.add_argument("--task", type=str, help="The file path to the stream CSV file.")
     parser.add_argument(
-        "config", type=str, help="The file path to the folder that contains configs."
+        "--config", type=str, help="The file path to the folder that contains configs."
     )
     parser.add_argument(
-        "iter", type=int, help="The number of iterations.", default=10, nargs="?"
+        "--iter", type=int, help="The number of iterations.", default=10, nargs="?"
     )
     parser.add_argument(
-        "verbose", type=bool, help="Whether to print the log.", default=True, nargs="?"
+        "--verbose", type=bool, help="Whether to print the log.", default=True, nargs="?"
     )
 
     # log: [
