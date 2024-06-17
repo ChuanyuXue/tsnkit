@@ -55,7 +55,6 @@ python3 -m tsnkit.models.[METHOD] [STREAM PATH] [NETWORK PATH]
 - **`src/tsnkit/models`**: Inplementations of all supported scheduling methods.
 - **`src/tsnkit/simulation`**: TSN simulator to validate the scheduling output.
 - **`src/tsnkit/utils`**: Data structures and helper functions.
-- **`src/notebooks`** : A step-by-step implementation tutorial transitioning from paper to source code.
 
 
 ## Contribute
