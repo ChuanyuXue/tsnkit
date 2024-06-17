@@ -1,6 +1,6 @@
 # tsnkit
 
-A simple scheduling toolkit and benchmark for Time-Sensitive Networking in Python.
+A scheduling and benchmark toolkit for Time-Sensitive Networking in Python
 
 ```
 @inproceedings{xue2024real,
