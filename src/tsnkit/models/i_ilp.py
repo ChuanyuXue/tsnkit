@@ -8,12 +8,14 @@ Created:  2023-10-29T02:22:54.275Z
 from os import name
 import traceback
 from typing import Dict, List, Optional
-from webbrowser import get
 
 import numpy as np
 from .. import utils
 import gurobipy as gp
 from sklearn.cluster import SpectralClustering
+import warnings
+
+warnings.filterwarnings("ignore", message="The spectral clustering API has changed.")
 
 
 def benchmark(
@@ -289,7 +291,9 @@ class i_ilp:
     def get_delay(self) -> utils.Delay:
         delay = []
         for s in self.task:
-            delay.append([s, 0, self.delay[s][s.last_link] - s.get_t_trans(s.last_link)])
+            delay.append(
+                [s, 0, self.delay[s][s.last_link] - s.get_t_trans(s.last_link)]
+            )
         return utils.Delay(delay)
 
 
