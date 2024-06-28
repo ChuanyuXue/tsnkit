@@ -6,9 +6,8 @@ Created:  2023-11-06T00:26:19.423Z
 """
 
 import traceback
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from zmq import NULL
 from .. import utils
 
 
@@ -57,13 +56,13 @@ class ls:
             ),
             reverse=True,
         )
-        self._delay: Dict[utils.Stream, int] = {}
+        self._delay: Dict[utils.Stream, Optional[int]] = {}
         self._result: Dict[utils.Link, List] = {
             l: [] for l in self.net.links
         }  ## GCL in legacy code
-        self._paths: Dict[
-            utils.Stream, utils.Path
-        ] = {}  ## Only used in recording result
+        self._paths: Dict[utils.Stream, utils.Path] = (
+            {}
+        )  ## Only used in recording result
         self._offset: Dict[utils.Stream, int] = {}  ## Only used in recording result
 
     def prepare(self) -> None:
@@ -182,7 +181,7 @@ class ls:
         return -1
 
     def schedule(self, task: utils.Stream) -> bool:
-        self._delay[task] = NULL
+        self._delay[task] = None
         for path in self.task_routes[task]:
             ## Check if the path is schedulable
             _delay = self.get_nw_delay(task, path)
@@ -194,12 +193,12 @@ class ls:
             if inject_time == -1:
                 continue
 
-            if self._delay[task] == NULL or _delay < self._delay[task]:
+            if self._delay[task] == None or _delay < self._delay[task]:
                 self._delay[task] = _delay
                 self._paths[task] = path
                 self._offset[task] = inject_time
 
-        if self._delay[task] == NULL:
+        if self._delay[task] == None:
             return False
 
         ## Update GCL
