@@ -13,7 +13,7 @@ All algorithm input and output are defined in `csv` format.
 
 ### Input:
 
-Follwing are the stream set and network descrption files as algorithm input.
+Following are the stream set and network description files as algorithm input.
 
 **Stream set format:**
 
@@ -39,7 +39,7 @@ Follwing are the stream set and network descrption files as algorithm input.
 - **q_num:** Number of available queues for time-triggered (critical) traffic.
 - **rate:** Bandwidth of link in <u>bit / nanosecond</u>, e.g., 1 = 1 Gbps, 0.1 = 100 Mbps, 0.01 = 10 Mbps.
 - **t_proc:** Processing time including switching fabric and ingress processing.
-- **t_prop:** Propogation delay on wire after transmission.
+- **t_prop:** Propagation delay on wire after transmission.
 
 ### Output
 
