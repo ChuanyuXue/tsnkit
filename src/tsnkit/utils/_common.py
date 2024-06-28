@@ -16,15 +16,18 @@ def parse_command_line_args():
     )
 
     # Add the positional arguments
-    parser.add_argument(
-        "name", type=str, nargs='?',help="The name of the experiment.", default="-"
-    )
+
     parser.add_argument("task", type=str, help="The file path to the stream CSV file.")
     parser.add_argument("net", type=str, help="The file path to the network CSV file.")
     parser.add_argument(
-        "output", type=str,nargs='?', help="The output folder path.", default="./"
+        "output", type=str, nargs="?", help="The output folder path.", default="./"
     )
-    parser.add_argument("workers", type=int,nargs='?',help="The number of workers.", default=1)
+    parser.add_argument(
+        "workers", type=int, nargs="?", help="The number of workers.", default=1
+    )
+    parser.add_argument(
+        "name", type=str, nargs="?", help="The name of the experiment.", default="-"
+    )
 
     # Parse the arguments and return them
     return parser.parse_args()

@@ -24,6 +24,11 @@ def load_stream(path: str) -> "StreamSet":
     except FileNotFoundError:
         raise Exception("Stream file not found")
 
+    if stream_df.shape[1] != 7:
+        raise Exception("Invalid stream file format")
+    if stream_df.shape[0] == 0:
+        raise Exception("Empty stream file")
+
     for i, row in stream_df.iterrows():
         if row["dst"][0] + row["dst"][-1] != "[]":
             raise Exception("Destination must be a single-element list for unicast")

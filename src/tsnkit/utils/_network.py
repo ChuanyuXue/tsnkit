@@ -417,6 +417,11 @@ def load_network(path: str) -> Network:
     except FileNotFoundError:
         raise Exception("Network file not found")
 
+    if net_df.shape[1] != 5:
+        raise Exception("Network file format error")
+    if net_df.shape[0] == 0:
+        raise Exception("Network file is empty")
+
     ## Init nodes
     _node_list = list(net_df["link"].apply(lambda x: eval(x)[0])) + list(
         net_df["link"].apply(lambda x: eval(x)[1])
