@@ -214,7 +214,9 @@ def collision(
         for u, v in task.get_frame_index_pairs(s, s_j):
             if offset_j + v * s_j.period <= offset + u * s.period + s.get_t_trans(
                 l
-            ) and offset + u * s.period <= offset_j + v * s_j + s_j.get_t_trans(l):
+            ) and offset + u * s.period <= offset_j + v * s_j.period + s_j.get_t_trans(
+                l
+            ):
                 return True
     return False
 
