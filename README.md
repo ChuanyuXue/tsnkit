@@ -4,14 +4,15 @@ A scheduling and benchmark toolkit for Time-Sensitive Networking in Python
 
 ```
 @inproceedings{xue2024real,
-  title={Real-Time Scheduling for 802.1Qbv Time-Sensitive Networking (TSN): A Systematic Review and Experimental Study},
-  author={Chuanyu Xue and Tianyu Zhang and Yuanbin Zhou and Mark Nixon and Andrew Loveless and Song Han},
-  booktitle={Proceedings of the 30th IEEE Real-Time and Embedded Technology and Applications Symposium (RTAS)},
+  title={Real-time scheduling for 802.1 Qbv time-sensitive networking (TSN): A systematic review and experimental study},
+  author={Xue, Chuanyu and Zhang, Tianyu and Zhou, Yuanbin and Nixon, Mark and Loveless, Andrew and Han, Song},
+  booktitle={2024 IEEE 30th Real-Time and Embedded Technology and Applications Symposium (RTAS)},
+  pages={108--121},
   year={2024},
   organization={IEEE}
 }
 ```
-Paper link: https://arxiv.org/abs/2305.16772
+Paper link: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10568056
 
 Documentation (work-in-progress): https://tsnkit.readthedocs.io
 
