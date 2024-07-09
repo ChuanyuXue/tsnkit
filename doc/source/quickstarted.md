@@ -95,3 +95,39 @@ Follow these steps for a basic use case:
     The script also draws statistics for each flow, including delay and jitter.
 
     ![image](fig/simulation_results.png)
+
+## Dependency
+
+1. **Gurobi**
+
+   Algorithms that require Gurobi: i_ilp, jrs_mc, jrs_nw, jrs_wa, smt_nw
+
+   **Installation:**
+
+   The limited version of gurobi should already be installed with your installation of tsnkit. If not, use the following command to install it:
+   ```
+   pip install gurobipy
+   ```
+    The limited version can solve models with a maximum of 2000 variables and 2000 constraints. Models that exceed these limits require an academic license that can be installed through the following steps.
+   
+    1. Register for a Gurobi account and download the Gurobi Optimizer [here](https://www.gurobi.com/downloads/gurobi-software/).
+    2. Request a web license service under the tab labeled WLS Academic [here](https://portal.gurobi.com/iam/licenses/request/). This step must be completed while connected to a university network.
+    3. After obtaining a license, follow the steps provided by [this link](https://license.gurobi.com/manager/doc/overview/#optimizer) to start using the Gurobi Optimizer.
+
+  
+3. **CPLEX Optimizer**
+
+   Algorithms that require CPLEX Optimizer: cp_wa, jrs_nw_l
+
+   **Installation:**
+
+   The limited version of CPLEX Optimizer should already be installed with your installation of tsnkit. If not, use the following command to install it:
+   ```
+   pip install docplex
+   ```
+    The limited version can only solve models with search spaces up to 2^1000. Models that exceed these limits require the academic version that can be installed through the following steps.
+    
+    1. Go to [this link](https://www.ibm.com/academic/) and click on "Access software downloads" to begin your registration.
+    2. After your registration is accepted, you will be able to access a link to download the academic version of the software.
+  
+    _Note: the academic version of this software currently only supports python versions 3.10 or earlier_
