@@ -156,9 +156,9 @@ class smt_wa:
                     solver.add(
                         z3.Or(
                             var[s2][l]["phi"] + f2 * s2.period + l.t_sync
-                            <= var[s1][pl_1]["phi"] + f1 * s1.period + pl_1.t_proc,
+                            <= var[s1][pl_1]["phi"] + f1 * s1.period + pl_1.t_prop,
                             var[s1][l]["phi"] + f1 * s1.period + l.t_sync
-                            <= var[s2][pl_2]["phi"] + f2 * s2.period + pl_2.t_proc,
+                            <= var[s2][pl_2]["phi"] + f2 * s2.period + pl_2.t_prop,
                             var[s1][l]["p"] != var[s2][l]["p"],
                         )
                     )
