@@ -16,9 +16,6 @@ if __name__ == "__main__":
     else:
         output_path = script_dir + "/result/"
 
-    # generate datasets
-    test.generate(script_dir + "/data/")
-
     successes = test.run("i_ilp", script_dir + "/data/", output_path)
-    summary = pd.DataFrame({"algorithm": "i_ilp", "number of successes": successes}, index=[0])
+    summary = pd.DataFrame({'algorithm': successes.keys(), '# of successes': successes.values()})
     summary.to_csv(output_path + "summary.csv")
