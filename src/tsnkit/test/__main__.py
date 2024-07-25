@@ -30,15 +30,8 @@ if __name__ == "__main__":
 
     data_path = script_dir + "/data/"
 
-    # generate datasets
-    test.generate(data_path)
-
-    schedulability = pd.DataFrame(columns=['algorithm', 'number of successes'],
-                                  index=range(len(algorithms)))
-
     i = 0
-    for algo_id, name in enumerate(algorithms):
-        num_success = test.run(name, data_path, output_path)
-        schedulability.iloc[algo_id, :] = [name, str(num_success)]
+    successes = test.run(algorithms, data_path, output_path)
 
-    schedulability.to_csv(output_path + "summary.csv")
+    summary = pd.DataFrame({'algorithm': successes.keys(), '# of successes': successes.values()})
+    summary.to_csv(output_path + "summary.csv")
