@@ -32,7 +32,7 @@ To quickly demonstrate the benchmark results, we provide a small scale benchmark
 1. Check out to `main` branch and run following command to generate the problem instances:
 
    ```
-   python -m tsnkit.data.generator --num_ins 1 --num_stream 10,40,70,100,130,160,190,220 --num_sw 8,18,28,38,48,58,68,78 --period 3, 4 --size 2 --deadline 1 --topo 0,1 --output "../data/"
+   python -m tsnkit.data.generator --num_ins 1 --num_stream 10,40,70,100,130,160,190,220 --num_sw 8,18,28,38,48,58,68,78 --period 3,4 --size 2 --deadline 1 --topo 0,1 --output "../data/"
    ``` 
 
 2. Check out to `legacy` branch and run the following command to generate the benchmark results:
