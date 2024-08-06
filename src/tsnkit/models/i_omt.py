@@ -348,10 +348,12 @@ class i_omt:
 
     def get_offset(self) -> utils.Release:
         offset = []
-        for s in self.task:
-            l = s.first_link
-            for k in s.get_frame_indexes(self.task.lcm):
-                offset.append([s, k, self.results[0][self.alpha[s][l][k]].as_long()])
+        for i in range(len(self.results)):
+            for s in self.task:
+                l = s.first_link
+                for k in s.get_frame_indexes(self.task.lcm):
+                    if self.group[s][l][k] == i:
+                        offset.append([s, k, self.results[i][self.alpha[s][l][k]].as_long()])
         return utils.Release(offset)
 
     def get_route(self) -> utils.Route:
