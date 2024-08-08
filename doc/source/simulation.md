@@ -74,3 +74,20 @@ The final log indicates any potential errors and the send/receive times for each
 > *Note: The delay here is measured **from the time a frame enters the egress queue of the 1st-bridge/switch to the time it leaves the last bridge/switch** (delay on Talker side is ignored). This delay may appear to be one processing delay (See `T_PROC` in `utils/constant.py`) shorter than the delay reported in the `**--DELAY.csv` file. This difference is due to the algorithm accounting for an additional processing delay at the listener end for easier implementation.*
 
 > *Note: The simulation for IEEE 802.1Qbu and fragmentation is currently operational within the program. It does not yet support the methods **smt_fr** and **smt_pr**. Features such as multi-cast and the window-based model are supported.*
+
+## Debug tool
+
+The debug tool is used for quickly validating a single or multiple methods on a fixed set of datasets. The tool outputs a report file for each method detailing the test results across all datasets and any potential errors that occurred during validation. 
+
+**Usage**
+
+Testing a single method:
+```
+tsnkit.test.[method] -t [total_timeout_limit] -o [path_for_output_report]
+```
+
+Testing multiple methods:
+```
+tsnkit.test [methods] -t [total_timeout_limit] -o [path_for_output_report]
+```
+
