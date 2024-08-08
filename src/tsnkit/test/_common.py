@@ -9,6 +9,7 @@ from ..data import generator
 import argparse
 import os
 from tqdm import tqdm
+import sys
 
 
 def generate(path: str) -> None:
@@ -40,6 +41,8 @@ def run(
     if not os.path.isdir(output_path):
         os.mkdir(output_path)
 
+    py_environment = sys.executable
+
     algorithms = [algorithms] if isinstance(algorithms, str) else algorithms
     successes = {name: 0 for name in algorithms}
 
@@ -59,7 +62,7 @@ def run(
                 topo_path = data_path + str(data_id) + "_topo.csv"
 
                 # create schedule
-                process = subprocess.Popen(['python3', '-m', 'tsnkit.models.' + algo_name, task_path, topo_path],
+                process = subprocess.Popen([py_environment, '-m', 'tsnkit.models.' + algo_name, task_path, topo_path],
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE,
                                            text=True)
