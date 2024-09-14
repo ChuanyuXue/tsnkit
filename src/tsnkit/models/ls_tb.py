@@ -218,7 +218,7 @@ class ls_tb:
                         if _val[1] < l.q_num - 1:
                             _val[1] += 1
                         else:
-                            _val[0] = int(np.inf)
+                            _val[0] = np.inf
                         success = False
                         break
                     if not success:
