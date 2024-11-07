@@ -4,6 +4,7 @@ _schedule.py (c) 2023
 Desc: description
 Created:  2023-10-08T06:13:56.911Z
 """
+
 """
 Following code is mainly for generate the schedule output,
 which is also used as the input of the simulator/testbed
@@ -139,8 +140,8 @@ class Release(list):
 
     def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self)
-        result.columns = ["stream", "ins", "offset"]  # type: ignore
-        result = result.sort_values(by=["stream", "ins"])
+        result.columns = ["stream", "frame", "offset"]  # type: ignore
+        result = result.sort_values(by=["stream", "frame"])
         result.to_csv(path, index=False)
 
 
@@ -191,8 +192,8 @@ class Queue(list):
 
     def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self)
-        result.columns = ["stream", "ins", "link", "queue"]  # type: ignore
-        result = result.sort_values(by=["stream", "ins"])
+        result.columns = ["stream", "frame", "link", "queue"]  # type: ignore
+        result = result.sort_values(by=["stream", "frame"])
         result.to_csv(path, index=False)
 
 
@@ -307,8 +308,8 @@ class Delay(list):
 
     def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self, dtype=int)
-        result.columns = ["stream", "ins", "delay"]  # type: ignore
-        result = result.sort_values(by=["stream", "ins"])
+        result.columns = ["stream", "frame", "delay"]  # type: ignore
+        result = result.sort_values(by=["stream", "frame"])
         result.to_csv(path, index=False)
 
 
@@ -319,8 +320,8 @@ class Size(list):
 
     def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self, dtype=int)
-        result = result.sort_values(by=["stream", "ins"])
-        result.columns = ["stream", "ins", "size"]
+        result = result.sort_values(by=["stream", "frame"])
+        result.columns = ["stream", "frame", "size"]
 
 
 class Config:

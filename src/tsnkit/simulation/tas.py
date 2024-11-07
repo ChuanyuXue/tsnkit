@@ -70,13 +70,13 @@ def match_config_type(
             return_dfs.append(df)
         if (
             df.shape[1] == 3
-            and all(df.columns == ["stream", "ins", "offset"])
+            and all(df.columns == ["stream", "frame", "offset"])
             and config_type == ConfigTypes.OFFSET
         ):
             return_dfs.append(df)
         if (
             df.shape[1] == 4
-            and all(df.columns == ["stream", "ins", "link", "queue"])
+            and all(df.columns == ["stream", "frame", "link", "queue"])
             and config_type == ConfigTypes.QUEUE
         ):
             return_dfs.append(df)
@@ -139,7 +139,7 @@ def simulation(
 
     OFFSET: Dict[Tuple[int, int], int] = {}
     for i, row in offset.iterrows():
-        OFFSET[(row["stream"], row["ins"])] = row["offset"]
+        OFFSET[(row["stream"], row["frame"])] = row["offset"]
 
     OFFSET_MAX: Dict[int, int] = {}
     for i, row in offset.groupby("stream", as_index=False).count().iterrows():
@@ -147,8 +147,8 @@ def simulation(
 
     QUEUE: Dict[Tuple[int, int], Dict[Tuple[int, int], int]] = {}
     for i, row in queue.iterrows():
-        QUEUE.setdefault((row["stream"], row["ins"]), {})
-        QUEUE[(row["stream"], row["ins"])][eval(row["link"])] = row["queue"]
+        QUEUE.setdefault((row["stream"], row["frame"]), {})
+        QUEUE[(row["stream"], row["frame"])][eval(row["link"])] = row["queue"]
 
     NUM_QUEUES = max(max(queue["queue"]), max(gcl["queue"])) + 1
 

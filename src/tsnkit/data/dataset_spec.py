@@ -222,7 +222,7 @@ def generate_flowset(
         if i >= num_thres_param:
             result = pd.DataFrame(
                 result,
-                columns=["id", "src", "dst", "size", "period", "deadline", "jitter"],
+                columns=["stream", "src", "dst", "size", "period", "deadline", "jitter"],
             )
             result.to_csv(header + ".csv", index=False)
             return
