@@ -17,11 +17,11 @@ Following are the stream set and network description files as algorithm input.
 
 **Stream set format:**
 
-| id  | src | dst     | size | period | deadline | jitter |
-| --- | --- | ------- | ---- | ------ | -------- | ------ |
-| 0   | 0   | [7,8,9] | 50   | 100000 | 44600    | 0      |
+| stream | src | dst     | size | period | deadline | jitter |
+| ------ | --- | ------- | ---- | ------ | -------- | ------ |
+| 0      | 0   | [7,8,9] | 50   | 100000 | 44600    | 0      |
 
-- **id:** Unique ID for each flow
+- **stream:** Unique ID for each flow
 - **src:** Talker that the end-system where flow starts at.
 - **dst:** Listener that the the end-system where flow ends at, formatted as list for multicast
 - **size:** Packet size of each flow in Bytes.
@@ -29,7 +29,7 @@ Following are the stream set and network description files as algorithm input.
 - **deadline:** Relative flow deadline requirement in Nanoseconds.
 - **jitter:** Maximum end-to-end delay variance requirement in Nanoseconds.
 
-**Network for mat:**
+**Network format:**
 
 | link   | q_num | rate | t_proc | t_prop |
 | ------ | ----- | ---- | ------ | ------ |
@@ -78,10 +78,12 @@ Following are the output files (gcl, offset, route, queuing assignment) from the
 
 **Queueing assignment:**
 
-| id  | frame | link  | queue |
-| --- | ----- | ----- | ----- |
-| 0   | 0     | (8,1) | 2     |
+| stream | frame | link  | queue |
+| ------ | ----- | ----- | ----- |
+| 0      | 0     | (8,1) | 2     |
 
+- **stream:** Unique ID for each flow.
+- **frame:** The index of corresponding flow instance.
 - **link:** Directional link connects two devices.
 - **queue:** The egress queue for corresponding flow instance on corresponding link.
 
@@ -119,7 +121,7 @@ python3.10 -m tsnkit.data.generator --num_ins 2 --num_stream 4,8,18 --num_sw 8 -
 In the output file `dataset_logs.csv`:
 
 ```
-id,size,period,deadline,topo,num_stream,num_sw
+stream,size,period,deadline,topo,num_stream,num_sw
 1,1,1,1,1,4,8
 2,2,1,1,1,4,8
 3,1,1,1,1,8,8

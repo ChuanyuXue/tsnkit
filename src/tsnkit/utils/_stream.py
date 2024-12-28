@@ -20,7 +20,7 @@ def load_stream(path: str) -> "StreamSet":
     stream_set = StreamSet()
 
     try:
-        stream_df = pd.read_csv(path)  ## id,src,dst,size,period,deadline,jitter
+        stream_df = pd.read_csv(path)  ## stream,src,dst,size,period,deadline,jitter
     except FileNotFoundError:
         raise Exception("Stream file not found")
 
@@ -34,7 +34,7 @@ def load_stream(path: str) -> "StreamSet":
             raise Exception("Destination must be a single-element list for unicast")
         stream_set._streams.append(
             Stream(
-                row["id"],
+                row["stream"],
                 row["src"],
                 eval(row["dst"]),
                 row["size"],
