@@ -80,7 +80,7 @@ class DatasetGenerator:
         exp_logs = pd.DataFrame(
             dataset_logs,
             columns=[
-                "id",
+                "stream",
                 "size",
                 "period",
                 "deadline",
