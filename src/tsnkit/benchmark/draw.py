@@ -15,6 +15,12 @@ ordered_palette = sns.color_palette(['#B0B1B6', '#BEB1A8', '#8A95A9',
                                      '#E8D3C0', '#7D7465', '#789798',
                                      '#7A8A71', '#9AA690'])
 
+dark_palette = sns.color_palette([
+    '#686789', '#B77F70', '#E5E2B9', '#BEB1A8', '#A79A89', '#8A95A9',
+    '#ECCED0', '#7D7465', '#E8D3C0', '#7A8A71', '#789798', '#B57C82',
+    '#9FABB9', '#B0B1B6', '#99857E', '#88878D', '#91A0A5',
+])
+
 METHOD_ORDER = ['smt_wa', 'smt_nw', 'jrs_wa', 'at', 'jrs_nw_l', 'ls', 'jrs_mc', 'i_ilp', 'i_omt', 'cg', 'jrs_nw',
                 'smt_frag', 'cp_wa', 'ls_tb', 'ls_pl', 'smt_pre', 'dt']
 
@@ -111,15 +117,15 @@ def remove_duplicate_legend(ax):
     return unique_handles[::-1], unique_labels[::-1]
 
 
-def draw_streams(df: pd.DataFrame):
-    draw(df, "num_stream", "Number of Streams")
+def draw_streams(df: pd.DataFrame, file_name: str):
+    draw_fig4(df, "num_stream", "Number of Streams", file_name)
 
 
-def draw_bridges(df: pd.DataFrame):
-    draw(df, "num_sw", "Number of Bridges")
+def draw_bridges(df: pd.DataFrame, file_name: str):
+    draw_fig4(df, "num_sw", "Number of Bridges", file_name)
 
 
-def draw_frames(df: pd.DataFrame):
+def draw_frames(df: pd.DataFrame, file_name: str):
     frames_list = []
     for piid in DATASET_LOGS["id"]:
         task = pd.read_csv(SCRIPT_DIR + "/data/" + str(piid) + "_task.csv")
@@ -130,10 +136,10 @@ def draw_frames(df: pd.DataFrame):
         frames = np.power(2, np.log2(frames).astype(int))
         frames_list.append(frames)
     DATASET_LOGS["num_frame"] = frames_list
-    draw(df, "num_frame", "Number of Frames")
+    draw_fig4(df, "num_frame", "Number of Frames", file_name)
 
 
-def draw_links(df: pd.DataFrame):
+def draw_links(df: pd.DataFrame, file_name: str):
     links_list = []
     for piid in DATASET_LOGS["id"]:
         topo = pd.read_csv(SCRIPT_DIR + "/data/" + str(piid) + "_topo.csv")
@@ -141,10 +147,10 @@ def draw_links(df: pd.DataFrame):
         links = (links // 50 + 1) * 50  # discreet
         links_list.append(links)
     DATASET_LOGS["num_link"] = links_list
-    draw(df, "num_link", "Number of Links")
+    draw_fig4(df, "num_link", "Number of Links", file_name)
 
 
-def draw(df: pd.DataFrame, var: str, graph_name: str):
+def draw_fig4(df: pd.DataFrame, var: str, graph_name: str, file_name: str):
     plt.rcParams['axes.axisbelow'] = True
     plt.figure(figsize=(3, 2))
 
@@ -169,7 +175,7 @@ def draw(df: pd.DataFrame, var: str, graph_name: str):
 
     for stat in list([x[1].reset_index(drop=True) for x in stat_pass.groupby('name')]):
         ax = sns.lineplot(ax=ax,
-                          data=stat.fillna(0),
+                          data=stat,
                           x=var,
                           y="schedulability",
                           hue="name",
@@ -190,4 +196,82 @@ def draw(df: pd.DataFrame, var: str, graph_name: str):
     legend = ax.legend(*remove_duplicate_legend(ax), ncol=3, loc="upper center", prop={'size': 10}, mode="expand",
                        bbox_to_anchor=(0.0, 1.4, 1.0, 0), frameon=False)
     legend.remove()
-    plt.savefig(var + '.pdf', bbox_inches="tight")
+    plt.savefig(file_name + ".pdf", bbox_inches="tight")
+
+
+def draw_period(df: pd.DataFrame, file_name: str):
+    period_dict = {3: "Harmonic Sparse", 4: "Harmonic Dense"}
+    DATASET_LOGS["period"] = DATASET_LOGS["period"].apply(lambda x: period_dict[x])
+    schedulability = get_schedulability(df, "period")
+    draw_fig5(schedulability, "period", list(period_dict.values()), file_name)
+
+
+def draw_payload(df: pd.DataFrame, file_name: str):
+    size_dict = {2: "Small"}
+    DATASET_LOGS["size"] = DATASET_LOGS["size"].apply(lambda x: size_dict[x])
+    schedulability = get_schedulability(df, "size")
+    print(schedulability)
+    draw_fig5(schedulability, "size", list(size_dict.values()), file_name)
+
+
+def draw_deadline(df: pd.DataFrame, file_name: str):
+    deadline_dict = {1: "Implicit"}
+    DATASET_LOGS["deadline"] = DATASET_LOGS["deadline"].apply(lambda x: deadline_dict[x])
+    schedulability = get_schedulability(df, "deadline")
+    print(schedulability)
+    draw_fig5(schedulability, "deadline", list(deadline_dict.values()), file_name)
+
+
+def draw_topo(df: pd.DataFrame, file_name: str):
+    topo_dict = {0: "Line", 1: "Mesh"}
+    DATASET_LOGS["topo"] = DATASET_LOGS["topo"].apply(lambda x: topo_dict[x])
+    schedulability = get_schedulability(df, "topo")
+    draw_fig5(schedulability, "topo", ["Line", "Mesh"], file_name)
+
+
+def draw_fig5(df: pd.DataFrame, var: str, hue_order: list, file_name: str):
+    plt.figure(figsize=(18, 1))
+    plt.rc('xtick', labelsize=8)
+    plt.rcParams['axes.axisbelow'] = True
+    ax = sns.barplot(
+        data=df,
+        y="schedulability",
+        x="name",
+        hue=var,
+        hue_order=hue_order,
+        palette=dark_palette,
+        order=METHOD_ORDER
+    )
+    plt.xlabel('')
+    plt.grid(axis='y')
+    plt.yticks(np.arange(0, 1.00001, step=0.2))
+    plt.ylabel('Schedulable Ratio')
+    ax.legend(*remove_duplicate_legend(ax), ncol=6, loc="upper center", prop={'size': 10}, mode="expand",
+              bbox_to_anchor=(0.0, 1.4, 1.0, 0), frameon=False)
+    plt.savefig(f"{file_name}.pdf", bbox_inches="tight")
+
+
+def draw(df: pd.DataFrame):
+    draw_streams(df, "streams")
+    draw_bridges(df, "bridges")
+    draw_links(df, "links")
+    draw_frames(df, "frames")
+    draw_topo(df, "topo")
+    draw_period(df, "period")
+    draw_payload(df, "payload")
+    draw_deadline(df, "deadline")
+
+
+if __name__ == "__main__":
+    SCRIPT_DIR = os.path.dirname(__file__)
+
+    df = pd.read_csv(f"./results.csv")
+    df = df.iloc[:, :-1]
+    draw_streams(df, "streams")
+    draw_bridges(df, "bridges")
+    draw_links(df, "links")
+    draw_frames(df, "frames")
+    draw_topo(df, "topo")
+    draw_period(df, "period")
+    draw_payload(df, "payload")
+    draw_deadline(df, "deadline")

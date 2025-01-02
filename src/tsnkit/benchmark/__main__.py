@@ -8,6 +8,7 @@ from functools import partial
 import pandas as pd
 import numpy as np
 
+from ..utils import Statistics, Result
 from . import draw
 from .. import utils
 from multiprocessing import Pool, cpu_count, Value, Process, Queue
@@ -15,7 +16,7 @@ from multiprocessing import Pool, cpu_count, Value, Process, Queue
 from ..models import (at, cg, cp_wa, dt, i_ilp, i_omt, jrs_mc, jrs_nw, jrs_nw_l, jrs_wa,
                       ls, ls_pl, ls_tb, smt_fr, smt_nw, smt_pr, smt_wa)
 
-from ._processes import killif, run, validate_schedule
+from ._processes import killif, run, validate_schedule, mute
 
 SCRIPT_DIR = os.path.dirname(__file__)
 DATASET_LOGS = pd.read_csv(SCRIPT_DIR + "/data/dataset_logs.csv")
@@ -46,7 +47,8 @@ def parse():
 
     parser.add_argument("algorithms", type=str, nargs="+", help="list of algorithms to be tested")
     parser.add_argument("--ins", type=str, nargs="+", help="list of problem instances")
-    parser.add_argument("-t", type=int, default=utils.T_LIMIT, help="total timeout limit")
+    parser.add_argument("-t", type=int, default=600, help="total timeout limit")
+    parser.add_argument("-o", type=str, default="./", help="output path")
 
     return parser.parse_args()
 
@@ -75,7 +77,7 @@ def process_num(name: str):
 
 
 def print_result(task_num: int, result: str):
-    print_format = "| {:<13} | {:<6} | {:<12}"
+    print_format = "| {:<13} | {:<6} | {:}"
 
     print(print_format.format(time.strftime("%d~%H:%M:%S"), task_num, result), flush=True)
 
@@ -85,9 +87,9 @@ if __name__ == "__main__":
     algorithms = args.algorithms
     ins = args.ins
     utils.T_LIMIT = args.t
+    output_affix = args.o
 
     data_path = f"{SCRIPT_DIR}/data/"
-    output_affix = f"{SCRIPT_DIR}/"
 
     results = pd.DataFrame(
         columns=["name", "data_id", "flag", "solve time", "memory usage", "log"],
@@ -128,16 +130,17 @@ if __name__ == "__main__":
         def store(result):
             flag = result[2]
             task_num = result[1]
-            if flag == "succ":
+            if flag.value == Result.schedulable.value:
                 successful.append(int(task_num))
-            elif flag == "unkwon":
+            elif flag.value == Result.unknown.value:
                 result[2] = "unknown"
             else:
                 result[2] = "infeasible"
             results.iloc[total_ins + int(task_num) - 1, :] = result
             signal.value += 1
+            Statistics(task_num, flag, result[3], result[4], 0, 0).content()
 
-        with Pool(processes=cpu_count() // process_num(name), maxtasksperchild=1) as p:
+        with Pool(processes=cpu_count() // process_num(name), maxtasksperchild=1, initializer=mute) as p:
             for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
                 p.apply_async(
                     run,
@@ -166,9 +169,12 @@ if __name__ == "__main__":
                 continue
             process = oom_queue.get()  # [proc_time, proc_mem]
             mem = process[1] / (1024 ** 2)
-            results.iloc[index, :] = [name, index+1, "unknown", process[0], round(mem, 3), []]
+            results.iloc[index, :] = [name, index+1-total_ins, "unknown", process[0], round(mem, 3), []]
 
         if not successful:
+            results.iloc[:(total_ins + tasks), :].to_csv(f"{output_affix}results.csv")
+            total_ins += tasks
+            gc.collect()
             continue
 
         # schedule validation
@@ -198,11 +204,10 @@ if __name__ == "__main__":
 
         def error(err, task_num: int):
             results.iloc[(total_ins + task_num - 1), 2] = "infeasible"
-            print(err, flush=True)
-            print_result(task_num, "error")
+            print_result(task_num, f"error: {err}")
             signal.value += 1
 
-        with Pool(processes=cpu_count(), maxtasksperchild=1) as p:
+        with Pool(processes=cpu_count(), maxtasksperchild=1, initializer=mute) as p:
             for task in successful:
                 validate_param = partial(validate, task_num=task)
                 error_param = partial(error, task_num=task)
@@ -230,4 +235,4 @@ if __name__ == "__main__":
 
     results = results.iloc[0:total_ins]
     results.to_csv(f"{output_affix}results.csv")
-    draw.draw_streams(results.iloc[:, :-1])
+    draw.draw(results.iloc[:, :-1])

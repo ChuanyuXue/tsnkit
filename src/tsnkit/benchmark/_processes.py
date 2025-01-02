@@ -2,6 +2,7 @@ import os
 import signal
 import sys
 import time
+import warnings
 from functools import partialmethod
 
 import psutil
@@ -66,18 +67,17 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     if proc.status() == psutil.STATUS_ZOMBIE or elapse_time > time_limit * 1.2 or mem > mem_limit * 1.1:
                         kill_process(proc)
                         sig.value += 1
-                        queue.put([round(elapse_time, 3), mem])
-                        Statistics("-", Result.unknown, elapse_time, mem, 0, 0).content()
 
                     interrupt_process(proc)
 
                     pids_killed.add(proc.pid)
                     pids_killed_time[proc.pid] = _current_time
 
+                    queue.put([round(proc.cpu_times().user, 3), mem])
+                    Statistics("-", Result.unknown, proc.cpu_times().user, mem, 0, 0).content()
+
                     if sys.platform == "win32" or sys.platform == "cygwin":
                         sig.value += 1
-                        queue.put([round(elapse_time, 3), mem])
-                        Statistics("-", Result.unknown, elapse_time, mem, 0, 0).content()
 
             except (psutil.NoSuchProcess, psutil.AccessDenied,
                     psutil.ZombieProcess):
@@ -98,8 +98,13 @@ def run(alg, name: str, file_num: str, workers: int):
     stats = alg(file_num, path + "_task.csv", path + "_topo.csv", workers=workers)
 
     # get data
-    flag = str(stats.result)
+    flag = stats.result
     solve_time = stats.algo_time
     mem_usage = stats.algo_mem
 
     return [name, file_num, flag, solve_time, mem_usage, []]
+
+
+def mute():
+    sys.stdout = open(os.devnull, 'w')
+    warnings.filterwarnings("ignore")
