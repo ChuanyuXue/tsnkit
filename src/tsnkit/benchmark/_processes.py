@@ -28,6 +28,12 @@ def interrupt_process(proc: psutil.Process):
         proc.send_signal(signal.SIGINT)
 
 
+def output(name: str, flag: str, solve_time: float, solve_mem: float):
+    print_format = "| {:<13} | {:<13} | {:<6} | {:<10} | {:<10}"
+    print(print_format.format(time.strftime("%d~%H:%M:%S"), name, flag, round(solve_time, 3), round(solve_mem, 3)),
+          flush=True)
+
+
 def killif(main_proc, mem_limit, time_limit, sig, queue):
     '''
     Kill the process if it uses more than mem memory or more than time seconds
@@ -66,7 +72,8 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                 if elapse_time > time_limit * 1.1 or mem > mem_limit:
                     if proc.status() == psutil.STATUS_ZOMBIE or elapse_time > time_limit * 1.2 or mem > mem_limit * 1.1:
                         kill_process(proc)
-                        sig.value += 1
+                        if not (sys.platform == "win32" or sys.platform == "cygwin"):
+                            sig.value += 1
 
                     interrupt_process(proc)
 
@@ -74,7 +81,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     pids_killed_time[proc.pid] = _current_time
 
                     queue.put([round(proc.cpu_times().user, 3), mem])
-                    Statistics("-", Result.unknown, proc.cpu_times().user, mem, 0, 0).content()
+                    output("-", str(Result.unknown), proc.cpu_times().user, mem)
 
                     if sys.platform == "win32" or sys.platform == "cygwin":
                         sig.value += 1

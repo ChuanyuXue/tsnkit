@@ -8,7 +8,7 @@ from functools import partial
 import pandas as pd
 import numpy as np
 
-from ..utils import Statistics, Result
+from ..utils import Result
 from . import draw
 from .. import utils
 from multiprocessing import Pool, cpu_count, Value, Process, Queue
@@ -16,7 +16,7 @@ from multiprocessing import Pool, cpu_count, Value, Process, Queue
 from ..models import (at, cg, cp_wa, dt, i_ilp, i_omt, jrs_mc, jrs_nw, jrs_nw_l, jrs_wa,
                       ls, ls_pl, ls_tb, smt_fr, smt_nw, smt_pr, smt_wa)
 
-from ._processes import killif, run, validate_schedule, mute
+from ._processes import killif, run, validate_schedule, mute, output
 
 SCRIPT_DIR = os.path.dirname(__file__)
 DATASET_LOGS = pd.read_csv(SCRIPT_DIR + "/data/dataset_logs.csv")
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         index=np.arange(4352))
 
     total_ins = 0
-    algo_header = "| {:<13} | {:<13} | {:<6} | {:<10} | {:<10} | {:<10}"
+    algo_header = "| {:<13} | {:<13} | {:<6} | {:<10} | {:<10}"
     sim_header = "| {:<13} | {:<6} | {:<12}"
 
     for i, name in enumerate(algorithms):
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         if alg is None:
             continue
 
-        print(algo_header.format("time", "task id", "flag", "solve time", "total time", "total mem", ), flush=True)
+        print(algo_header.format("time", "task id", "flag", "solve time", "solve mem", ), flush=True)
 
         successful = []
         a, b = ins[i].split("-")
@@ -138,7 +138,7 @@ if __name__ == "__main__":
                 result[2] = "infeasible"
             results.iloc[total_ins + int(task_num) - 1, :] = result
             signal.value += 1
-            Statistics(task_num, flag, result[3], result[4], 0, 0).content()
+            output(task_num, str(flag), result[3], result[4])
 
         with Pool(processes=cpu_count() // process_num(name), maxtasksperchild=1, initializer=mute) as p:
             for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
         # add the processes that timed out to the results dataframe
         for index, row in results.iloc[total_ins: total_ins+tasks, :].iterrows():
-            if not row.isnull().any():
+            if not row.isnull().any() or oom_queue.empty():
                 continue
             process = oom_queue.get()  # [proc_time, proc_mem]
             mem = process[1] / (1024 ** 2)
