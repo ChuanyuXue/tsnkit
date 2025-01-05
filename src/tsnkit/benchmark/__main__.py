@@ -9,14 +9,12 @@ import pandas as pd
 import numpy as np
 
 from ..utils import Result
-from . import draw
+from . import draw, killif, run, validate_schedule, mute, print_output, str_flag
 from .. import utils
 from multiprocessing import Pool, cpu_count, Value, Process, Queue
 
 from ..models import (at, cg, cp_wa, dt, i_ilp, i_omt, jrs_mc, jrs_nw, jrs_nw_l, jrs_wa,
                       ls, ls_pl, ls_tb, smt_fr, smt_nw, smt_pr, smt_wa)
-
-from ._processes import killif, run, validate_schedule, mute, output
 
 SCRIPT_DIR = os.path.dirname(__file__)
 DATASET_LOGS = pd.read_csv(SCRIPT_DIR + "/data/dataset_logs.csv")
@@ -92,11 +90,11 @@ if __name__ == "__main__":
     data_path = f"{SCRIPT_DIR}/data/"
 
     results = pd.DataFrame(
-        columns=["name", "data_id", "flag", "solve time", "memory usage", "log"],
+        columns=["name", "data_id", "flag", "solve_time", "total_time", "total_mem", "log"],
         index=np.arange(4352))
 
     total_ins = 0
-    algo_header = "| {:<13} | {:<13} | {:<6} | {:<10} | {:<10}"
+    algo_header = "| {:<13} | {:<13} | {:<6} | {:<10} | {:<10} | {:<10}"
     sim_header = "| {:<13} | {:<6} | {:<12}"
 
     for i, name in enumerate(algorithms):
@@ -105,7 +103,8 @@ if __name__ == "__main__":
         if alg is None:
             continue
 
-        print(algo_header.format("time", "task id", "flag", "solve time", "solve mem", ), flush=True)
+        print(f"------------------------------------{name}------------------------------------")
+        print(algo_header.format("time", "task id", "flag", "solve_time", "total_time", "total_mem", ), flush=True)
 
         successful = []
         a, b = ins[i].split("-")
@@ -127,18 +126,20 @@ if __name__ == "__main__":
 
         oom.start()
 
-        def store(result):
-            flag = result[2]
-            task_num = result[1]
-            if flag.value == Result.schedulable.value:
+        def store(output):
+            # output = [task_id, result, algo_time, total_time, algo_mem, total_mem]
+            flag = output[1]
+            task_num = output[0]
+            result = [name, task_num, "successful", output[2], output[3], output[4], []]
+            if flag == Result.schedulable.value:
                 successful.append(int(task_num))
-            elif flag.value == Result.unknown.value:
+            elif flag == Result.unknown.value:
                 result[2] = "unknown"
             else:
                 result[2] = "infeasible"
             results.iloc[total_ins + int(task_num) - 1, :] = result
             signal.value += 1
-            output(task_num, str(flag), result[3], result[4])
+            print_output(task_num, str_flag(flag), output[2], output[3], output[4])
 
         with Pool(processes=cpu_count() // process_num(name), maxtasksperchild=1, initializer=mute) as p:
             for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
@@ -146,7 +147,6 @@ if __name__ == "__main__":
                     run,
                     args=(
                         alg.benchmark,
-                        name,
                         file_num,
                         process_num(name),
                     ),
@@ -169,7 +169,8 @@ if __name__ == "__main__":
                 continue
             process = oom_queue.get()  # [proc_time, proc_mem]
             mem = process[1] / (1024 ** 2)
-            results.iloc[index, :] = [name, index+1-total_ins, "unknown", process[0], round(mem, 3), []]
+            # ["name", "data_id", "flag", "solve_time", "total_time", "total_mem", "log"]
+            results.iloc[index, :] = [name, index+1-total_ins, "unknown", process[0], process[0], round(mem, 3), []]
 
         if not successful:
             results.iloc[:(total_ins + tasks), :].to_csv(f"{output_affix}results.csv")
@@ -195,9 +196,9 @@ if __name__ == "__main__":
                     sim_result = "fail"
                     break
 
-            # [name, file_num, flag, solve_time, mem_usage, log]
+            # ["name", "data_id", "flag", "solve_time", "total_time", "total_mem", "log"]
             results.iloc[total_ins + task_num - 1, 2] = flag
-            results.iloc[total_ins + task_num - 1, 5] = log
+            results.iloc[total_ins + task_num - 1, 6] = log
             signal.value += 1
             print_result(task_num, sim_result)
             remove_configs(task_num)
@@ -235,4 +236,4 @@ if __name__ == "__main__":
 
     results = results.iloc[0:total_ins]
     results.to_csv(f"{output_affix}results.csv")
-    draw.draw(f"{output_affix}results.csv")
+    draw(f"{output_affix}results.csv")

@@ -1,4 +1,4 @@
-id,src,dst,size,period,deadline,jitter
+stream,src,dst,size,period,deadline,jitter
 0,33,[48],400,400000,400000,400000
 1,46,[44],100,100000,100000,100000
 2,54,[33],500,100000,100000,100000

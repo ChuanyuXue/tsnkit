@@ -334,14 +334,14 @@ def draw_comparison_matrix(df: pd.DataFrame, file_name: str):
 
 
 def get_runtime_stat(data: pd.DataFrame, var: str):
-    data = data[(data["flag"] != "unknown") | (data["memory usage"] < 4000)]
-    data.loc[:, ["solve time"]] = data["solve time"] / 60
-    return data.groupby([var, "name"], as_index=False)["solve time"].mean()
+    data = data[(data["flag"] != "unknown") | (data["total_mem"] < 4000)]
+    data.loc[:, ["total_time"]] = data["total_time"] / 60
+    return data.groupby([var, "name"], as_index=False)["total_time"].mean()
 
 
 def get_memory_stat(data: pd.DataFrame, var: str):
-    data = data[(data["flag"] != "unknown") | (data["solve time"] < 7200)]
-    return data.groupby([var, "name"], as_index=False)["memory usage"].mean()
+    data = data[(data["flag"] != "unknown") | (data["total_time"] < 7200)]
+    return data.groupby([var, "name"], as_index=False)["total_mem"].mean()
 
 
 def test_evidence_thres_index(df: pd.DataFrame, var: str, confidence=0.1):
@@ -372,12 +372,13 @@ def test_evidence_thres_index(df: pd.DataFrame, var: str, confidence=0.1):
 
 
 def draw_scalability(df: pd.DataFrame, x: str, y: str, x_label: str, y_label: str, file_name: str):
+    df = copy.deepcopy(df)
     df[x] = df["data_id"].map(dict(zip(DATASET_LOGS["id"], DATASET_LOGS[x])))
 
     plt.rcParams['axes.axisbelow'] = True
     plt.figure(figsize=(3, 2))
 
-    stat = get_runtime_stat(df, x) if y == "solve time" else get_memory_stat(df, x)
+    stat = get_runtime_stat(df, x) if y == "total_time" else get_memory_stat(df, x)
 
     pass_rej = test_evidence_thres_index(df, x, 0.1)
     stat_pass = pd.merge(stat, pass_rej[0], on=["name", x])
@@ -416,7 +417,7 @@ def draw_scalability(df: pd.DataFrame, x: str, y: str, x_label: str, y_label: st
     ax.grid(axis="y")
     ax.set_xlabel(x_label, fontsize=12)
     ax.set_ylabel(y_label, fontsize=12)
-    if y == "solve time":
+    if y == "total_time":
         ax.set_ylim(0, 10)
     else:
         ax.set_ylim(0, 4000)
@@ -427,28 +428,28 @@ def draw_scalability(df: pd.DataFrame, x: str, y: str, x_label: str, y_label: st
 
 
 def draw_runtime(df: pd.DataFrame, file_name: str):
-    draw_scalability(df, "num_stream", "solve time", "Number of streams", "Runtime (Mins)", f"{file_name}_stream")
-    draw_scalability(df, "num_sw", "solve time", "Number of bridges", "Runtime (Mins)", f"{file_name}_bridge")
+    draw_scalability(df, "num_stream", "total_time", "Number of streams", "Runtime (Mins)", f"{file_name}_stream")
+    draw_scalability(df, "num_sw", "total_time", "Number of bridges", "Runtime (Mins)", f"{file_name}_bridge")
 
 
 def draw_mem(df: pd.DataFrame, file_name: str):
-    draw_scalability(df, "num_stream", "memory usage", "Number of streams", "Memory (MB)", f"{file_name}_stream")
-    draw_scalability(df, "num_sw", "memory usage", "Number of bridges", "Memory (MB)", f"{file_name}_bridge")
+    draw_scalability(df, "num_stream", "total_mem", "Number of streams", "Memory (MB)", f"{file_name}_stream")
+    draw_scalability(df, "num_sw", "total_mem", "Number of bridges", "Memory (MB)", f"{file_name}_bridge")
 
 
-def draw(path: str):
+def draw(path: str, output_affix="./"):
     df = pd.read_csv(path)
-    draw_streams(df, "streams")
-    draw_bridges(df, "bridges")
-    draw_links(df, "links")
-    draw_frames(df, "frames")
-    draw_topo(df, "topo")
-    draw_period(df, "period")
-    draw_payload(df, "payload")
-    draw_deadline(df, "deadline")
-    draw_comparison_matrix(df, "comparison_matrix")
-    draw_runtime(df, "runtime")
-    draw_mem(df, "mem")
+    draw_streams(df, f"{output_affix}stream")
+    draw_bridges(df, f"{output_affix}bridge")
+    draw_links(df, f"{output_affix}link")
+    draw_frames(df, f"{output_affix}frame")
+    draw_topo(df, f"{output_affix}topo")
+    draw_period(df, f"{output_affix}period")
+    draw_payload(df, f"{output_affix}payload")
+    draw_deadline(df, f"{output_affix}deadline")
+    draw_comparison_matrix(df, f"{output_affix}comparison_matrix")
+    draw_runtime(df, f"{output_affix}runtime")
+    draw_mem(df, f"{output_affix}mem")
 
 
 if __name__ == "__main__":

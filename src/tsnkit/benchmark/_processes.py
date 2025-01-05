@@ -8,7 +8,7 @@ from functools import partialmethod
 import psutil
 from tqdm import tqdm
 
-from ..utils import Statistics, Result
+from ..utils import Result
 from ..simulation import tas
 
 SCRIPT_DIR = os.path.dirname(__file__)
@@ -28,10 +28,16 @@ def interrupt_process(proc: psutil.Process):
         proc.send_signal(signal.SIGINT)
 
 
-def output(name: str, flag: str, solve_time: float, solve_mem: float):
-    print_format = "| {:<13} | {:<13} | {:<6} | {:<10} | {:<10}"
-    print(print_format.format(time.strftime("%d~%H:%M:%S"), name, flag, round(solve_time, 3), round(solve_mem, 3)),
-          flush=True)
+def print_output(name: str, flag: str, solve_time: float, total_time: float, total_mem: float):
+    print_format = "| {:<13} | {:<13} | {:<6} | {:<10} | {:<10} | {:<10}"
+    print(print_format.format(
+        time.strftime("%d~%H:%M:%S"),
+        name,
+        flag,
+        round(solve_time, 3),
+        round(total_time, 3),
+        round(total_mem, 3)),
+        flush=True)
 
 
 def killif(main_proc, mem_limit, time_limit, sig, queue):
@@ -80,8 +86,9 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     pids_killed.add(proc.pid)
                     pids_killed_time[proc.pid] = _current_time
 
+                    proc_time = proc.cpu_times().user
                     queue.put([round(proc.cpu_times().user, 3), mem])
-                    output("-", str(Result.unknown), proc.cpu_times().user, mem / (1024 ** 2))
+                    print_output("-", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
 
                     if sys.platform == "win32" or sys.platform == "cygwin":
                         sig.value += 1
@@ -100,16 +107,22 @@ def validate_schedule(task_path, file_num):
     return log
 
 
-def run(alg, name: str, file_num: str, workers: int):
+def str_flag(flag):
+    if flag == Result.schedulable.value:
+        return str(Result.schedulable)
+    elif flag == Result.unschedulable.value:
+        return str(Result.unschedulable)
+    elif flag == Result.unknown.value:
+        return str(Result.unknown)
+    else:
+        return str(Result.error)
+
+
+def run(alg, file_num: str, workers: int):
     path = SCRIPT_DIR + "/data/" + file_num
     stats = alg(file_num, path + "_task.csv", path + "_topo.csv", workers=workers)
 
-    # get data
-    flag = stats.result
-    solve_time = stats.algo_time
-    mem_usage = stats.algo_mem
-
-    return [name, file_num, flag, solve_time, mem_usage, []]
+    return stats.to_list()
 
 
 def mute():
