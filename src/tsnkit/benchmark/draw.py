@@ -1,5 +1,6 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import pandas as pd
 import numpy as np
 import os
@@ -22,15 +23,27 @@ dark_palette = sns.color_palette([
 ])
 
 METHOD_ORDER = ['smt_wa', 'smt_nw', 'jrs_wa', 'at', 'jrs_nw_l', 'ls', 'jrs_mc', 'i_ilp', 'i_omt', 'cg', 'jrs_nw',
-                'smt_frag', 'cp_wa', 'ls_tb', 'ls_pl', 'smt_pre', 'dt']
+                'smt_fr', 'cp_wa', 'ls_tb', 'ls_pl', 'smt_pr', 'dt']
 
 marker_dict = {'jrs_wa': 'o', 'jrs_mc': 'o', 'jrs_nw_l': '^', 'jrs_nw': '^', 'ls': 's', 'i_ilp': 's', 'cg': 'v',
-               'smt_wa': 'D', 'at': 'D', 'cp_wa': '*', 'smt_pre': '*', 'i_omt': 'p', 'ls_tb': 'p', 'ls_pl': 'p',
-               'smt_nw': 'X', 'smt_frag': 'X', 'dt': '.'}
+               'smt_wa': 'D', 'at': 'D', 'cp_wa': '*', 'smt_pr': '*', 'i_omt': 'p', 'ls_tb': 'p', 'ls_pl': 'p',
+               'smt_nw': 'X', 'smt_fr': 'X', 'dt': '.'}
 
 dash_dict = {name: (2, 2) for name in METHOD_ORDER}
 
 ALPHA_REJ = 0.5
+
+gradient_palette = sns.color_palette(sns.color_palette(dark_palette).as_hex(), n_colors=16)
+
+_temp_morandi = ["#F0F0F0", "#E0E0E0", "#C0C0C0", "#8B8680", "#808080"]
+
+morandi_cmap = mcolors.LinearSegmentedColormap.from_list("morandi_cmap", _temp_morandi)
+
+default_color = "#FFEBCD"
+morandi_cmap.set_bad(color=default_color)
+
+extended_colors = [default_color] + _temp_morandi
+extended_cmap = mcolors.LinearSegmentedColormap.from_list("morandi_cmap", extended_colors)
 
 
 def get_schedulability(data: pd.DataFrame, var: str):
@@ -66,11 +79,11 @@ def get_schedulability(data: pd.DataFrame, var: str):
     return schedulability
 
 
-def test_evidence_thres(stat: pd.DataFrame, var: str):
+def test_evidence_thres(stat: pd.DataFrame, var: str, confidence=0.9):
     stat_pass = stat[
-        stat['num_unknown'] <= (stat['num_successful'] + stat['num_infeasible'] + stat["num_unknown"]) * 0.9]
+        stat['num_unknown'] <= (stat['num_successful'] + stat['num_infeasible'] + stat["num_unknown"]) * confidence]
     stat_rej = stat[
-        stat['num_unknown'] > (stat['num_successful'] + stat['num_infeasible'] + stat["num_unknown"]) * 0.9]
+        stat['num_unknown'] > (stat['num_successful'] + stat['num_infeasible'] + stat["num_unknown"]) * confidence]
 
     if stat[var].dtype == 'int' or stat[var].dtype == 'int64':
         var_range = stat[var].unique()
@@ -87,8 +100,8 @@ def test_evidence_thres(stat: pd.DataFrame, var: str):
                         (stat_pass[var] == var_range[var_index - 1])
                         ]
                 )
-            if var_index + 1 < len(var_range) and var_range[var_index + 1] not in \
-                    stat_rej[stat_rej['name'] == row['name']][var].unique():
+            if (var_index + 1 < len(var_range)
+                    and var_range[var_index + 1] not in stat_rej[stat_rej['name'] == row['name']][var].unique()):
                 addition_points.append(
                     stat_pass.loc[
                         (stat_pass['name'] == row['name']) &
@@ -210,7 +223,6 @@ def draw_payload(df: pd.DataFrame, file_name: str):
     size_dict = {2: "Small"}
     DATASET_LOGS["size"] = DATASET_LOGS["size"].apply(lambda x: size_dict[x])
     schedulability = get_schedulability(df, "size")
-    print(schedulability)
     draw_fig5(schedulability, "size", list(size_dict.values()), file_name)
 
 
@@ -218,7 +230,6 @@ def draw_deadline(df: pd.DataFrame, file_name: str):
     deadline_dict = {1: "Implicit"}
     DATASET_LOGS["deadline"] = DATASET_LOGS["deadline"].apply(lambda x: deadline_dict[x])
     schedulability = get_schedulability(df, "deadline")
-    print(schedulability)
     draw_fig5(schedulability, "deadline", list(deadline_dict.values()), file_name)
 
 
@@ -251,7 +262,182 @@ def draw_fig5(df: pd.DataFrame, var: str, hue_order: list, file_name: str):
     plt.savefig(f"{file_name}.pdf", bbox_inches="tight")
 
 
-def draw(df: pd.DataFrame):
+def get_comparison_matrix(df: pd.DataFrame):
+    index_map = {method: i for i, method in enumerate(df["name"].unique())}
+    num_methods = len(index_map)
+    group_index = ["data_id"]
+
+    single_data = df[["name", "data_id", "flag"]]
+    paired_data = pd.merge(
+        left=single_data[single_data["flag"] != "unknown"],
+        right=single_data[single_data["flag"] != "unknown"],
+        on=group_index
+    ).dropna()
+
+    comparison_matrix = np.zeros((num_methods, num_methods))
+    all_result_matrix = np.zeros((num_methods, num_methods))
+
+    for i, row in paired_data.iterrows():
+        x = row["name_x"]
+        y = row["name_y"]
+        if (row["flag_x"] == "successful") and (row["flag_y"] == "infeasible"):
+            comparison_matrix[index_map[x], index_map[y]] += 1
+        all_result_matrix[index_map[x], index_map[y]] += 1
+
+    return comparison_matrix, all_result_matrix
+
+
+def draw_comparison_matrix(df: pd.DataFrame, file_name: str):
+    comparison_matrix, all_result_matrix = get_comparison_matrix(df)
+    comparison_matrix[np.where(comparison_matrix == 0)] = np.nan
+
+    methods = df["name"].unique()
+    num_methods = len(methods)
+    dominate_matrix = np.empty([num_methods, num_methods], dtype=str)
+
+    for i in range(num_methods):
+        for j in range(num_methods):
+            sa_ij = comparison_matrix[i][j]
+            sa_ji = comparison_matrix[j][i]
+            if sa_ij > 0 and np.isnan(sa_ji):
+                dominate_matrix[i][j] = '✗'
+
+    means = np.nanmean(np.nan_to_num(comparison_matrix / all_result_matrix), axis=0)
+    sorted_indices = np.argsort(means)
+    sorted_comparison_matrix = (comparison_matrix / all_result_matrix)[:, sorted_indices][sorted_indices, :]
+    sorted_dominate_matrix = dominate_matrix[:, sorted_indices][sorted_indices, :]
+
+    plt.figure()
+    sns.heatmap(data=sorted_comparison_matrix,
+                xticklabels=[methods[x] for x in sorted_indices],
+                yticklabels=[methods[x] for x in sorted_indices],
+                cmap=extended_cmap,
+                cbar_kws={"label": "Schedulability Advantage"},
+                linewidths=1,
+                linecolor="white",
+                vmin=0
+                )
+    sns.heatmap(data=sorted_comparison_matrix,
+                xticklabels=[methods[x] for x in sorted_indices],
+                yticklabels=[methods[x] for x in sorted_indices],
+                cmap=morandi_cmap,
+                cbar=False,
+                linewidths=1,
+                linecolor='white',
+                vmin=0,
+                annot=sorted_dominate_matrix,
+                fmt=''
+                )
+
+    plt.xticks(rotation=45, ha='right')
+    plt.savefig(f"{file_name}.pdf", bbox_inches="tight")
+
+
+def get_runtime_stat(data: pd.DataFrame, var: str):
+    data = data[(data["flag"] != "unknown") | (data["memory usage"] < 4000)]
+    data.loc[:, ["solve time"]] = data["solve time"] / 60
+    return data.groupby([var, "name"], as_index=False)["solve time"].mean()
+
+
+def get_memory_stat(data: pd.DataFrame, var: str):
+    data = data[(data["flag"] != "unknown") | (data["solve time"] < 7200)]
+    return data.groupby([var, "name"], as_index=False)["memory usage"].mean()
+
+
+def test_evidence_thres_index(df: pd.DataFrame, var: str, confidence=0.1):
+    df[var] = df["data_id"].map(dict(zip(DATASET_LOGS["id"], DATASET_LOGS[var])))
+    df_known = df[df["flag"] != "unknown"].groupby(["name", var], as_index=False)["data_id"].count()
+    df_all = df.groupby(["name", var], as_index=False)["data_id"].count()
+    df = pd.merge(df_known, df_all, on=["name", var], suffixes=("_known", "_all"), how="outer").fillna(0)
+
+    stat_pass = df[df["data_id_known"] >= df["data_id_all"] * confidence]
+    stat_rej = df[df["data_id_known"] < df["data_id_all"] * confidence]
+
+    addition_points = []
+    var_range = df[var].unique()
+    var_step = set(np.diff(var_range)).pop()
+
+    for i, row in stat_rej.iterrows():
+        value = row[var]
+        if (value - var_step in var_range and
+                value - var_step not in stat_rej[stat_rej["name"] == row["name"]][var].unique()):
+            addition_points.append(
+                stat_pass.loc[
+                    (stat_pass["name"] == row["name"]) &
+                    (stat_pass[var] == value - var_step)
+                    ]
+            )
+    stat_rej = pd.concat([stat_rej] + addition_points)
+    return stat_pass, stat_rej
+
+
+def draw_scalability(df: pd.DataFrame, x: str, y: str, x_label: str, y_label: str, file_name: str):
+    df[x] = df["data_id"].map(dict(zip(DATASET_LOGS["id"], DATASET_LOGS[x])))
+
+    plt.rcParams['axes.axisbelow'] = True
+    plt.figure(figsize=(3, 2))
+
+    stat = get_runtime_stat(df, x) if y == "solve time" else get_memory_stat(df, x)
+
+    pass_rej = test_evidence_thres_index(df, x, 0.1)
+    stat_pass = pd.merge(stat, pass_rej[0], on=["name", x])
+    stat_rej = pd.merge(stat, pass_rej[1], on=["name", x])
+
+    ax = sns.lineplot(data=stat_pass,
+                      x=x,
+                      y=y,
+                      hue="name",
+                      style="name",
+                      palette=ordered_palette,
+                      hue_order=METHOD_ORDER,
+                      markers=marker_dict,
+                      dashes=False,
+                      markeredgecolor=None,
+                      fillstyle="none",
+                      linewidth=1.2,
+                      markersize=6, )
+
+    ax = sns.lineplot(ax=ax,
+                      data=stat_rej,
+                      x=x,
+                      y=y,
+                      hue="name",
+                      style="name",
+                      palette=ordered_palette,
+                      hue_order=METHOD_ORDER,
+                      markers=marker_dict,
+                      dashes=dash_dict,
+                      alpha=ALPHA_REJ,
+                      markeredgecolor=None,
+                      fillstyle="none",
+                      linewidth=1.2,
+                      markersize=6, )
+
+    ax.grid(axis="y")
+    ax.set_xlabel(x_label, fontsize=12)
+    ax.set_ylabel(y_label, fontsize=12)
+    if y == "solve time":
+        ax.set_ylim(0, 10)
+    else:
+        ax.set_ylim(0, 4000)
+
+    legend = plt.legend(prop={"size": 7})
+    legend.remove()
+    plt.savefig(f"{file_name}.pdf", bbox_inches="tight")
+
+
+def draw_runtime(df: pd.DataFrame, file_name: str):
+    draw_scalability(df, "num_stream", "solve time", "Number of streams", "Runtime (Mins)", f"{file_name}_stream")
+    draw_scalability(df, "num_sw", "solve time", "Number of bridges", "Runtime (Mins)", f"{file_name}_bridge")
+
+
+def draw_mem(df: pd.DataFrame, file_name: str):
+    draw_scalability(df, "num_stream", "memory usage", "Number of streams", "Memory (MB)", f"{file_name}_stream")
+    draw_scalability(df, "num_sw", "memory usage", "Number of bridges", "Memory (MB)", f"{file_name}_bridge")
+
+
+def draw(path: str):
+    df = pd.read_csv(path)
     draw_streams(df, "streams")
     draw_bridges(df, "bridges")
     draw_links(df, "links")
@@ -260,18 +446,10 @@ def draw(df: pd.DataFrame):
     draw_period(df, "period")
     draw_payload(df, "payload")
     draw_deadline(df, "deadline")
+    draw_comparison_matrix(df, "comparison_matrix")
+    draw_runtime(df, "runtime")
+    draw_mem(df, "mem")
 
 
 if __name__ == "__main__":
-    SCRIPT_DIR = os.path.dirname(__file__)
-
-    df = pd.read_csv(f"./results.csv")
-    df = df.iloc[:, :-1]
-    draw_streams(df, "streams")
-    draw_bridges(df, "bridges")
-    draw_links(df, "links")
-    draw_frames(df, "frames")
-    draw_topo(df, "topo")
-    draw_period(df, "period")
-    draw_payload(df, "payload")
-    draw_deadline(df, "deadline")
+    draw("./results.csv")

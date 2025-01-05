@@ -235,4 +235,4 @@ if __name__ == "__main__":
 
     results = results.iloc[0:total_ins]
     results.to_csv(f"{output_affix}results.csv")
-    draw.draw(results.iloc[:, :-1])
+    draw.draw(f"{output_affix}results.csv")

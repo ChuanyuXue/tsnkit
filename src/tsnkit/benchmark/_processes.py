@@ -81,7 +81,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     pids_killed_time[proc.pid] = _current_time
 
                     queue.put([round(proc.cpu_times().user, 3), mem])
-                    output("-", str(Result.unknown), proc.cpu_times().user, mem)
+                    output("-", str(Result.unknown), proc.cpu_times().user, mem / (1024 ** 2))
 
                     if sys.platform == "win32" or sys.platform == "cygwin":
                         sig.value += 1
