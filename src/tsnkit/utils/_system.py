@@ -16,8 +16,10 @@ from ._constants import METHOD_TO_PROCNUM, T_LIMIT
 import psutil
 import os
 import sys
-import resource
 import subprocess
+
+if sys.platform != "win32" and sys.platform != "cygwin":
+    import resource
 
 
 def mem_log() -> float:
