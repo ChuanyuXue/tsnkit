@@ -39,6 +39,8 @@ ALGO_DICT = {
     "smt_wa": smt_wa
 }
 
+MULTIPROC = ["ls_pl"]
+
 
 def parse():
     parser = argparse.ArgumentParser()
@@ -126,7 +128,7 @@ if __name__ == "__main__":
 
         oom.start()
 
-        def store(output):
+        def store(output, verbose=True):
             # output = [task_id, result, algo_time, total_time, algo_mem, total_mem]
             flag = output[1]
             task_num = output[0]
@@ -139,26 +141,31 @@ if __name__ == "__main__":
                 result[2] = "infeasible"
             results.iloc[total_ins + int(task_num) - 1, :] = result
             signal.value += 1
-            print_output(task_num, str_flag(flag), output[2], output[3], output[4])
+            if verbose:
+                print_output(task_num, str_flag(flag), output[2], output[3], output[4])
 
-        with Pool(processes=cpu_count() // process_num(name), maxtasksperchild=1, initializer=mute) as p:
+        if name in MULTIPROC:
             for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
-                p.apply_async(
-                    run,
-                    args=(
-                        alg.benchmark,
-                        file_num,
-                        process_num(name),
-                    ),
-                    callback=store,
-                )
-            p.close()
-            try:
-                while signal.value < tasks:
-                    time.sleep(1)
-            except KeyboardInterrupt:
-                print(f"Terminate calculation by hand.")
-                tasks = signal.value
+                store(run(alg.benchmark, file_num, process_num(name)), verbose=False)
+        else:
+            with Pool(processes=cpu_count() // process_num(name), maxtasksperchild=1, initializer=mute) as p:
+                for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
+                    p.apply_async(
+                        run,
+                        args=(
+                            alg.benchmark,
+                            file_num,
+                            process_num(name),
+                        ),
+                        callback=store,
+                    )
+                p.close()
+                try:
+                    while signal.value < tasks:
+                        time.sleep(1)
+                except KeyboardInterrupt:
+                    print(f"Terminate calculation by hand.")
+                    tasks = signal.value
 
         oom.terminate()
         gc.collect()

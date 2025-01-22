@@ -50,11 +50,9 @@ def get_schedulability(data: pd.DataFrame, var: str):
     data = copy.deepcopy(data)
     data[var] = data["data_id"].map(dict(zip(DATASET_LOGS["id"], DATASET_LOGS[var])))
 
-    # count and group data by the flags: "successful", "infeasible", and "unknown"
     group_index = ['name', 'flag', var]
     grouped_data = data.groupby(group_index, as_index=False)['data_id'].count().groupby('flag')
 
-    # merge the groups
     schedulability = pd.merge(
         left=grouped_data.get_group('successful')[['name', var, 'data_id']].rename(
             columns={'data_id': 'num_successful'}),
@@ -72,7 +70,7 @@ def get_schedulability(data: pd.DataFrame, var: str):
     )
     schedulability = schedulability.fillna(0)
 
-    # calculate lower bound schedulability
+    # lower bound schedulability
     schedulability['schedulability'] = (schedulability['num_successful']) / (
             schedulability['num_successful'] + schedulability['num_infeasible'] + schedulability['num_unknown'])
 
@@ -88,23 +86,23 @@ def test_evidence_thres(stat: pd.DataFrame, var: str, confidence=0.9):
     if stat[var].dtype == 'int' or stat[var].dtype == 'int64':
         var_range = stat[var].unique()
         var_range.sort()
-        stat_rej = stat_rej.sort_values(['name', var]).reset_index(drop=True)
+        stat_rej = stat_rej.sort_values(["name", var]).reset_index(drop=True)
         addition_points = []
         for i, row in stat_rej.iterrows():
             var_index = np.where(var_range == row[var])[0][0]
             if (var_index - 1 >= 0
-                    and var_range[var_index - 1] not in stat_rej[stat_rej['name'] == row['name']][var].unique()):
+                    and var_range[var_index - 1] not in stat_rej[stat_rej["name"] == row["name"]][var].unique()):
                 addition_points.append(
                     stat_pass.loc[
-                        (stat_pass['name'] == row['name']) &
+                        (stat_pass["name"] == row["name"]) &
                         (stat_pass[var] == var_range[var_index - 1])
                         ]
                 )
             if (var_index + 1 < len(var_range)
-                    and var_range[var_index + 1] not in stat_rej[stat_rej['name'] == row['name']][var].unique()):
+                    and var_range[var_index + 1] not in stat_rej[stat_rej["name"] == row["name"]][var].unique()):
                 addition_points.append(
                     stat_pass.loc[
-                        (stat_pass['name'] == row['name']) &
+                        (stat_pass["name"] == row["name"]) &
                         (stat_pass[var] == var_range[var_index + 1])
                         ]
                 )
@@ -344,33 +342,6 @@ def get_memory_stat(data: pd.DataFrame, var: str):
     return data.groupby([var, "name"], as_index=False)["total_mem"].mean()
 
 
-def test_evidence_thres_index(df: pd.DataFrame, var: str, confidence=0.1):
-    df[var] = df["data_id"].map(dict(zip(DATASET_LOGS["id"], DATASET_LOGS[var])))
-    df_known = df[df["flag"] != "unknown"].groupby(["name", var], as_index=False)["data_id"].count()
-    df_all = df.groupby(["name", var], as_index=False)["data_id"].count()
-    df = pd.merge(df_known, df_all, on=["name", var], suffixes=("_known", "_all"), how="outer").fillna(0)
-
-    stat_pass = df[df["data_id_known"] >= df["data_id_all"] * confidence]
-    stat_rej = df[df["data_id_known"] < df["data_id_all"] * confidence]
-
-    addition_points = []
-    var_range = df[var].unique()
-    var_step = set(np.diff(var_range)).pop()
-
-    for i, row in stat_rej.iterrows():
-        value = row[var]
-        if (value - var_step in var_range and
-                value - var_step not in stat_rej[stat_rej["name"] == row["name"]][var].unique()):
-            addition_points.append(
-                stat_pass.loc[
-                    (stat_pass["name"] == row["name"]) &
-                    (stat_pass[var] == value - var_step)
-                    ]
-            )
-    stat_rej = pd.concat([stat_rej] + addition_points)
-    return stat_pass, stat_rej
-
-
 def draw_scalability(df: pd.DataFrame, x: str, y: str, x_label: str, y_label: str, file_name: str):
     df = copy.deepcopy(df)
     df[x] = df["data_id"].map(dict(zip(DATASET_LOGS["id"], DATASET_LOGS[x])))
@@ -380,7 +351,8 @@ def draw_scalability(df: pd.DataFrame, x: str, y: str, x_label: str, y_label: st
 
     stat = get_runtime_stat(df, x) if y == "total_time" else get_memory_stat(df, x)
 
-    pass_rej = test_evidence_thres_index(df, x, 0.1)
+    schedulability = get_schedulability(df, x)
+    pass_rej = test_evidence_thres(schedulability, x)
     stat_pass = pd.merge(stat, pass_rej[0], on=["name", x])
     stat_rej = pd.merge(stat, pass_rej[1], on=["name", x])
 
@@ -417,10 +389,6 @@ def draw_scalability(df: pd.DataFrame, x: str, y: str, x_label: str, y_label: st
     ax.grid(axis="y")
     ax.set_xlabel(x_label, fontsize=12)
     ax.set_ylabel(y_label, fontsize=12)
-    if y == "total_time":
-        ax.set_ylim(0, 10)
-    else:
-        ax.set_ylim(0, 4000)
 
     legend = plt.legend(prop={"size": 7})
     legend.remove()
