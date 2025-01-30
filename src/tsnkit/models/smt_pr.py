@@ -72,7 +72,8 @@ class smt_pr:
             utils.Result.schedulable if result == z3.sat else utils.Result.unschedulable
         )
 
-        self.model_output = self.solver.model()
+        if result == z3.sat:
+            self.model_output = self.solver.model()
         return utils.Statistics("-", algo_result, algo_time, algo_mem)
 
     def output(self) -> utils.Config:
