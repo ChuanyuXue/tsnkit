@@ -495,17 +495,17 @@ def load_network(path: str) -> Network:
             if src == dst:
                 continue
             else:
-                network._shortest_path[src][dst] = Path(
-                    nx.shortest_path(
-                        network._net_nx, int(src), int(dst)
-                    ),  # type: ignore
-                    network,
-                )
                 network._all_path[src][dst] = [
                     Path(path, network)
                     for path in nx.all_simple_paths(network._net_nx, int(src), int(dst))
                 ]
-
+                if len(network._all_path[src][dst]) != 0:
+                    network._shortest_path[src][dst] = Path(
+                        nx.shortest_path(
+                            network._net_nx, int(src), int(dst)
+                        ),  # type: ignore
+                        network,
+                    )
     return network
 
 
