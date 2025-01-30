@@ -15,19 +15,27 @@ from ._constants import METHOD_TO_PROCNUM, T_LIMIT
 
 import psutil
 import os
-import resource
+import sys
 import subprocess
+
+if sys.platform != "win32" and sys.platform != "cygwin":
+    import resource
 
 
 def mem_log() -> float:
     ## Log memory usage in MB
-    # return tracemalloc.get_traced_memory()[1] / 1024 / 1024
-
-    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+    ## psutil returns in bytes, resource returns in KB.
+    if sys.platform == "win32" or sys.platform == "cygwin":
+        return psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+    else:
+        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
 
 
 def time_log() -> float:
-    return resource.getrusage(resource.RUSAGE_SELF).ru_utime
+    if sys.platform == "win32" or sys.platform == "cygwin":
+        return psutil.Process(os.getpid()).cpu_times().user
+    else:
+        return resource.getrusage(resource.RUSAGE_SELF).ru_utime
 
 
 def is_timeout(thres: float) -> bool:
