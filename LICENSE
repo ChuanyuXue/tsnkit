@@ -1,17 +1,19 @@
-If you use this software in a scholarly publication, please cite the following paper:
+If you use this software in a scholarly publication, please cite our following paper:
 
 Title: Real-Time Scheduling for Time-Sensitive Networking: A Systematic Review and Experimental Study
 Author: Chuanyu Xue, Tianyu Zhang, Yuanbin Zhou, Mark Nixon, Andrew Loveless, Song Han
-Year: 2023
-URL: https://arxiv.org/abs/2305.16772
+Year: 2024
+URL: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10568056
 
 BibTeX entry:
 
-@article{xue2023real,
-  title={Real-Time Scheduling for Time-Sensitive Networking: A Systematic Review and Experimental Study},
-  author={Xue, Chuanyu and Zhang, Tianyu and Zhou, Yuanbin and Han, Song},
-  journal={arXiv preprint arXiv:2305.16772},
-  year={2023}
+@inproceedings{xue2024real,
+  title={Real-time scheduling for 802.1 Qbv time-sensitive networking (TSN): A systematic review and experimental study},
+  author={Xue, Chuanyu and Zhang, Tianyu and Zhou, Yuanbin and Nixon, Mark and Loveless, Andrew and Han, Song},
+  booktitle={2024 IEEE 30th Real-Time and Embedded Technology and Applications Symposium (RTAS)},
+  pages={108--121},
+  year={2024},
+  organization={IEEE}
 }
 
 

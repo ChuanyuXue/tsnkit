@@ -58,6 +58,10 @@ python3 -m tsnkit.models.[METHOD] [STREAM PATH] [NETWORK PATH]
 - **`src/tsnkit/utils`**: Data structures and helper functions.
 
 
+## Related projects:
+
+- [OMNeT_TSNkit](https://github.com/deepsea52418/OMNeT_TSNkit): Integrating TSNkit into OMNeT++ for simulation.
+
 ## Contribute
 
 Contributions are welcome! Feel free to add your own scheduling algorithm in this toolkit. And contact me to update your new scheduling method into our benchmark paper!
