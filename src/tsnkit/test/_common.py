@@ -34,7 +34,8 @@ def parse() -> argparse.Namespace:
 def run(
         algorithms: Union[List[str], str],
         data_path: str,
-        output_path: str
+        output_path: str,
+        sim_iterations: int = 1
 ) -> Dict[str, int]:
 
     # create a result directory if one does not exist
