@@ -32,9 +32,16 @@ def load_stream(path: str) -> "StreamSet":
     for i, row in stream_df.iterrows():
         if row["dst"][0] + row["dst"][-1] != "[]":
             raise Exception("Destination must be a single-element list for unicast")
+        if "stream" in row:
+            _id = row["stream"]
+        elif "id" in row:
+            _id = row["id"]
+        else:
+            raise Exception("Stream id not found")
+
         stream_set._streams.append(
             Stream(
-                row["stream"],
+                _id,
                 row["src"],
                 eval(row["dst"]),
                 row["size"],

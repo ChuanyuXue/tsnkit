@@ -91,3 +91,6 @@ Testing multiple methods:
 tsnkit.test [methods] -t [total_timeout_limit] -o [path_for_output_report]
 ```
 
+## OMNeT_TSNkit
+
+`tsnkit.simulation.tas` is a simple custom-written simulator to capture the TAS scheduling behavior at a high-level granularity. Here is an excellent third-party project *OMNeT_TSNkit* that integrating TSNkit into OMNeT++: [https://github.com/deepsea52418/OMNeT_TSNkit](https://github.com/deepsea52418/OMNeT_TSNkit)
