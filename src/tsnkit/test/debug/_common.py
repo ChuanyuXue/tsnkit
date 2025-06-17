@@ -1,8 +1,11 @@
+import time
 from functools import partialmethod
 from typing import List, Union
 import pandas as pd
 import numpy as np
 import subprocess
+import psutil
+
 from ... import utils
 from ...simulation import tas
 from ...data import generator
@@ -50,17 +53,17 @@ def run(
 
     dataset = [*range(1, 17), *range(33, 49), *range(65, 81)]
 
-    with tqdm(total=len(algorithms) * 48) as pbar:
+    with tqdm(total=len(algorithms) * len(dataset)) as pbar:
         # header
         print_format = "| {:<13} | {:<8} | {:<8} | {:<8} | {:<10} | {:<10} | {:<10} "
-        tqdm.write(print_format.format("time", "name", "data id", "flag", "solve_time", "total time", "total_mem"))
+        tqdm.write(print_format.format("time", "name", "data id", "flag", "solve_time", "total time", "total mem"))
 
         for algo_name in algorithms:
             result = pd.DataFrame(
                 columns=['algorithm', 'data id', 'total time', 'total mem', 'flag', 'error', 'log'],
-                index=range(48), dtype=object)
+                index=range(len(dataset)), dtype=object)
             i = 0
-            for n in range(48):
+            for n in range(len(dataset)):
                 data_id = dataset[n]
                 task_path = data_path + str(data_id) + "_task.csv"
                 topo_path = data_path + str(data_id) + "_topo.csv"
@@ -70,19 +73,33 @@ def run(
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE,
                                            text=True)
-                stdout, stderr = process.communicate()
+                try:
+                    stdout, stderr = process.communicate(timeout=utils.T_LIMIT)
+                except subprocess.TimeoutExpired:
+                    mem = psutil.Process(process.pid).memory_info().rss / 1024 / 1024
+                    cpu_time = psutil.Process(process.pid).cpu_times().user
+                    process.kill()
+                    stdout = utils.Statistics.output_format.format(
+                        time.strftime("%d~%H:%M:%S"),
+                        "-",
+                        str(utils.Result.unknown),
+                        round(cpu_time, 3),
+                        round(cpu_time, 3),
+                        round(mem, 3)
+                    ) + "\n"
 
                 if stderr:
                     tqdm.write(stderr.split("\n")[-2])
                 if not stdout:
+                    tqdm.write(f"{algo_name} not found")
                     result.iloc[i, 0] = algo_name
                     result.iloc[i, 4:6] = ["err", stderr.split("\n")[-2]]
-                    pbar.update(48)
+                    pbar.update(len(dataset))
                     i += 1
                     break
 
-                output = stdout.split("\n")[:-1]
-                stat = [s.split()[0] for s in output[-1].split("|")[1:]]
+                output = stdout.split("\n")[-2]
+                stat = [s.split()[0] for s in output.split("|")[1:]]
 
                 flag = stat[2]
                 total_time = float(stat[4])
