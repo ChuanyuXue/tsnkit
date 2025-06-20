@@ -1,21 +1,15 @@
-import time
 from functools import partialmethod
-from typing import List, Union
+from typing import List, Union, Dict
 import pandas as pd
 import numpy as np
 import subprocess
-import psutil
-
-from ... import utils
-from ...simulation import tas
-from ...data import generator
+from .. import utils
+from ..simulation import tas
+from ..data import generator
 import argparse
 import os
 from tqdm import tqdm
 import sys
-
-
-SCRIPT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 
 def generate(path: str) -> None:
@@ -33,40 +27,38 @@ def parse() -> argparse.Namespace:
 
     parser.add_argument("-t", type=int, default=utils.T_LIMIT, help="total timeout limit")
     parser.add_argument("-o", type=str, help="path for output report")
-    parser.add_argument("-it", type=int, default=1, help="simulation iterations")
 
     return parser.parse_args()
 
 
 def run(
         algorithms: Union[List[str], str],
+        data_path: str,
         output_path: str,
         sim_iterations: int = 1
-):
+) -> Dict[str, int]:
 
     # create a result directory if one does not exist
     if not os.path.isdir(output_path):
         os.mkdir(output_path)
-    data_path = SCRIPT_DIR + "/data/"
 
     py_environment = sys.executable
 
     algorithms = [algorithms] if isinstance(algorithms, str) else algorithms
+    successes = {name: 0 for name in algorithms}
 
-    dataset = [*range(1, 17), *range(33, 49), *range(65, 81)]
-
-    with tqdm(total=len(algorithms) * len(dataset)) as pbar:
+    with tqdm(total=len(algorithms) * 48) as pbar:
         # header
         print_format = "| {:<13} | {:<8} | {:<8} | {:<8} | {:<10} | {:<10} | {:<10} "
-        tqdm.write(print_format.format("time", "name", "data id", "flag", "solve_time", "total time", "total mem"))
+        print(print_format.format("time", "name", "data id", "flag", "solve_time", "total time", "total_mem"),
+              flush=True)
 
         for algo_name in algorithms:
             result = pd.DataFrame(
                 columns=['algorithm', 'data id', 'total time', 'total mem', 'flag', 'error', 'log'],
-                index=range(len(dataset)), dtype=object)
+                index=range(48), dtype=object)
             i = 0
-            for n in range(len(dataset)):
-                data_id = dataset[n]
+            for data_id in range(1, 49):
                 task_path = data_path + str(data_id) + "_task.csv"
                 topo_path = data_path + str(data_id) + "_topo.csv"
 
@@ -75,33 +67,19 @@ def run(
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE,
                                            text=True)
-                try:
-                    stdout, stderr = process.communicate(timeout=utils.T_LIMIT)
-                except subprocess.TimeoutExpired:
-                    mem = psutil.Process(process.pid).memory_info().rss / 1024 / 1024
-                    cpu_time = psutil.Process(process.pid).cpu_times().user
-                    process.kill()
-                    stdout = utils.Statistics.output_format.format(
-                        time.strftime("%d~%H:%M:%S"),
-                        "-",
-                        str(utils.Result.unknown),
-                        round(cpu_time, 3),
-                        round(cpu_time, 3),
-                        round(mem, 3)
-                    ) + "\n"
+                stdout, stderr = process.communicate()
 
                 if stderr:
-                    tqdm.write(stderr.split("\n")[-2])
+                    print(stderr)
                 if not stdout:
-                    tqdm.write(f"{algo_name} not found")
                     result.iloc[i, 0] = algo_name
                     result.iloc[i, 4:6] = ["err", stderr.split("\n")[-2]]
-                    pbar.update(len(dataset))
+                    pbar.update(48)
                     i += 1
                     break
 
-                output = stdout.split("\n")[-2]
-                stat = [s.split()[0] for s in output.split("|")[1:]]
+                output = stdout.split("\n")[:-1]
+                stat = [s.split()[0] for s in output[-1].split("|")[1:]]
 
                 flag = stat[2]
                 total_time = float(stat[4])
@@ -110,20 +88,22 @@ def run(
                 if flag == str(utils.Result.error):
                     error = output[1]
                     result.iloc[i, :-1] = [algo_name, data_id, total_time, total_mem, flag, error]
-                    tqdm.write(print_format.format(stat[0], algo_name, data_id, stat[2], stat[3], stat[4], stat[5]))
-                    pbar.update(1)
+                    print(print_format.format(stat[0], algo_name, data_id, stat[2], stat[3], stat[4], stat[5]),
+                          flush=True)
+                    update_pbar(i, pbar)
                     i += 1
                     continue
                 elif flag != str(utils.Result.schedulable):
                     result.iloc[i, :-1] = [algo_name, data_id, total_time, total_mem, flag, "none"]
-                    tqdm.write(print_format.format(stat[0], algo_name, data_id, stat[2], stat[3], stat[4], stat[5]))
-                    pbar.update(1)
+                    print(print_format.format(stat[0], algo_name, data_id, stat[2], stat[3], stat[4], stat[5]),
+                          flush=True)
+                    update_pbar(i, pbar)
                     i += 1
                     continue
 
                 # validate schedule
                 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
-                log = tas.simulation(task_path, "./", it=sim_iterations)
+                log = tas.simulation(task_path, "./")
                 tqdm.__init__ = partialmethod(tqdm.__init__, disable=False)
 
                 deadline = list(pd.read_csv(task_path)["deadline"])
@@ -136,15 +116,23 @@ def run(
                         flag = "fail sim"
 
                 if flag == "succ":
+                    successes[algo_name] += 1
                     result.iloc[i, :] = [algo_name, data_id, total_time, total_mem, flag, "none", str(log)]
-                    tqdm.write(print_format.format(stat[0], algo_name, data_id, flag, stat[3], stat[4], stat[5]))
+                    print(print_format.format(stat[0], algo_name, data_id, flag, stat[3], stat[4], stat[5]), flush=True)
                 else:
                     result.iloc[i, :] = [algo_name, data_id, total_time, total_mem,
                                          flag, "failed flows: " + str(flow_errors), str(log)]
-                    tqdm.write(print_format.format(stat[0], algo_name, data_id, flag, stat[3], stat[4], stat[5]))
+                    print(print_format.format(stat[0], algo_name, data_id, flag, stat[3], stat[4], stat[5]), flush=True)
 
-                pbar.update(1)
+                update_pbar(i, pbar)
                 i += 1
 
             result = result.iloc[0:i, :]  # get rid of empty rows
             result.to_csv(output_path + algo_name + "_report.csv")
+
+    return successes
+
+
+def update_pbar(i: int, pbar: tqdm):
+    if (i + 1) % 6 == 0:
+        pbar.update(6)
