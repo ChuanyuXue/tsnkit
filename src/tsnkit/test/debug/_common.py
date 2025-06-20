@@ -33,7 +33,7 @@ def parse() -> argparse.Namespace:
 
     parser.add_argument("-t", type=int, default=utils.T_LIMIT, help="total timeout limit")
     parser.add_argument("-o", type=str, help="path for output report")
-    parser.add_argument("-it", type=int, default=1, help="simulation iterations")
+    parser.add_argument("-it", type=int, default=5, help="simulation iterations")
 
     return parser.parse_args()
 
@@ -41,7 +41,7 @@ def parse() -> argparse.Namespace:
 def run(
         algorithms: Union[List[str], str],
         output_path: str,
-        sim_iterations: int = 1
+        sim_iterations: int = 5
 ):
 
     # create a result directory if one does not exist
@@ -123,7 +123,7 @@ def run(
 
                 # validate schedule
                 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
-                log = tas.simulation(task_path, "./", it=sim_iterations)
+                log = tas.simulation(task_path, "./", it=sim_iterations, draw_results=False)
                 tqdm.__init__ = partialmethod(tqdm.__init__, disable=False)
 
                 deadline = list(pd.read_csv(task_path)["deadline"])
@@ -147,4 +147,4 @@ def run(
                 i += 1
 
             result = result.iloc[0:i, :]  # get rid of empty rows
-            result.to_csv(output_path + algo_name + "_report.csv")
+            result.to_csv(output_path + algo_name + "_result.csv")

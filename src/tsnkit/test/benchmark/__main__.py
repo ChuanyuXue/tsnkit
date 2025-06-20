@@ -44,7 +44,7 @@ MULTIPROC = ["ls_pl"]
 def parse():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("algorithms", type=str, nargs="+", help="list of algorithms to be tested")
+    parser.add_argument("--methods", type=str, nargs="+", help="list of methods to be tested")
     parser.add_argument("--ins", type=str, nargs="+", help="list of problem instances")
     parser.add_argument("-t", type=int, default=600, help="total timeout limit")
     parser.add_argument("-o", type=str, default="./", help="output path")
@@ -54,7 +54,7 @@ def parse():
 
 def import_algorithm(algo_name):
     try:
-        algo = ALGO_DICT[algo_name]
+        algo = ALGO_DICT[algo_name.lower()]
         return algo
     except KeyError as e:
         print(f"no model named {algo_name}")
@@ -83,22 +83,27 @@ def print_result(task_num: int, result: str):
 
 if __name__ == "__main__":
     args = parse()
-    algorithms = args.algorithms
+    methods = args.methods
+    if methods[0] == "ALL":
+        methods = ALGO_DICT.keys()
     ins = args.ins
+    if len(ins) == 1:
+        ins = [ins[0]] * len(methods)
+    print(ins)
     utils.T_LIMIT = args.t
     output_affix = args.o
 
     data_path = f"{SCRIPT_DIR}/data/"
 
     results = pd.DataFrame(
-        columns=["name", "data_id", "flag", "solve_time", "total_time", "total_mem", "log"],
+        columns=["name", "data_id", "flag", "solve_time", "total_time", "total_mem"],
         index=np.arange(4352))
 
     total_ins = 0
     algo_header = "| {:<13} | {:<13} | {:<6} | {:<10} | {:<10} | {:<10}"
     sim_header = "| {:<13} | {:<6} | {:<12}"
 
-    for i, name in enumerate(algorithms):
+    for i, name in enumerate(methods):
 
         alg = import_algorithm(name)
         if alg is None:
@@ -131,7 +136,7 @@ if __name__ == "__main__":
             # output = [task_id, result, algo_time, total_time, algo_mem, total_mem]
             flag = output[1]
             task_num = output[0]
-            result = [name, task_num, "successful", output[2], output[3], output[4], []]
+            result = [name, task_num, "successful", output[2], output[3], output[4]]
             if flag == Result.schedulable.value:
                 successful.append(int(task_num))
             elif flag == Result.unknown.value:
@@ -175,8 +180,8 @@ if __name__ == "__main__":
                 continue
             process = oom_queue.get()  # [proc_time, proc_mem]
             mem = process[1] / (1024 ** 2)
-            # ["name", "data_id", "flag", "solve_time", "total_time", "total_mem", "log"]
-            results.iloc[index, :] = [name, index+1-total_ins, "unknown", process[0], process[0], round(mem, 3), []]
+            # ["name", "data_id", "flag", "solve_time", "total_time", "total_mem"]
+            results.iloc[index, :] = [name, index+1-total_ins, "unknown", process[0], process[0], round(mem, 3)]
 
         if not successful:
             results.iloc[:(total_ins + tasks), :].to_csv(f"{output_affix}results.csv")
