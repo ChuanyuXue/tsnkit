@@ -15,4 +15,4 @@ if __name__ == "__main__":
     else:
         output_path = script_dir + "/result/"
 
-    debug.run("i_omt", output_path)
+    debug.run("i_omt", output_path, args.it)

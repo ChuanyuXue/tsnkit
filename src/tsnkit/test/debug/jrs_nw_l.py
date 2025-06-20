@@ -15,4 +15,4 @@ if __name__ == "__main__":
     else:
         output_path = script_dir + "/result/"
 
-    debug.run("jrs_nw_l", output_path)
+    debug.run("jrs_nw_l", output_path, args.it)
