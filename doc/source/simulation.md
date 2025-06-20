@@ -15,6 +15,12 @@ To validate the correctness of the generated schedule, we provide a TSN simulato
 
 The core functionality of this simulator simulating the propagation of data packets through a TSN, based on user-defined TAS configurations files and traffic pattern. It is mainly designed for verifying the correctness of the generated schedule. 
 
+**Compilation (for Cython optimization):**
+
+```
+python setup.py build_ext --inplace
+```
+
 **Usage:**
 
 ```
