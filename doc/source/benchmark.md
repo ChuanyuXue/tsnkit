@@ -17,7 +17,7 @@ Following are the steps to generate the benchmark results used in the paper.
 
 1. Check out to `legacy` branch.
 2. Download `data.gz` from git-lfs, and unzip it to `data` folder. (Or generate it using `data/input/generate_data.ipynb`)
-3. Go `src` foder and run `python main.py --method=ALL --start=0 --end=38400`.
+3. Go `src` folder and run `python main.py --method=ALL --start=0 --end=38400`.
 
 *Both `main` and `legacy` branches use the same logic (models & algorithms). However, we have refined the organization in the `main` branch by introducing a unified interface and standardized type notation to enhance maintainability and simplify the efforts to add new methods. The `legacy` branch houses the source code record used in the paper.*
 
@@ -27,19 +27,36 @@ We provide the generated benchmark results in the `data` folder along with the v
 
 **Small scale benchmark demo:**
 
-To quickly demonstrate the benchmark results, we provide a small scale benchmark with 256 experiments. Follow the steps below to produce the results:
+To quickly demonstrate the benchmark results, we provide a small scale benchmark with 256 experiments.
 
-1. Check out to `main` branch and run following command to generate the problem instances:
-
-   ```
-   python -m tsnkit.data.generator --num_ins 1 --num_stream 10,40,70,100,130,160,190,220 --num_sw 8,18,28,38,48,58,68,78 --period 3,4 --size 2 --deadline 1 --topo 0,1 --output "../data/"
-   ``` 
-
-2. Check out to `legacy` branch and run the following command to generate the benchmark results:
+Run the following command to generate the benchmark results for all algorithms:
 
     ```
-    python main.py --method=ALL --start=0 --end=256
+    python -m tsnkit.test.benchmark --methods ALL --ins 1-256
+    ```
+The estimated time to generate results for one algorithm, such as ls is 30 minutes. When running all the algorithms, results generation may take over 2 days. 
+
+The default time limit for each test case for each algorithm is 10 minutes. For faster benchmark results, the time limit can be lowered:
+
+    ```
+    python -m tsnkit.test.benchmark --methods ALL --ins 1-256 -t 60
     ```
 
+### Debug tool
 
+The debug module can be used to run and validate methods across 48 test cases.
+To validate individual modules, the following command can be used:
+   
+    ```
+    python -m tsnkit.test.debug.at -t 60
+    ```
 
+In the above command, "at" represents one of the scheduling methods and be interchanged with other methods. 
+This tool will take less than 1 hour to validate one method across all 48 cases.
+To validate multiple modules, the following command can be used, with each desired method name separated by a space:
+
+    ```
+    python -m tsnkit.test.debug at cg cp_wa dt -t 60
+    ```
+Results for each algorithm are written to a file in the results directory of the debug folder containing information
+on the runtime, memory usage, error messages (if any), and the simulation log for each test case. 
