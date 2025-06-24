@@ -54,17 +54,14 @@ def get_schedulability(data: pd.DataFrame, var: str):
     grouped_data = data.groupby(group_index, as_index=False)['data_id'].count().groupby('flag')
 
     schedulability = pd.merge(
-        left=grouped_data.get_group('successful')[['name', var, 'data_id']].rename(
-            columns={'data_id': 'num_successful'}),
-        right=grouped_data.get_group('infeasible')[['name', var, 'data_id']].rename(
-            columns={'data_id': 'num_infeasible'}),
+        left=grouped_data.get_group('successful')[['name', var, 'data_id']].rename(columns={'data_id': 'num_successful'}),
+        right=grouped_data.get_group('infeasible')[['name', var, 'data_id']].rename(columns={'data_id': 'num_infeasible'}),
         how='outer',
         on=['name', var]
     )
     schedulability = pd.merge(
         left=schedulability,
-        right=grouped_data.get_group('unknown')[['name', var, 'data_id']].rename(
-            columns={'data_id': 'num_unknown'}),
+        right=grouped_data.get_group('unknown')[['name', var, 'data_id']].rename(columns={'data_id': 'num_unknown'}),
         how='outer',
         on=['name', var]
     )

@@ -52,7 +52,7 @@ def parse():
     return parser.parse_args()
 
 
-def import_algorithm(algo_name):
+def import_algorithm(algo_name: str):
     try:
         algo = ALGO_DICT[algo_name.lower()]
         return algo
@@ -61,7 +61,7 @@ def import_algorithm(algo_name):
         return None
 
 
-def remove_configs(config_num):
+def remove_configs(config_num: str):
     os.remove(f"./{config_num}-DELAY.csv")
     os.remove(f"./{config_num}-GCL.csv")
     os.remove(f"./{config_num}-OFFSET.csv")
@@ -89,7 +89,6 @@ if __name__ == "__main__":
     ins = args.ins
     if len(ins) == 1:
         ins = [ins[0]] * len(methods)
-    print(ins)
     utils.T_LIMIT = args.t
     output_affix = args.o
 
@@ -139,6 +138,7 @@ if __name__ == "__main__":
             result = [name, task_num, "successful", output[2], output[3], output[4]]
             if flag == Result.schedulable.value:
                 successful.append(int(task_num))
+                remove_configs(task_num)
             elif flag == Result.unknown.value:
                 result[2] = "unknown"
             else:
@@ -183,12 +183,10 @@ if __name__ == "__main__":
             # ["name", "data_id", "flag", "solve_time", "total_time", "total_mem"]
             results.iloc[index, :] = [name, index+1-total_ins, "unknown", process[0], process[0], round(mem, 3)]
 
-        if not successful:
-            results.iloc[:(total_ins + tasks), :].to_csv(f"{output_affix}results.csv")
-            total_ins += tasks
-            gc.collect()
-            continue
+        results.iloc[:(total_ins + tasks), :].to_csv(f"{output_affix}results.csv", index=False)
+        total_ins += tasks
+        gc.collect()
 
     results = results.iloc[0:total_ins]
-    results.to_csv(f"{output_affix}results.csv")
+    results.to_csv(f"{output_affix}results.csv", index=False)
     draw(f"{output_affix}results.csv")
