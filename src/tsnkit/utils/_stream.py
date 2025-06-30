@@ -311,7 +311,7 @@ class StreamSet:
         return self._streams[int(stream)]
 
     def get_streams(
-            self,
+        self,
     ) -> List[Stream]:
         return self._streams
 
