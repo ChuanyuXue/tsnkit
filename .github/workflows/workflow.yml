@@ -1,0 +1,36 @@
+name: model workflow
+
+on: 
+  pull_request: 
+    branches:
+    - main
+
+jobs:
+  my_job:
+    name: validate model
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: first step
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+        
+    - name: setup python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+        
+    - name: get changed models
+      id: changes
+      run: |
+        changes=${{git diff --name-only HEAD^1 HEAD}}
+        changed_models=${{echo "$changed_files" | grep "./src/tsnkit/models/.*\.py$" | xargs -n1 basename | sed 's/\.py$//' | tr '\n' ' '}}
+        echo "models=$changed_models" >> "$GITHUB_OUTPUT"
+      
+    - name: run test
+      if: ${{steps.changed.outputs.models != ''}}
+      run: |
+        python -m src.tsnkit.test.debug ${{steps.changes.outputs.models}} -t 60
+      
+    
