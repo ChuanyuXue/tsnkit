@@ -431,6 +431,8 @@ def load_network(path: str) -> Network:
         [x for x in _node_set if _node_list.count(x) == 2]
     )  ## ES only has 2 links
     _sw_set = set(_node_set) - set(_es_set)
+    print("es_set", _es_set)
+    print("sw_set", _sw_set)
     network._nodes += [Node(x, NodeType.es) for x in _es_set]
     network._nodes += [Node(x, NodeType.sw) for x in _sw_set]
     network._nodes.sort(key=lambda x: x._id)
