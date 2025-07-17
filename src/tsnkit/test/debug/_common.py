@@ -33,16 +33,21 @@ def parse() -> argparse.Namespace:
 
     parser.add_argument("-t", type=int, default=utils.T_LIMIT, help="total timeout limit")
     parser.add_argument("-o", type=str, help="path for output report")
-    parser.add_argument("-it", type=int, default=5, help="simulation iterations")
+    parser.add_argument("--it", type=int, default=5, help="simulation iterations")
+    parser.add_argument("--subset", action="store_true", help="for quick validation")
 
     return parser.parse_args()
 
 
 def run(
         algorithms: Union[List[str], str],
-        output_path: str,
-        sim_iterations: int = 5
+        args: argparse.Namespace,
 ):
+    utils.T_LIMIT = args.t
+    if args.o is not None:
+        output_path = args.o
+    else:
+        output_path = SCRIPT_DIR + "/result/"
 
     # create a result directory if one does not exist
     if not os.path.isdir(output_path):
@@ -54,6 +59,7 @@ def run(
     algorithms = [algorithms] if isinstance(algorithms, str) else algorithms
 
     dataset = [*range(1, 17), *range(33, 49), *range(65, 81)]
+    validation = args.subset
 
     with tqdm(total=len(algorithms) * len(dataset)) as pbar:
         # header
@@ -61,6 +67,11 @@ def run(
         tqdm.write(print_format.format("time", "name", "data id", "flag", "solve_time", "total time", "total mem"))
 
         for algo_name in algorithms:
+            if args.subset:
+                if algo_name in ["jrs_nw", "ls", "smt_wa"]:
+                    dataset = [*range(1, 17)]
+                else:
+                    dataset = [257, 258, 259, 260]
             result = pd.DataFrame(
                 columns=['algorithm', 'data id', 'total time', 'total mem', 'flag', 'error', 'log'],
                 index=range(len(dataset)), dtype=object)
@@ -91,7 +102,10 @@ def run(
                     ) + "\n"
 
                 if stderr:
-                    tqdm.write(stderr.split("\n")[-2])
+                    if "warning" not in stderr:
+                        tqdm.write(stderr.split("\n")[-2])
+                        if validation:
+                            raise Exception(f"{algo_name}.py\n{stderr}")
                 if not stdout:
                     tqdm.write(f"{algo_name} not found")
                     result.iloc[i, 0] = algo_name
@@ -115,6 +129,8 @@ def run(
                     i += 1
                     continue
                 elif flag != str(utils.Result.schedulable):
+                    if validation:
+                        raise Exception(f"{algo_name} failed, task {data_id}")
                     result.iloc[i, :-1] = [algo_name, data_id, total_time, total_mem, flag, "none"]
                     tqdm.write(print_format.format(stat[0], algo_name, data_id, stat[2], stat[3], stat[4], stat[5]))
                     pbar.update(1)
@@ -123,7 +139,7 @@ def run(
 
                 # validate schedule
                 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
-                log = tas.simulation(task_path, "./", it=sim_iterations, draw_results=False)
+                log = tas.simulation(task_path, "./", it=args.it, draw_results=False)
                 tqdm.__init__ = partialmethod(tqdm.__init__, disable=False)
 
                 deadline = list(pd.read_csv(task_path)["deadline"])
@@ -132,6 +148,8 @@ def run(
                 for flow_id, flow_log in enumerate(log):
                     delay = np.mean([flow_log[1][s] - flow_log[0][s] for s in range(len(flow_log[1]))])
                     if np.isnan(delay) or delay > deadline[flow_id]:
+                        if validation:
+                            raise Exception(f"invalid schedule: {algo_name}, task {data_id}")
                         flow_errors.append(flow_id)
                         flag = "fail sim"
 
@@ -140,7 +158,7 @@ def run(
                     tqdm.write(print_format.format(stat[0], algo_name, data_id, flag, stat[3], stat[4], stat[5]))
                 else:
                     result.iloc[i, :] = [algo_name, data_id, total_time, total_mem,
-                                         flag, "failed flows: " + str(flow_errors), str(log)]
+                                         flag, "flows: " + str(flow_errors), str(log)]
                     tqdm.write(print_format.format(stat[0], algo_name, data_id, flag, stat[3], stat[4], stat[5]))
 
                 pbar.update(1)
