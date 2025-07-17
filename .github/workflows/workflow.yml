@@ -39,7 +39,12 @@ jobs:
         changes=$(git diff --name-only HEAD^1 HEAD)
         changed_models=$(echo "$changed_files" | grep "./src/tsnkit/models/.*\.py$" | xargs -n1 basename | sed 's/\.py$//' | tr '\n' ' ')
         echo "models=$changed_models" >> "$GITHUB_OUTPUT"
-      
+
+    - name: get git lfs
+      run: |
+        git lfs install
+        git lfs pull
+    
     - name: run test
       run: |
         cd src
