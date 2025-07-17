@@ -28,15 +28,12 @@ jobs:
         pip install -r requirements.txt
         pip install seaborn
 
-    - name: gurobi license
+    - name: gurobi-license
       env: 
         GRB_LICENSE_FILE: ${{secrets.GUROBI_LICENSE}}
       run: |
-        cd opt
-        cd gurobi
-        echo "${{secrets.GUROBI_LICENSE}}" > gurobi.ilc
-        cd ..
-        cd ..
+        echo "$GRB_LICENSE_FILE" > $PWD/gurobi.ilc
+        echo "grb_license_file=$PWD/gurobi.lic" >> $GITHUB_OUTPUT
         
     - name: get changed models
       id: changes
@@ -51,6 +48,8 @@ jobs:
         git lfs pull
     
     - name: run test
+      env: 
+        GRB_LICENSE_FILE: ${{steps.gurobi-license.outputs.grb_license_file}}
       run: |
         cd src
         python -m tsnkit.test.debug ${{steps.changes.outputs.models}} ls jrs_nw smt_wa --subset 
