@@ -31,7 +31,12 @@ jobs:
     - name: gurobi license
       env: 
         GRB_LICENSE_FILE: ${{secrets.GUROBI_LICENSE}}
-      run: echo "Setting up gurobi license file"
+      run: |
+        cd opt
+        cd gurobi
+        echo "${{secrets.GUROBI_LICENSE}}" > gurobi.ilc
+        cd ..
+        cd ..
         
     - name: get changed models
       id: changes
