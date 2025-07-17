@@ -4,6 +4,7 @@ on:
   pull_request: 
     branches:
     - main
+    - benchmark
 
 jobs:
   my_job:
