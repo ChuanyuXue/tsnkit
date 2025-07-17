@@ -32,8 +32,8 @@ jobs:
       env: 
         GRB_LICENSE_FILE: ${{secrets.GUROBI_LICENSE}}
       run: |
-        echo "$GRB_LICENSE_FILE" > $PWD/gurobi.lic
-        echo "grb_license_file=$PWD/gurobi.lic" >> $GITHUB_OUTPUT
+        echo "$GRB_LICENSE_FILE" > $HOME/gurobi.lic
+        echo "grb_license_file=$HOME/gurobi.lic" >> $GITHUB_OUTPUT
         
     - name: get changed models
       id: changes
@@ -52,6 +52,6 @@ jobs:
         GRB_LICENSE_FILE: ${{steps.gurobi-license.outputs.grb_license_file}}
       run: |
         cd src
-        python -m tsnkit.test.debug ${{steps.changes.outputs.models}} ls jrs_nw smt_wa --subset 
+        python -m tsnkit.test.debug ${{steps.changes.outputs.models}} jrs_nw ls smt_wa --subset 
       
     
