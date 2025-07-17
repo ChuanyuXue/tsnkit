@@ -42,6 +42,7 @@ jobs:
       
     - name: run test
       run: |
-        python -m src.tsnkit.test.debug ${{steps.changes.outputs.models}} ls jrs_nw smt_wa --subset 
+        cd src
+        python -m tsnkit.test.debug ${{steps.changes.outputs.models}} ls jrs_nw smt_wa --subset 
       
     
