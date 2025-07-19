@@ -10,17 +10,17 @@ jobs:
   my_job:
     name: validate model
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/elainehu222/cpoptimizer:latest
+      credentials:
+        username: elainehu222
+        password: ${{secrets.GHCR_TOKEN}}
 
     steps:
-    - name: first step
+    - name: checkout tsnkit
       uses: actions/checkout@v4
       with:
         fetch-depth: 2
-        
-    - name: setup python
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.10"
 
     - name: install dependencies
       run: |
@@ -38,6 +38,7 @@ jobs:
     - name: get changed models
       id: changes
       run: |
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
         changes=$(git diff --name-only HEAD^1)
         changed_models=$(echo $changes | grep "src/tsnkit/models/.*\.py$" | xargs -n1 basename | sed 's/\.py$//' | tr '\n' ' ')
         echo "models=$changed_models" >> "$GITHUB_OUTPUT"
