@@ -22,13 +22,6 @@ jobs:
       with:
         fetch-depth: 2
 
-    - name: Confirm Git repo
-      run: |
-        git config --global --add safe.directory "$GITHUB_WORKSPACE"
-        echo "Current dir: $(pwd)"
-        ls -a
-        git rev-parse --is-inside-work-tree
-
     - name: install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -45,6 +38,7 @@ jobs:
     - name: get changed models
       id: changes
       run: |
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
         changes=$(git diff --name-only HEAD^1)
         changed_models=$(echo $changes | grep "src/tsnkit/models/.*\.py$" | xargs -n1 basename | sed 's/\.py$//' | tr '\n' ' ')
         echo "models=$changed_models" >> "$GITHUB_OUTPUT"
@@ -59,6 +53,7 @@ jobs:
       env: 
         GRB_LICENSE_FILE: ${{steps.gurobi-license.outputs.grb_license_file}}
       run: |
+        cd src
         python -m tsnkit.test.debug ${{steps.changes.outputs.models}} jrs_nw ls smt_wa --subset 
       
     
