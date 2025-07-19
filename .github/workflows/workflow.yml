@@ -16,6 +16,10 @@ jobs:
         username: elainehu222
         password: ${{secrets.GHCR_TOKEN}}
 
+    defaults:
+      run:
+        working-directory: ${{github.workspace}}
+
     steps:
     - name: checkout tsnkit
       uses: actions/checkout@v4
