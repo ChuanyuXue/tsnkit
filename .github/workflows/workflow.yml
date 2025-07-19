@@ -24,6 +24,7 @@ jobs:
 
     - name: Confirm Git repo
       run: |
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
         echo "Current dir: $(pwd)"
         ls -a
         git rev-parse --is-inside-work-tree
