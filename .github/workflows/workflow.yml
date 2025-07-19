@@ -16,10 +16,6 @@ jobs:
         username: elainehu222
         password: ${{secrets.GHCR_TOKEN}}
 
-    defaults:
-      run:
-        working-directory: ${{github.workspace}}
-
     steps:
     - name: checkout tsnkit
       uses: actions/checkout@v4
@@ -42,7 +38,6 @@ jobs:
     - name: get changed models
       id: changes
       run: |
-        cd $GITHUB_WORKSPACE
         changes=$(git diff --name-only HEAD^1)
         changed_models=$(echo $changes | grep "src/tsnkit/models/.*\.py$" | xargs -n1 basename | sed 's/\.py$//' | tr '\n' ' ')
         echo "models=$changed_models" >> "$GITHUB_OUTPUT"
