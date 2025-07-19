@@ -17,7 +17,7 @@ jobs:
         password: ${{secrets.GHCR_TOKEN}}
 
     steps:
-    - name: first step
+    - name: checkout tsnkit
       uses: actions/checkout@v4
       with:
         fetch-depth: 2
@@ -45,6 +45,7 @@ jobs:
 
     - name: get git lfs
       run: |
+        cd tsnkit
         git lfs install
         git lfs pull
     
@@ -52,7 +53,7 @@ jobs:
       env: 
         GRB_LICENSE_FILE: ${{steps.gurobi-license.outputs.grb_license_file}}
       run: |
-        cd src
+        cd tsnkit\src
         python -m tsnkit.test.debug ${{steps.changes.outputs.models}} jrs_nw ls smt_wa --subset 
       
     
