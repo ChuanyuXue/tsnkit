@@ -61,7 +61,11 @@ def run(
     dataset = [*range(1, 17), *range(33, 49), *range(65, 81)]
     validation = args.subset
 
-    with tqdm(total=len(algorithms) * len(dataset)) as pbar:
+    progress_bar = len(algorithms) * len(dataset)
+    if validation:
+        progress_bar = 3 * 16 + (len(algorithms) - 3) * 4
+
+    with tqdm(total=progress_bar) as pbar:
         # header
         print_format = "| {:<13} | {:<8} | {:<8} | {:<8} | {:<10} | {:<10} | {:<10} "
         tqdm.write(print_format.format("time", "name", "data id", "flag", "solve_time", "total time", "total mem"))
