@@ -49,44 +49,47 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
         time_limit: the time limit, uint: seconds
     """
     time.sleep(1)
-    wait_time = 60  # Wait for 1 min before next killing
+    wait_time = 0.2*time_limit  # Wait before killing
     self_proc = os.getpid()
     mem_limit = mem_limit * 1024 ** 3
-    pids_killed = set()
-    pids_killed_time = {}
+    pids_int = set()
+    pids_int_time = {}
     try:
         while True:
             _current_time = time.time()
             for proc in psutil.process_iter(
                     ['pid', 'name', 'username', 'ppid', 'cpu_times', 'status']):
-                if 'python' not in proc.name() and 'cpoptimizer' not in proc.name():
-                    continue
-                if proc.ppid() != main_proc and 'cpoptimizer' not in proc.name():
-                    continue
-                if proc.pid == main_proc or proc.pid == self_proc:
-                    continue
-                if proc.pid in pids_killed and _current_time - pids_killed_time[proc.pid] < wait_time:
-                    continue
                 try:
+                    if 'python' not in proc.name() and 'cpoptimizer' not in proc.name():
+                        continue
+                    if proc.ppid() != main_proc and 'cpoptimizer' not in proc.name():
+                        continue
+                    if proc.pid == main_proc or proc.pid == self_proc:
+                        continue
+                    if proc.pid in pids_int and _current_time - pids_int_time[proc.pid] < wait_time:
+                        continue
                     mem = proc.memory_info().rss
                     start_time = proc.create_time()
                     elapse_time = _current_time - start_time
                     if elapse_time > time_limit * 1.1 or mem > mem_limit:
                         if proc.status() == psutil.STATUS_ZOMBIE or elapse_time > time_limit * 1.2 or mem > mem_limit * 1.1:
-                            kill_process(proc)
-                            if not (sys.platform == "win32" or sys.platform == "cygwin"):
+                            if not (sys.platform == "win32" or sys.platform == "cygwin") and proc.status() != psutil.STATUS_ZOMBIE:
+                                proc_time = proc.cpu_times().user
+                                queue.put([round(proc.cpu_times().user, 3), mem], block=False)
                                 sig.value += 1
+                                print_output(f"{sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
+                            kill_process(proc)
+                            continue
 
                         interrupt_process(proc)
 
-                        pids_killed.add(proc.pid)
-                        pids_killed_time[proc.pid] = _current_time
-
-                        proc_time = proc.cpu_times().user
-                        queue.put([round(proc.cpu_times().user, 3), mem])
-                        print_output("-", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
+                        pids_int.add(proc.pid)
+                        pids_int_time[proc.pid] = _current_time
 
                         if sys.platform == "win32" or sys.platform == "cygwin":
+                            proc_time = proc.cpu_times().user
+                            queue.put([round(proc.cpu_times().user, 3), mem])
+                            print_output("-", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                             sig.value += 1
 
                 except (psutil.NoSuchProcess, psutil.AccessDenied,
@@ -96,7 +99,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     pass
             time.sleep(0.5)  # check every 0.5 sec
     except KeyboardInterrupt:
-        pass
+        print("killif interrupted")
 
 
 def validate_schedule(task_path, file_num):
@@ -125,4 +128,5 @@ def run(alg, file_num: str, workers: int):
 
 def mute():
     sys.stdout = open(os.devnull, 'w')
+    sys.stderr = open(os.devnull, 'w')
     warnings.filterwarnings("ignore")

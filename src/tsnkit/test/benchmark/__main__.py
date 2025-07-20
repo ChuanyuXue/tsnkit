@@ -1,7 +1,6 @@
 import argparse
 import gc
 import os
-import signal
 import time
 
 import pandas as pd
@@ -12,7 +11,7 @@ from . import draw, killif, run, mute, print_output, str_flag
 from ... import utils
 from multiprocessing import Pool, cpu_count, Value, Process, Queue
 
-from ...models import (at, cg, cp_wa, dt, i_ilp, i_omt, jrs_mc, jrs_nw, jrs_nw_l, jrs_wa, ls, ls_pl, ls_tb, smt_fr,
+from ...models import (at, cg, cp_wa, dt, i_ilp, i_omt, jrs_mc, jrs_nw, jrs_nw_l, jrs_wa, ls, ls_pl2, ls_tb, smt_fr,
                        smt_nw, smt_pr, smt_wa)
 
 SCRIPT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -30,7 +29,7 @@ ALGO_DICT = {
     "jrs_nw_l": jrs_nw_l,
     "jrs_wa": jrs_wa,
     "ls": ls,
-    "ls_pl": ls_pl,
+    "ls_pl2": ls_pl2,
     "ls_tb": ls_tb,
     "smt_fr": smt_fr,
     "smt_nw": smt_nw,
@@ -70,7 +69,7 @@ def remove_configs(config_num: str):
 
 
 def process_num(name: str):
-    if name in ["dt", "ls", "ls_tb"]:
+    if name in ["dt", "ls", "ls_pl2", "ls_tb"]:
         return 1
     return 4
 
@@ -111,11 +110,10 @@ if __name__ == "__main__":
         print(f"------------------------------------{name}------------------------------------")
         print(algo_header.format("time", "task id", "flag", "solve_time", "total_time", "total_mem", ), flush=True)
 
-        successful = []
         a, b = ins[i].split("-")
         tasks = int(b) - int(a) + 1
 
-        signal = Value("i", 0)
+        sig = Value("i", 0)
         oom_queue = Queue()
 
         oom = Process(
@@ -124,7 +122,7 @@ if __name__ == "__main__":
                 os.getpid(),
                 process_num(name),
                 utils.T_LIMIT,
-                signal,
+                sig,
                 oom_queue,
             ),
         )
@@ -136,17 +134,15 @@ if __name__ == "__main__":
             flag = output[1]
             task_num = output[0]
             result = [name, task_num, "successful", output[2], output[3], output[4]]
-            if flag == Result.schedulable.value:
-                successful.append(int(task_num))
-                remove_configs(task_num)
-            elif flag == Result.unknown.value:
+            if flag == Result.unknown.value:
                 result[2] = "unknown"
-            else:
+            elif flag == Result.unschedulable.value or flag == Result.error.value:
                 result[2] = "infeasible"
             results.iloc[total_ins + int(task_num) - 1, :] = result
-            signal.value += 1
+            sig.value += 1
             if verbose:
-                print_output(task_num, str_flag(flag), output[2], output[3], output[4])
+                print_output(f"{task_num}, {sig.value}", str_flag(flag), output[2], output[3], output[4])   # TODO: delete
+
 
         if name in MULTIPROC:
             for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
@@ -165,13 +161,17 @@ if __name__ == "__main__":
                     )
                 p.close()
                 try:
-                    while signal.value < tasks:
+                    while sig.value < tasks:
                         time.sleep(1)
                 except KeyboardInterrupt:
                     print(f"Terminate calculation by hand.")
-                    tasks = signal.value
+                    tasks = sig.value
 
+        print("exited")
         oom.terminate()
+        oom.join(timeout=2)
+        if oom.is_alive():
+            oom.kill()
         gc.collect()
 
         # add the processes that timed out to the results dataframe
@@ -185,7 +185,6 @@ if __name__ == "__main__":
 
         results.iloc[:(total_ins + tasks), :].to_csv(f"{output_affix}results.csv", index=False)
         total_ins += tasks
-        gc.collect()
 
     results = results.iloc[0:total_ins]
     results.to_csv(f"{output_affix}results.csv", index=False)
