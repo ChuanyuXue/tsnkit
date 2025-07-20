@@ -145,8 +145,8 @@ class cp_wa:
 
     def add_delay_const(self):
         for s in self.task:
-            start = self.solver.start_of(self.phi[s][s.first_link][0])
-            end = self.solver.start_of(self.phi[s][s.last_link][-1])
+            start = self.solver.end_of(self.phi[s][s.first_link][0])
+            end = self.solver.start_of(self.phi[s][s.last_link][0])
             self.solver.add(end - start <= s.deadline)
 
     def add_frame_isolation_const(self):
