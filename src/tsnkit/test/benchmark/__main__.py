@@ -81,6 +81,14 @@ def print_result(task_num: int, result: str):
 
 
 if __name__ == "__main__":
+
+    # CHECK GUROBI VERSION  TODO: delete
+    import gurobipy as gp
+
+    print(gp.gurobi.version())
+    print(gp.gurobi.licenv())
+
+
     args = parse()
     methods = args.methods
     if methods[0] == "ALL":
