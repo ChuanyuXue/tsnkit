@@ -88,7 +88,7 @@ if __name__ == "__main__":
     ins = args.ins
     if len(ins) == 1:
         ins = [ins[0]] * len(methods)
-    utils.T_LIMIT = args.t
+    t_limit = args.t
     output_affix = args.o
 
     data_path = f"{SCRIPT_DIR}/data/"
@@ -121,7 +121,7 @@ if __name__ == "__main__":
             args=(
                 os.getpid(),
                 process_num(name),
-                utils.T_LIMIT,
+                t_limit,
                 sig,
                 oom_queue,
             ),
