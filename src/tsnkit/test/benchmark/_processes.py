@@ -54,8 +54,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
     mem_limit = mem_limit * 1024 ** 3
     pids_int = set()
     pids_int_time = {}
-    try:
-        while True:
+    while True:
             _current_time = time.time()
             for proc in psutil.process_iter(
                     ['pid', 'name', 'username', 'ppid', 'cpu_times', 'status']):
@@ -98,8 +97,6 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                 except Exception as e:
                     pass
             time.sleep(0.5)  # check every 0.5 sec
-    except KeyboardInterrupt:
-        print("killif interrupted")
 
 
 def validate_schedule(task_path, file_num):
