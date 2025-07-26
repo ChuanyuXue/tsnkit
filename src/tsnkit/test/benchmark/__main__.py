@@ -167,11 +167,7 @@ if __name__ == "__main__":
                     print(f"Terminate calculation by hand.")
                     tasks = sig.value
 
-        print("exited")
         oom.terminate()
-        oom.join(timeout=2)
-        if oom.is_alive():
-            oom.kill()
         gc.collect()
 
         # add the processes that timed out to the results dataframe
