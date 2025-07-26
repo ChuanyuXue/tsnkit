@@ -1,6 +1,7 @@
 import argparse
 import gc
 import os
+import sys
 import time
 
 import pandas as pd
@@ -88,7 +89,7 @@ if __name__ == "__main__":
     ins = args.ins
     if len(ins) == 1:
         ins = [ins[0]] * len(methods)
-    t_limit = args.t
+    utils.T_LIMIT = args.t
     output_affix = args.o
 
     data_path = f"{SCRIPT_DIR}/data/"
@@ -121,7 +122,7 @@ if __name__ == "__main__":
             args=(
                 os.getpid(),
                 process_num(name),
-                t_limit,
+                utils.T_LIMIT,
                 sig,
                 oom_queue,
             ),
@@ -167,7 +168,11 @@ if __name__ == "__main__":
                     print(f"Terminate calculation by hand.")
                     tasks = sig.value
 
+        print("exited")
         oom.terminate()
+        oom.join(timeout=2)
+        if oom.is_alive():
+            oom.kill()
         gc.collect()
 
         # add the processes that timed out to the results dataframe

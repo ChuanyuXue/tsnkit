@@ -49,7 +49,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
         time_limit: the time limit, uint: seconds
     """
     time.sleep(1)
-    wait_time = 10  # Wait for 10 sec before killing
+    wait_time = 0.2*time_limit  # Wait before killing
     self_proc = os.getpid()
     mem_limit = mem_limit * 1024 ** 3
     pids_int = set()
@@ -59,21 +59,27 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
             _current_time = time.time()
             for proc in psutil.process_iter(
                     ['pid', 'name', 'username', 'ppid', 'cpu_times', 'status']):
-                if 'python' not in proc.name() and 'cpoptimizer' not in proc.name():
-                    continue
-                if proc.ppid() != main_proc and 'cpoptimizer' not in proc.name():
-                    continue
-                if proc.pid == main_proc or proc.pid == self_proc:
-                    continue
-                if proc.pid in pids_int and _current_time - pids_int_time[proc.pid] < wait_time:
-                    continue
                 try:
+                    if 'python' not in proc.name() and 'cpoptimizer' not in proc.name():
+                        continue
+                    if proc.ppid() != main_proc and 'cpoptimizer' not in proc.name():
+                        continue
+                    if proc.pid == main_proc or proc.pid == self_proc:
+                        continue
+                    if proc.pid in pids_int and _current_time - pids_int_time[proc.pid] < wait_time:
+                        continue
                     mem = proc.memory_info().rss
                     start_time = proc.create_time()
                     elapse_time = _current_time - start_time
                     if elapse_time > time_limit * 1.1 or mem > mem_limit:
                         if proc.status() == psutil.STATUS_ZOMBIE or elapse_time > time_limit * 1.2 or mem > mem_limit * 1.1:
+                            if not (sys.platform == "win32" or sys.platform == "cygwin") and proc.status() != psutil.STATUS_ZOMBIE:
+                                proc_time = proc.cpu_times().user
+                                queue.put([round(proc.cpu_times().user, 3), mem], block=False)
+                                sig.value += 1
+                                print_output(f"{sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                             kill_process(proc)
+                            continue
 
                         interrupt_process(proc)
 
