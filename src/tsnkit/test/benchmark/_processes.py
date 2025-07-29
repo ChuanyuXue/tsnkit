@@ -67,14 +67,16 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     continue
                 if proc.pid in pids_int and _current_time - pids_int_time[proc.pid] < wait_time:
                     continue
+                if not (sys.platform == "win32" or sys.platform == "cygwin") and proc.status() == psutil.STATUS_ZOMBIE:
+                    sig.value += 1
                 mem = proc.memory_info().rss
                 start_time = proc.create_time()
                 elapse_time = _current_time - start_time
                 if elapse_time > time_limit * 1.1 or mem > mem_limit:
                     if proc.status() == psutil.STATUS_ZOMBIE or elapse_time > time_limit * 1.2 or mem > mem_limit * 1.1:
                         if not (sys.platform == "win32" or sys.platform == "cygwin"):
-                            sig.value += 1
                             if proc.status() != psutil.STATUS_ZOMBIE:
+                                sig.value += 1
                                 proc_time = proc.cpu_times().user
                                 queue.put([round(proc.cpu_times().user, 3), mem], block=False)
                                 print_output(f"{sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))

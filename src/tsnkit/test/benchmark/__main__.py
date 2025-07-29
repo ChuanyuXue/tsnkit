@@ -160,12 +160,12 @@ if __name__ == "__main__":
                         callback=store,
                     )
                 p.close()
-                # try:
-                #     while sig.value < tasks:
-                #         time.sleep(1)
-                # except KeyboardInterrupt:
-                #     print(f"Terminate calculation by hand.")
-                #     tasks = sig.value
+                try:
+                    while sig.value < tasks:
+                        time.sleep(1)
+                except KeyboardInterrupt:
+                    print(f"Terminate calculation by hand.")
+                    tasks = sig.value
 
         print("exited")
         oom.terminate()
