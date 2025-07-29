@@ -142,6 +142,7 @@ if __name__ == "__main__":
             results.iloc[total_ins + int(task_num) - 1, :] = result
             if verbose:
                 print_output(f"{task_num}", str_flag(flag), output[2], output[3], output[4])
+            sig.value += 1
 
 
         if name in MULTIPROC:
