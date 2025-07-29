@@ -74,7 +74,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     if proc.status() == psutil.STATUS_ZOMBIE or elapse_time > time_limit * 1.2 or mem > mem_limit * 1.1:
                         if not (sys.platform == "win32" or sys.platform == "cygwin") and proc.status() != psutil.STATUS_ZOMBIE:
                             proc_time = proc.cpu_times().user
-                            queue.put([round(proc.cpu_times().user, 3), mem], block=False)
+                            # queue.put([round(proc.cpu_times().user, 3), mem], block=False)
                             sig.value += 1
                             print_output(f"{sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                         kill_process(proc)
