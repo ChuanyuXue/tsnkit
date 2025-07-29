@@ -40,7 +40,7 @@ def print_output(name: str, flag: str, solve_time: float, total_time: float, tot
         flush=True)
 
 
-def killif(main_proc, mem_limit, time_limit, sig, queue):
+def killif(main_proc, mem_limit, time_limit):
     """
     Kill the process if it uses more than mem memory or more than time seconds
     Args:
@@ -89,7 +89,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                         proc_time = proc.cpu_times().user
                         # queue.put([round(proc.cpu_times().user, 3), mem])
                         print_output("-", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
-                        sig.value += 1
+                        # sig.value += 1
 
             except (psutil.NoSuchProcess, psutil.AccessDenied,
                     psutil.ZombieProcess):

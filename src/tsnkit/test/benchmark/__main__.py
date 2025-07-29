@@ -123,8 +123,8 @@ if __name__ == "__main__":
                 os.getpid(),
                 process_num(name),
                 utils.T_LIMIT,
-                sig,
-                oom_queue,
+                # sig,
+                # oom_queue,
             ),
         )
 
