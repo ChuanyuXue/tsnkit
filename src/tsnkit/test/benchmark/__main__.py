@@ -141,7 +141,7 @@ if __name__ == "__main__":
                 result[2] = "infeasible"
             results.iloc[total_ins + int(task_num) - 1, :] = result
             if verbose:
-                print_output(f"{task_num}, {sig.value}", str_flag(flag), output[2], output[3], output[4])
+                print_output(f"{task_num}", str_flag(flag), output[2], output[3], output[4])
 
 
         if name in MULTIPROC:
@@ -160,12 +160,12 @@ if __name__ == "__main__":
                         callback=store,
                     )
                 p.close()
-                try:
-                    while sig.value < tasks:
-                        time.sleep(1)
-                except KeyboardInterrupt:
-                    print(f"Terminate calculation by hand.")
-                    tasks = sig.value
+                # try:
+                #     while sig.value < tasks:
+                #         time.sleep(1)
+                # except KeyboardInterrupt:
+                #     print(f"Terminate calculation by hand.")
+                #     tasks = sig.value
 
         print("exited")
         oom.terminate()
