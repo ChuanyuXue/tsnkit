@@ -40,7 +40,7 @@ def print_output(name: str, flag: str, solve_time: float, total_time: float, tot
         flush=True)
 
 
-def killif(main_proc, mem_limit, time_limit):
+def killif(main_proc, mem_limit, time_limit, sig, queue):
     """
     Kill the process if it uses more than mem memory or more than time seconds
     Args:
@@ -72,11 +72,12 @@ def killif(main_proc, mem_limit, time_limit):
                 elapse_time = _current_time - start_time
                 if elapse_time > time_limit * 1.1 or mem > mem_limit:
                     if proc.status() == psutil.STATUS_ZOMBIE or elapse_time > time_limit * 1.2 or mem > mem_limit * 1.1:
-                        # if not (sys.platform == "win32" or sys.platform == "cygwin") and proc.status() != psutil.STATUS_ZOMBIE:
-                        #     proc_time = proc.cpu_times().user
-                        #     queue.put([round(proc.cpu_times().user, 3), mem], block=False)
-                        #     sig.value += 1
-                        #     print_output(f"{sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
+                        if not (sys.platform == "win32" or sys.platform == "cygwin"):
+                            sig.value += 1
+                            if proc.status() != psutil.STATUS_ZOMBIE:
+                                proc_time = proc.cpu_times().user
+                                queue.put([round(proc.cpu_times().user, 3), mem], block=False)
+                                print_output(f"{sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                         kill_process(proc)
                         continue
 
@@ -87,9 +88,9 @@ def killif(main_proc, mem_limit, time_limit):
 
                     if sys.platform == "win32" or sys.platform == "cygwin":
                         proc_time = proc.cpu_times().user
-                        # queue.put([round(proc.cpu_times().user, 3), mem])
+                        queue.put([round(proc.cpu_times().user, 3), mem])
                         print_output("-", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
-                        # sig.value += 1
+                        sig.value += 1
 
             except (psutil.NoSuchProcess, psutil.AccessDenied,
                     psutil.ZombieProcess):

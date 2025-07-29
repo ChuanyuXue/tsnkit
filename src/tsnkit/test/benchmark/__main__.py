@@ -123,8 +123,8 @@ if __name__ == "__main__":
                 os.getpid(),
                 process_num(name),
                 utils.T_LIMIT,
-                # sig,
-                # oom_queue,
+                sig,
+                oom_queue,
             ),
         )
 
@@ -140,9 +140,8 @@ if __name__ == "__main__":
             elif flag == Result.unschedulable.value or flag == Result.error.value:
                 result[2] = "infeasible"
             results.iloc[total_ins + int(task_num) - 1, :] = result
-            sig.value += 1
             if verbose:
-                print_output(f"{task_num}, {sig.value}", str_flag(flag), output[2], output[3], output[4])   # TODO: delete
+                print_output(f"{task_num}, {sig.value}", str_flag(flag), output[2], output[3], output[4])
 
 
         if name in MULTIPROC:
