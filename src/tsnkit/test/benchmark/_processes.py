@@ -69,6 +69,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     continue
                 if not (sys.platform == "win32" or sys.platform == "cygwin") and proc.status() == psutil.STATUS_ZOMBIE:
                     sig.value += 1
+                    print(f"status zombie {sig.value}")
                 mem = proc.memory_info().rss
                 start_time = proc.create_time()
                 elapse_time = _current_time - start_time
