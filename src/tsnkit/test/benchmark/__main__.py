@@ -124,7 +124,7 @@ if __name__ == "__main__":
                 process_num(name),
                 utils.T_LIMIT,
                 sig,
-                oom_queue,
+#                oom_queue,
             ),
         )
 
