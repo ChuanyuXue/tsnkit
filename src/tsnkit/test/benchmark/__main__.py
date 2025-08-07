@@ -159,7 +159,7 @@ if __name__ == "__main__":
                             process_num(name),
                         ),
                         callback=store,
-                    ).get(timeout=t_limit)
+                    )
                 try:
                     while sig.value < tasks:
                         time.sleep(2)
