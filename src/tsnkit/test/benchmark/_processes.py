@@ -73,20 +73,15 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                 if elapse_time > time_limit * 1.1 or mem > mem_limit:
                     if mem > mem_limit:
                         print(f"{proc.pid} mem exceeded")  # TODO: delete later
-                    if (elapse_time > time_limit * 1.2 or
-                            (mem > mem_limit and proc.pid in pids_int)):
-                        if not (sys.platform == "win32" or sys.platform == "cygwin"):
-                            if proc.status() != psutil.STATUS_ZOMBIE:
-                                sig.value += 1
-                                proc_time = proc.cpu_times().user
-                                queue.put([round(proc.cpu_times().user, 3), mem], block=False)
-                                print_output(f"killed {sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
-                        kill_process(proc)
-                        try:
-                            print(proc.status())
-                        except psutil.NoSuchProcess:
-                            print("killed successfully")
-                        continue
+                    # if (elapse_time > time_limit * 1.2 or
+                    #         (mem > mem_limit and proc.pid in pids_int)):
+                    #     if not (sys.platform == "win32" or sys.platform == "cygwin"):
+                    #         if proc.status() != psutil.STATUS_ZOMBIE:
+                    #             sig.value += 1
+                    #             proc_time = proc.cpu_times().user
+                    #             queue.put([round(proc.cpu_times().user, 3), mem], block=False)
+                    #             print_output(f"killed {sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
+                    #     kill_process(proc)
 
                     interrupt_process(proc)
 
