@@ -18,7 +18,7 @@ def kill_process(proc: psutil.Process):
     if sys.platform == "win32" or sys.platform == "cygwin":
         proc.kill()
     else:
-        proc.send_signal(signal.SIGKILL)
+        proc.send_signal(signal.SIGCHLD)
 
 
 def interrupt_process(proc: psutil.Process):

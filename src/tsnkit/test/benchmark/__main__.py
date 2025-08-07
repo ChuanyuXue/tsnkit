@@ -151,25 +151,21 @@ if __name__ == "__main__":
         else:
             with Pool(processes=cpu_count() // process_num(name), maxtasksperchild=1, initializer=mute) as p:
                 for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
-                    try:
-                        p.apply_async(
-                            run,
-                            args=(
-                                alg.benchmark,
-                                file_num,
-                                process_num(name),
-                            ),
-                            callback=store,
-                        ).get(timeout=t_limit)
-                    except Exception as e:
-                        continue
-                # try:
-                #     while sig.value < tasks:
-                #         time.sleep(2)
-                #         print(sig.value)
-                # except KeyboardInterrupt:
-                #     print(f"Terminate calculation by hand.")
-                #     tasks = sig.value
+                    p.apply_async(
+                        run,
+                        args=(
+                            alg.benchmark,
+                            file_num,
+                            process_num(name),
+                        ),
+                        callback=store,
+                    ).get(timeout=t_limit)
+                try:
+                    while sig.value < tasks:
+                        time.sleep(2)
+                except KeyboardInterrupt:
+                    print(f"Terminate calculation by hand.")
+                    tasks = sig.value
 
         print("exited")
         oom.terminate()
