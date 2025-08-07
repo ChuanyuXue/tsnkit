@@ -484,16 +484,9 @@ def load_network(path: str) -> Network:
     ## Init links
     _link_set = set()
     for i, row in net_df.iterrows():
-        try:
-            evaluated = eval(row["link"])
-            if not isinstance(evaluated, (tuple, list)) or len(evaluated) < 2:
-                raise TypeError("Not a valid sequence or not enough elements")
-            src = network.get_node(int(evaluated[0]))
-            dst = network.get_node(int(evaluated[1]))
-            if src is None or dst is None:
-                raise Exception("Node not found")
-        except (SyntaxError, TypeError, IndexError):
-            raise Exception("Network file format error")
+        evaluated = eval(row["link"])
+        src = network.get_node(int(evaluated[0]))
+        dst = network.get_node(int(evaluated[1]))
 
         link = Link(
             id=cast(int, i),
@@ -520,10 +513,7 @@ def load_network(path: str) -> Network:
 
         network._net_np[int(src)][int(dst)] = 1
 
-        if link._name in _link_set:
-            raise Exception("Link duplicated in network configure file")
-        else:
-            _link_set.add(link._name)
+        _link_set.add(link._name)
     network._net_nx = nx.DiGraph(network._net_np)
 
     ## Configure shortest path and all path
