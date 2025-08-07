@@ -170,9 +170,7 @@ if __name__ == "__main__":
 
         print("exited")
         oom.terminate()
-        oom.join(timeout=2)
-        if oom.is_alive():
-            oom.kill()
+        oom.join()
         gc.collect()
 
         # add the processes that timed out to the results dataframe
