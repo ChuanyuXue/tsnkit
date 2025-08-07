@@ -72,8 +72,6 @@ def remove_configs(config_num: str):
 def process_num(name: str):
     if name in ["dt", "ls", "ls_pl2", "ls_tb"]:
         return 1
-    if name in ["jrs_mc", "jrs_nw"]:
-            return 8
     return 4
 
 
@@ -172,7 +170,7 @@ if __name__ == "__main__":
 
         print("exited")
         oom.terminate()
-        oom.join()
+        # oom.join()
         gc.collect()
 
         # add the processes that timed out to the results dataframe
