@@ -67,8 +67,6 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     continue
                 if proc.pid in pids_int and _current_time - pids_int_time[proc.pid] < wait_time:
                     continue
-                if proc.status() == psutil.STATUS_ZOMBIE:
-                    continue
                 mem = proc.memory_info().rss
                 start_time = proc.create_time()
                 elapse_time = _current_time - start_time
@@ -84,6 +82,10 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                                 queue.put([round(proc.cpu_times().user, 3), mem], block=False)
                                 print_output(f"{sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                         kill_process(proc)
+                        try:
+                            print(proc.status())
+                        except psutil.NoSuchProcess:
+                            print("killed successfully")
                         continue
 
                     interrupt_process(proc)
