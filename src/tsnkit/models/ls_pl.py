@@ -216,7 +216,7 @@ def collision(
                 return True
     return False
 
-def topology_sort(net: Dict[utils.Link, List[utils.Link]]) -> List[Set[utils.Link]]:
+def topology_sort(net: Dict[utils.Link, List[utils.Link]]) -> List[Set[utils.Link]] | None:
     data = {k: set(v) for k, v in net.items()}
     graph = defaultdict(set)
     nodes = set()
@@ -229,7 +229,8 @@ def topology_sort(net: Dict[utils.Link, List[utils.Link]]) -> List[Set[utils.Lin
     while nodes:
         no_dep = set(n for n in nodes if not graph[n])
         if not no_dep:
-            raise ValueError("Cyclic dependencies exist")
+            # Return None to indicate cyclic dependencies exist
+            return None
         nodes.difference_update(no_dep)
         result.append(no_dep)
 
@@ -266,6 +267,13 @@ class ls_pl:
     def solve(self) -> utils.Statistics:
         self.scheduled_frame: Dict[utils.Link, Dict[utils.Stream, List]] = {}
         start_time = utils.time_log()
+        
+        # Check for cyclic dependencies
+        if self.link_dependency is None:
+            end_time = utils.time_log()
+            return utils.Statistics(
+                "-", utils.Result.unschedulable, end_time - start_time
+            )
         
         for phase in range(len(self.link_dependency)):
             if MULTI_PROC:
@@ -342,7 +350,7 @@ class ls_pl:
         config._delay = self.get_delay()
         return config
 
-    def get_link_dependency(self) -> List[Set[utils.Link]]:
+    def get_link_dependency(self) -> List[Set[utils.Link]] | None:
         ## Get link dependency
         link_dependency: Dict[utils.Link, List[utils.Link]] = {}
         for s in self.task:
