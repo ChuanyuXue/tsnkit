@@ -84,7 +84,6 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                         kill_process(proc)
 
                     interrupt_process(proc)
-                    print(f"interrupted {proc.pid}")
 
                     pids_int.add(proc.pid)
                     pids_int_time[proc.pid] = _current_time
