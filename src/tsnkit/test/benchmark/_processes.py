@@ -132,6 +132,6 @@ def run(alg, file_num: str, workers: int):
 
 
 def mute():
-    # sys.stdout = open(os.devnull, 'w')
+    sys.stdout = open(os.devnull, 'w')
     # sys.stderr = open(os.devnull, 'w')
     warnings.filterwarnings("ignore")
