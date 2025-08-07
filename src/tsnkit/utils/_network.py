@@ -410,17 +410,57 @@ class Network:
         pass
 
 
+def check_network_format(network: pd.DataFrame):
+    if network.shape[1] != 5 or network.iloc[0].name != 0:
+        raise Exception("Network file format error")
+    if network.shape[0] == 0:
+        raise Exception("Network file is empty")
+
+    nodes = set()
+    links = set()
+    for i, row in network.iterrows():
+        try:
+            _link = row["link"]
+            link = eval(_link)
+        except KeyError:
+            raise Exception("Network file error: link not found")
+        except (SyntaxError, TypeError, IndexError):
+            raise Exception(f"Network file error: link format error {_link}")
+        if not isinstance(link, (tuple, list)) or len(link) != 2:
+            raise Exception(f"Network file error: invalid link {link}")
+        if link in links:
+            raise Exception(f"Link {link} is duplicated in the network config file")
+
+        for attr in ["q_num", "rate", "t_proc", "t_prop"]:
+            try:
+                value = int(row[attr])
+                if value < 0:
+                    raise Exception(f"Network file error: {attr} cannot be negative")
+            except KeyError:
+                raise Exception(f"Network file error: {attr} not found")
+            except ValueError:
+                raise ValueError(f"Network file error: invalid {attr}, {row[attr]}")
+
+        links.add(link)
+        nodes.add(link[0])
+        nodes.add(link[1])
+
+    sorted_nodes = list(nodes)
+    sorted_nodes.sort()
+    if len(sorted_nodes) != sorted_nodes[-1]+1:
+        raise Exception("Network file error: node indexes are not successive or do not start at 0")
+
+
 def load_network(path: str) -> Network:
     network = Network()
     try:
         net_df = pd.read_csv(path)  ## link,q_num,rate,t_proc,t_prop
     except FileNotFoundError:
         raise Exception("Network file not found")
+    except pd.errors.ParserError as e:
+        raise Exception(f"Network file format error: {e}")
 
-    if net_df.shape[1] != 5:
-        raise Exception("Network file format error")
-    if net_df.shape[0] == 0:
-        raise Exception("Network file is empty")
+    check_network_format(net_df)
 
     ## Init nodes
     _node_list = list(net_df["link"].apply(lambda x: eval(x)[0])) + list(
@@ -444,16 +484,9 @@ def load_network(path: str) -> Network:
     ## Init links
     _link_set = set()
     for i, row in net_df.iterrows():
-        try:
-            evaluated = eval(row["link"])
-            if not isinstance(evaluated, (tuple, list)) or len(evaluated) < 2:
-                raise TypeError("Not a valid sequence or not enough elements")
-            src = network.get_node(int(evaluated[0]))
-            dst = network.get_node(int(evaluated[1]))
-            if src is None or dst is None:
-                raise Exception("Node not found")
-        except (SyntaxError, TypeError, IndexError):
-            raise Exception("Network file format error")
+        evaluated = eval(row["link"])
+        src = network.get_node(int(evaluated[0]))
+        dst = network.get_node(int(evaluated[1]))
 
         link = Link(
             id=cast(int, i),
@@ -480,10 +513,7 @@ def load_network(path: str) -> Network:
 
         network._net_np[int(src)][int(dst)] = 1
 
-        if link._name in _link_set:
-            raise Exception("Link duplicated in network configure file")
-        else:
-            _link_set.add(link._name)
+        _link_set.add(link._name)
     network._net_nx = nx.DiGraph(network._net_np)
 
     ## Configure shortest path and all path

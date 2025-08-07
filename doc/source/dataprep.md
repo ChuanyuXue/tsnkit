@@ -41,6 +41,13 @@ Following are the stream set and network description files as algorithm input.
 - **t_proc:** Processing time including switching fabric and ingress processing.
 - **t_prop:** Propagation delay on wire after transmission.
 
+**Nodes:**
+
+Each device is a node that has directional links to other devices. End stations (talkers/listeners) are nodes
+that have two directional links connecting it to a bridge. Each stream should begin and end at an end station node. 
+Switches (or bridges) are nodes that connect to two or more other nodes. In the stream file, the source nodes and 
+destination nodes should not be switches. 
+
 ### Output
 
 Following are the output files (gcl, offset, route, queuing assignment) from the algorithm, which can be fed into the TSN simulator or testbed. The implementation can be found in `tsnkit.utils._config.py`
