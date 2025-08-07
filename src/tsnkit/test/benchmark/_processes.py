@@ -80,7 +80,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                                 sig.value += 1
                                 proc_time = proc.cpu_times().user
                                 queue.put([round(proc.cpu_times().user, 3), mem], block=False)
-                                print_output(f"{sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
+                                print_output(f"killed {sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                         kill_process(proc)
                         try:
                             print(proc.status())
