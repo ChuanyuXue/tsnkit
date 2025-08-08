@@ -121,18 +121,20 @@ class smt_pr:
     def add_link_const(self):
         for l in self.net.links:
             for s1, s2 in self.task.get_pairs_on_link(l):
-                for k1, k2 in self.task.get_frame_index_pairs(s1, s2):
-                    self.solver.add(
-                        z3.Implies(
-                            self.n[s1][l][k1] == self.n[s2][l][k2],
-                            z3.Or(
-                                self.f[s1][l][k1][self.num_segs - 1]
-                                <= self.r[s2][l][k2][0],
-                                self.f[s2][l][k2][self.num_segs - 1]
-                                <= self.r[s1][l][k1][0],
-                            ),
+                for k1 in s1.get_frame_indexes(self.task.lcm):
+                    for k2 in s2.get_frame_indexes(self.task.lcm):
+                        # Case 1: same mode -> enforce non-overlap
+                        self.solver.add(
+                            z3.Implies(
+                                self.n[s1][l][k1] == self.n[s2][l][k2],
+                                z3.Or(
+                                    self.f[s1][l][k1][self.num_segs - 1]
+                                    <= self.r[s2][l][k2][0],
+                                    self.f[s2][l][k2][self.num_segs - 1]
+                                    <= self.r[s1][l][k1][0],
+                                ),
+                            )
                         )
-                    )
 
                     self.solver.add(
                         z3.Implies(
