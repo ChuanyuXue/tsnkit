@@ -33,7 +33,7 @@ def print_output(name: str, flag: str, solve_time: float, total_time: float, tot
         flush=True)
 
 
-def killif(main_proc, mem_limit, time_limit, sig, queue):
+def killif(main_proc, mem_limit, time_limit, sig, oom_queue, proc_queue):
     """
     Kill the process if it uses more than mem memory or more than time seconds
     Args:
@@ -62,8 +62,9 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                 elapse_time = _current_time - start_time
                 if elapse_time > time_limit * 1.1 or mem > mem_limit:
                     proc_time = proc.cpu_times().user
-                    queue.put([round(proc.cpu_times().user, 3), mem])
-                    print_output("-", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
+                    task = proc_queue.get()
+                    oom_queue.put([task, round(proc.cpu_times().user, 3), mem])
+                    print_output(task, str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                     kill_process(proc)
                     sig.value += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
@@ -88,7 +89,8 @@ def str_flag(flag):
         return str(Result.error)
 
 
-def run(alg, file_num: str, workers: int):
+def run(alg, file_num: str, workers: int, proc_queue):
+    proc_queue.put(file_num)
     path = SCRIPT_DIR + "/data/" + file_num
     stats = alg(file_num, path + "_task.csv", path + "_topo.csv", workers=workers)
 
