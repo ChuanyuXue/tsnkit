@@ -136,32 +136,61 @@ class smt_pr:
                             )
                         )
 
-                    self.solver.add(
-                        z3.Implies(
-                            z3.And(
-                                self.n[s1][l][k1] == True, self.n[s2][l][k2] == False
-                            ),
-                            z3.Or(
-                                [
-                                    z3.And(
-                                        self.r[s2][l][k2][y]
-                                        == self.f[s1][l][k1][self.num_segs - 1],
-                                        self.f[s2][l][k2][y - 1]
-                                        == self.r[s1][l][k1][0],
-                                    )
-                                    for y in range(1, self.num_segs)
-                                ]
-                                + [
-                                    z3.Or(
-                                        self.f[s1][l][k1][self.num_segs - 1]
-                                        <= self.r[s2][l][k2][0],
-                                        self.f[s2][l][k2][self.num_segs - 1]
-                                        <= self.r[s1][l][k1][0],
-                                    )
-                                ]
-                            ),
+                        # Case 2: s1 in True-mode, s2 in False-mode
+                        self.solver.add(
+                            z3.Implies(
+                                z3.And(
+                                    self.n[s1][l][k1] == True, self.n[s2][l][k2] == False
+                                ),
+                                z3.Or(
+                                    [
+                                        z3.And(
+                                            self.r[s2][l][k2][y]
+                                            == self.f[s1][l][k1][self.num_segs - 1],
+                                            self.f[s2][l][k2][y - 1]
+                                            == self.r[s1][l][k1][0],
+                                        )
+                                        for y in range(1, self.num_segs)
+                                    ]
+                                    + [
+                                        z3.Or(
+                                            self.f[s1][l][k1][self.num_segs - 1]
+                                            <= self.r[s2][l][k2][0],
+                                            self.f[s2][l][k2][self.num_segs - 1]
+                                            <= self.r[s1][l][k1][0],
+                                        )
+                                    ]
+                                ),
+                            )
                         )
-                    )
+
+                        # Case 3: s1 in False-mode, s2 in True-mode (symmetric to Case 2)
+                        self.solver.add(
+                            z3.Implies(
+                                z3.And(
+                                    self.n[s1][l][k1] == False, self.n[s2][l][k2] == True
+                                ),
+                                z3.Or(
+                                    [
+                                        z3.And(
+                                            self.r[s1][l][k1][y]
+                                            == self.f[s2][l][k2][self.num_segs - 1],
+                                            self.f[s1][l][k1][y - 1]
+                                            == self.r[s2][l][k2][0],
+                                        )
+                                        for y in range(1, self.num_segs)
+                                    ]
+                                    + [
+                                        z3.Or(
+                                            self.f[s1][l][k1][self.num_segs - 1]
+                                            <= self.r[s2][l][k2][0],
+                                            self.f[s2][l][k2][self.num_segs - 1]
+                                            <= self.r[s1][l][k1][0],
+                                        )
+                                    ]
+                                ),
+                            )
+                        )
 
     def add_segments_const(self):
         for s in self.task:
