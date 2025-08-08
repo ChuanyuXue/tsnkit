@@ -81,7 +81,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                                 queue.put([round(proc.cpu_times().user, 3), mem], block=False)
                                 print_output(f"killed {sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                                 sig.value += 1
-                        kill_process(proc)
+                                kill_process(proc)
 
                     interrupt_process(proc)
 
@@ -98,7 +98,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     psutil.ZombieProcess):
                 pass
             except Exception as e:
-                pass
+                print(e)
         time.sleep(0.5)  # check every 0.5 sec
 
 
