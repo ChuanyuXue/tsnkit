@@ -24,8 +24,6 @@ def kill_process(proc: psutil.Process):
 def interrupt_process(proc: psutil.Process):
     if sys.platform == "win32" or sys.platform == "cygwin":
         proc.terminate()
-    else:
-        proc.send_signal(signal.SIGINT)
 
 
 def print_output(name: str, flag: str, solve_time: float, total_time: float, total_mem: float):
@@ -78,11 +76,13 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     if proc.pid in pids_int:
                         if not (sys.platform == "win32" or sys.platform == "cygwin"):
                             if proc.status() != psutil.STATUS_ZOMBIE:
-                                sig.value += 1
                                 proc_time = proc.cpu_times().user
                                 queue.put([round(proc.cpu_times().user, 3), mem], block=False)
                                 print_output(f"killed {sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
+                                sig.value += 1
                         kill_process(proc)
+
+                    interrupt_process(proc)
 
                     pids_int.add(proc.pid)
                     pids_int_time[proc.pid] = _current_time
