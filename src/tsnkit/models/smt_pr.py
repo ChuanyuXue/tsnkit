@@ -37,7 +37,7 @@ def benchmark(
 
 
 class smt_pr:
-    def __init__(self, workers=1, num_segs=3) -> None:
+    def __init__(self, workers=1, num_segs=1) -> None:
         self.workers = workers
         self.num_segs = num_segs
 
