@@ -167,7 +167,6 @@ if __name__ == "__main__":
                     print(f"Terminate calculation by hand.")
                     tasks = sig.value
 
-        print("exited")
         oom.terminate()
         gc.collect()
 

@@ -24,6 +24,8 @@ def kill_process(proc: psutil.Process):
 def interrupt_process(proc: psutil.Process):
     if sys.platform == "win32" or sys.platform == "cygwin":
         proc.terminate()
+    else:
+        proc.send_signal(signal.SIGINT)
 
 
 def print_output(name: str, flag: str, solve_time: float, total_time: float, total_mem: float):
@@ -65,9 +67,8 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                     continue
                 if proc.pid in pids_int and _current_time - pids_int_time[proc.pid] < wait_time:
                     continue
-                if proc.status() == psutil.STATUS_ZOMBIE and proc.pid in pids_int:
-                    print("zombie")
-                    sig.value += 1
+                if proc.status() == psutil.STATUS_ZOMBIE:
+                    kill_process(proc)
                     continue
                 mem = proc.memory_info().rss
                 start_time = proc.create_time()
