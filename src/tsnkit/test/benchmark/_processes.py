@@ -91,6 +91,7 @@ def str_flag(flag):
 
 def run(alg, file_num: str, workers: int, proc_queue):
     proc_queue.put(file_num)
+    print(proc_queue)
     path = SCRIPT_DIR + "/data/" + file_num
     stats = alg(file_num, path + "_task.csv", path + "_topo.csv", workers=workers)
 
