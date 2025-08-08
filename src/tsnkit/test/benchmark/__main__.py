@@ -113,7 +113,6 @@ if __name__ == "__main__":
         tasks = int(b) - int(a) + 1
 
         sig = Value("i", 0)
-        proc_queue = Queue()
         oom_queue = Queue()
 
         oom = Process(
@@ -124,14 +123,12 @@ if __name__ == "__main__":
                 t_limit,
                 sig,
                 oom_queue,
-                proc_queue,
             ),
         )
 
         oom.start()
 
         def store(output, verbose=True):
-            proc_queue.get()
             # output = [task_id, result, algo_time, total_time, algo_mem, total_mem]
             flag = output[1]
             task_num = output[0]
@@ -154,7 +151,6 @@ if __name__ == "__main__":
                         alg.benchmark,
                         file_num,
                         process_num(name),
-                        proc_queue
                     ),
                     callback=store,
                 )
@@ -172,11 +168,10 @@ if __name__ == "__main__":
         for index, row in results.iloc[total_ins: total_ins+tasks, :].iterrows():
             if not row.isnull().any() or oom_queue.empty():
                 continue
-            process = oom_queue.get()  # [task, proc_time, proc_mem]
-            print(process[0]) # TODO: test
-            mem = process[2] / (1024 ** 2)
+            process = oom_queue.get()  # [proc_time, proc_mem]
+            mem = process[1] / (1024 ** 2)
             # ["name", "data_id", "flag", "solve_time", "total_time", "total_mem"]
-            results.iloc[index, :] = [name, index+1-total_ins, "unknown", process[1], process[1], round(mem, 3)]
+            results.iloc[index, :] = [name, index+1-total_ins, "unknown", process[0], process[0], round(mem, 3)]
 
         results.iloc[:(total_ins + tasks), :].to_csv(f"{output_affix}results.csv", index=False)
         total_ins += tasks
