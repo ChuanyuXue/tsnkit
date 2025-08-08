@@ -16,6 +16,53 @@ import numpy as np
 import warnings
 
 
+def check_stream_format(stream_df: pd.DataFrame):
+    if stream_df.shape[1] != 7 or stream_df.iloc[0].name != 0:
+        raise Exception("Invalid stream file format")
+    if stream_df.shape[0] == 0:
+        raise Exception("Empty stream file")
+
+    streams = set()
+    for i, row in stream_df.iterrows():
+        try:
+            _stream = row["stream"] if "stream" in row else row["id"]
+            stream = int(_stream)
+        except KeyError:
+            raise Exception("Stream file error: stream id not found")
+        except ValueError:
+            raise Exception(f"Stream file error: invalid stream id {_stream}")
+
+        if stream in streams:
+            raise Exception(f"Stream file error: stream id {stream} is duplicated")
+
+        for attr in ["src", "size", "period", "deadline", "jitter"]:
+            try:
+                value = int(row[attr])
+                if value < 0:
+                    raise Exception(f"Stream file error: {attr} cannot be negative")
+            except KeyError:
+                raise Exception(f"Stream file error: {attr} not found")
+            except ValueError:
+                raise ValueError(f"Stream file error: invalid {attr}, {row[attr]}")
+
+        try:
+            _dst = row["dst"]
+            dst = eval(_dst)
+            if not isinstance(dst, list):
+                raise TypeError
+            if len(dst) != 1:
+                raise Exception("Stream file error: Destination must be a single-element list for unicast")
+        except KeyError:
+            raise Exception(f"Stream file error: dst not found")
+        except (SyntaxError, TypeError, IndexError):
+            raise Exception(f"Stream file error: invalid dst {_dst}")
+
+        if int(row["deadline"]) > int(row["period"]) or int(row["jitter"]) > int(row["period"]):
+            raise Exception("Stream file error: deadline and jitter must be less than or equal to the period")
+
+        streams.add(stream)
+
+
 def load_stream(path: str) -> "StreamSet":
     stream_set = StreamSet()
 
@@ -23,21 +70,16 @@ def load_stream(path: str) -> "StreamSet":
         stream_df = pd.read_csv(path)  ## stream,src,dst,size,period,deadline,jitter
     except FileNotFoundError:
         raise Exception("Stream file not found")
+    except pd.errors.ParserError as e:
+        raise Exception(f"Stream file format error: {e}")
 
-    if stream_df.shape[1] != 7:
-        raise Exception("Invalid stream file format")
-    if stream_df.shape[0] == 0:
-        raise Exception("Empty stream file")
+    check_stream_format(stream_df)
 
     for i, row in stream_df.iterrows():
-        if row["dst"][0] + row["dst"][-1] != "[]":
-            raise Exception("Destination must be a single-element list for unicast")
         if "stream" in row:
             _id = row["stream"]
-        elif "id" in row:
-            _id = row["id"]
         else:
-            raise Exception("Stream id not found")
+            _id = row["id"]
 
         stream_set._streams.append(
             Stream(
