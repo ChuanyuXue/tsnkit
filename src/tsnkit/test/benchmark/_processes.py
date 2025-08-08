@@ -70,6 +70,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                 if proc.status() == psutil.STATUS_ZOMBIE and proc.pid in pids_int:
                     print("zombie")
                     sig.value += 1
+                    continue
                 mem = proc.memory_info().rss
                 start_time = proc.create_time()
                 elapse_time = _current_time - start_time
