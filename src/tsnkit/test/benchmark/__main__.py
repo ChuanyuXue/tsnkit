@@ -151,19 +151,15 @@ if __name__ == "__main__":
         else:
             with Pool(processes=cpu_count() // process_num(name), maxtasksperchild=1, initializer=mute) as p:
                 for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
-                    try:
-                        p.apply_async(
-                            run,
-                            args=(
-                                alg.benchmark,
-                                file_num,
-                                process_num(name),
-                            ),
-                            callback=store,
-                        ).get(timeout=t_limit)
-                    except Exception as e:
-                        print("timed out")
-                        sig.value += 1
+                    p.apply_async(
+                        run,
+                        args=(
+                            alg.benchmark,
+                            file_num,
+                            process_num(name),
+                        ),
+                        callback=store,
+                    )
                 try:
                     while sig.value < tasks:
                         time.sleep(1)

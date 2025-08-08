@@ -49,7 +49,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
         time_limit: the time limit, uint: seconds
     """
     time.sleep(1)
-    wait_time = 0.2*time_limit  # Wait before killing
+    wait_time = 60  # Wait before killing
     self_proc = os.getpid()
     mem_limit = mem_limit * 1024 ** 3
     pids_int = set()
