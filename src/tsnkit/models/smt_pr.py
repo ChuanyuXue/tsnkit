@@ -271,8 +271,8 @@ class smt_pr:
                         [
                             l,
                             queue,
-                            start + k * s.period,
-                            end + k * s.period,
+                            start,
+                            end,
                             self.task.lcm,
                         ]
                     )
@@ -282,13 +282,15 @@ class smt_pr:
         release = []
         for s in self.task:
             for k in s.get_frame_indexes(self.task.lcm):
+                absolute_time = self.model_output[
+                    self.r[s][s.first_link][k][0]
+                ].as_long()  # type: ignore
+                relative_time = absolute_time % s.period
                 release.append(
                     [
                         s,
                         k,
-                        self.model_output[
-                            self.r[s][s.first_link][k][0]
-                        ].as_long(),  # type: ignore
+                        relative_time,
                     ]
                 )  # type: ignore
         return utils.Release(release)
