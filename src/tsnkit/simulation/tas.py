@@ -133,11 +133,12 @@ def simulation(
     for link in GCL:
         GCL[link] = sorted(GCL[link], key=lambda x: x[0], reverse=False)
 
-    for link in GCL:
-        temp = GCL[link]
-        for i, row in enumerate(temp[:-1]):  # type: ignore
-            if row[1] > temp[i + 1][0]:
-                print("overlap", link, row, temp[i + 1])
+    if verbose:
+        for link in GCL:
+            temp = GCL[link]
+            for i, row in enumerate(temp[:-1]):  # type: ignore
+                if row[1] > temp[i + 1][0]:
+                    print("overlap", link, row, temp[i + 1])
 
     ROUTE: Dict[int, Dict[int, List[int]]] = {}  ## flow -> link -> [link]
     SRC = {}
