@@ -163,6 +163,7 @@ if __name__ == "__main__":
                 try:
                     while sig.value < tasks:
                         time.sleep(1)
+                        print(sig.value)
                 except KeyboardInterrupt:
                     print(f"Terminate calculation by hand.")
                     tasks = sig.value

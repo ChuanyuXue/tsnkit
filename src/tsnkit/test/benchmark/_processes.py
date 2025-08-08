@@ -84,7 +84,7 @@ def killif(main_proc, mem_limit, time_limit, sig, queue):
                                 print_output(f"killed {sig.value}", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                         kill_process(proc)
 
-                    interrupt_process(proc)
+                    # interrupt_process(proc)
 
                     pids_int.add(proc.pid)
                     pids_int_time[proc.pid] = _current_time
