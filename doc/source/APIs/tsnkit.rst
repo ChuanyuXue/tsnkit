@@ -7,9 +7,9 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   tsnkit.models
+   tsnkit.algorithms
    tsnkit.simulation
-   tsnkit.utils
+   tsnkit.core
 
 Module contents
 ---------------

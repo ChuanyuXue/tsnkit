@@ -40,10 +40,10 @@ Follow these steps for a basic use case:
 2. **Run the Scheduling Algorithm:** Execute the scheduling algorithm using the generated input:
 
     ```
-    python3 -m tsnkit.models.ls 1_task.csv 1_topo.csv 
+    python3 -m tsnkit.algorithms.ls 1_task.csv 1_topo.csv 
     ``` 
 
-    Here, `models.ls`` represents one of the available scheduling algorithms. For more options, see [section algorithms](schedule.md). The output log displays results, execution time (in seconds), and memory usage (in KB):
+    Here, `algorithms.ls`` represents one of the available scheduling algorithms. For more options, see [section algorithms](schedule.md). The output log displays results, execution time (in seconds), and memory usage (in KB):
 
 
     ```

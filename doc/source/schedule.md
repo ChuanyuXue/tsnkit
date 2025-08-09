@@ -12,10 +12,10 @@ Created:  2023-11-28T20:57:28.080Z
 Currently, the following scheduling algorithms are implemented in `tsnkit`. You can use them by running 
 
 ```
-## python3 -m tsnkit.models.<algorithm> <task_file> <topo_file>
+## python3 -m tsnkit.algorithms.<algorithm> <task_file> <topo_file>
 ## For example:
 
-python3 -m tsnkit.models.smt_wa ./task.csv ./topo.csv
+python3 -m tsnkit.algorithms.smt_wa ./task.csv ./topo.csv
 ```
 
 
@@ -45,7 +45,7 @@ The detailed description of each algorithm and their corresponding system model 
 ## Contribution
 
 ### Contributing new algorithms
-It is very welcome to contribute new algorithms to tsnkit. To do so, you need to create a new class in `tsnkit.models` with a new `.py` file that implements the interface class `_Method`. The full description can be found in `tsnkit.models.__init__.py` file. You can refer the implementation of other algorithms in `tsnkit.models` folder.
+It is very welcome to contribute new algorithms to tsnkit. To do so, you need to create a new class in `tsnkit.algorithms` with a new `.py` file that implements the interface class `_Method`. The full description can be found in `tsnkit.algorithms.__init__.py` file. You can refer the implementation of other algorithms in `tsnkit.algorithms` folder.
 
 ```
 class _Method(ABC):
@@ -67,6 +67,6 @@ We use [github flow](https://homes.cs.washington.edu/~mernst/advice/github-pull-
 
 ### Coding style:
 
-- Avoid directly loading algorithm input files. Instead, utilize the `load_stream` and `load_network` functions provided by `tsnkit.utils`. These functions are essential as they perform checks on the input file format and ensure the integrity and fairness of benchmarking results. It is also recommended to use the `Stream` and `Network` data structure.
+- Avoid directly loading algorithm input files. Instead, utilize the `load_stream` and `load_network` functions provided by `tsnkit.core`. These functions are essential as they perform checks on the input file format and ensure the integrity and fairness of benchmarking results. It is also recommended to use the `Stream` and `Network` data structure.
 - It is crucial to implement the benchmark entry function in your code. You may replicate this function from existing model files, ensuring to update the class name appropriately to fit your model.
 - This project follows *PEP 484* type hints. Please make sure all the functions are annotated with type hints and pass the type check. [Mypy](https://mypy.readthedocs.io/en/stable/) static type checker is recommended during development process. 

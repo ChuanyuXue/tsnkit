@@ -40,7 +40,7 @@ pip install -U tsnkit
 **Testing:**
 
 ```
-python3 -m tsnkit.models.[METHOD] [STREAM PATH] [NETWORK PATH]
+python3 -m tsnkit.algorithms.[METHOD] [STREAM PATH] [NETWORK PATH]
 ```
 **Reproducing benchmark paper results:**
 
@@ -53,9 +53,9 @@ python3 -m tsnkit.models.[METHOD] [STREAM PATH] [NETWORK PATH]
 **Code structure:**
 
 
-- **`src/tsnkit/models`**: Inplementations of all supported scheduling methods.
-- **`src/tsnkit/simulation`**: TSN simulator to validate the scheduling output.
-- **`src/tsnkit/utils`**: Data structures and helper functions.
+- **`tsnkit/algorithms`**: Inplementations of all supported scheduling methods.
+- **`tsnkit/simulation`**: TSN simulator to validate the scheduling output.
+- **`tsnkit/core`**: Data structures and helper functions.
 
 
 ## Related projects:
@@ -67,4 +67,4 @@ python3 -m tsnkit.models.[METHOD] [STREAM PATH] [NETWORK PATH]
 
 Contributions are welcome! Feel free to add your own scheduling algorithm in this toolkit. And contact me to update your new scheduling method into our benchmark paper!
 
-*Refer to `src/tsnkit/models/__init__.py` to implement the required interface and benchmark entrance.*
+*Refer to `tsnkit/algorithms/__init__.py` to implement the required interface and benchmark entrance.*
