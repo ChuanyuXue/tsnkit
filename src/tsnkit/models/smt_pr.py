@@ -37,7 +37,7 @@ def benchmark(
 
 
 class smt_pr:
-    def __init__(self, workers=1, num_segs=3) -> None:
+    def __init__(self, workers=1, num_segs=1) -> None:
         self.workers = workers
         self.num_segs = num_segs
 
@@ -121,45 +121,76 @@ class smt_pr:
     def add_link_const(self):
         for l in self.net.links:
             for s1, s2 in self.task.get_pairs_on_link(l):
-                for k1, k2 in self.task.get_frame_index_pairs(s1, s2):
-                    self.solver.add(
-                        z3.Implies(
-                            self.n[s1][l][k1] == self.n[s2][l][k2],
-                            z3.Or(
-                                self.f[s1][l][k1][self.num_segs - 1]
-                                <= self.r[s2][l][k2][0],
-                                self.f[s2][l][k2][self.num_segs - 1]
-                                <= self.r[s1][l][k1][0],
-                            ),
+                for k1 in s1.get_frame_indexes(self.task.lcm):
+                    for k2 in s2.get_frame_indexes(self.task.lcm):
+                        # Case 1: same mode -> enforce non-overlap
+                        self.solver.add(
+                            z3.Implies(
+                                self.n[s1][l][k1] == self.n[s2][l][k2],
+                                z3.Or(
+                                    self.f[s1][l][k1][self.num_segs - 1]
+                                    <= self.r[s2][l][k2][0],
+                                    self.f[s2][l][k2][self.num_segs - 1]
+                                    <= self.r[s1][l][k1][0],
+                                ),
+                            )
                         )
-                    )
 
-                    self.solver.add(
-                        z3.Implies(
-                            z3.And(
-                                self.n[s1][l][k1] == True, self.n[s2][l][k2] == False
-                            ),
-                            z3.Or(
-                                [
-                                    z3.And(
-                                        self.r[s2][l][k2][y]
-                                        == self.f[s1][l][k1][self.num_segs - 1],
-                                        self.f[s2][l][k2][y - 1]
-                                        == self.r[s1][l][k1][0],
-                                    )
-                                    for y in range(1, self.num_segs)
-                                ]
-                                + [
-                                    z3.Or(
-                                        self.f[s1][l][k1][self.num_segs - 1]
-                                        <= self.r[s2][l][k2][0],
-                                        self.f[s2][l][k2][self.num_segs - 1]
-                                        <= self.r[s1][l][k1][0],
-                                    )
-                                ]
-                            ),
+                        # Case 2: s1 in True-mode, s2 in False-mode
+                        self.solver.add(
+                            z3.Implies(
+                                z3.And(
+                                    self.n[s1][l][k1] == True, self.n[s2][l][k2] == False
+                                ),
+                                z3.Or(
+                                    [
+                                        z3.And(
+                                            self.r[s2][l][k2][y]
+                                            == self.f[s1][l][k1][self.num_segs - 1],
+                                            self.f[s2][l][k2][y - 1]
+                                            == self.r[s1][l][k1][0],
+                                        )
+                                        for y in range(1, self.num_segs)
+                                    ]
+                                    + [
+                                        z3.Or(
+                                            self.f[s1][l][k1][self.num_segs - 1]
+                                            <= self.r[s2][l][k2][0],
+                                            self.f[s2][l][k2][self.num_segs - 1]
+                                            <= self.r[s1][l][k1][0],
+                                        )
+                                    ]
+                                ),
+                            )
                         )
-                    )
+
+                        # Case 3: s1 in False-mode, s2 in True-mode (symmetric to Case 2)
+                        self.solver.add(
+                            z3.Implies(
+                                z3.And(
+                                    self.n[s1][l][k1] == False, self.n[s2][l][k2] == True
+                                ),
+                                z3.Or(
+                                    [
+                                        z3.And(
+                                            self.r[s1][l][k1][y]
+                                            == self.f[s2][l][k2][self.num_segs - 1],
+                                            self.f[s1][l][k1][y - 1]
+                                            == self.r[s2][l][k2][0],
+                                        )
+                                        for y in range(1, self.num_segs)
+                                    ]
+                                    + [
+                                        z3.Or(
+                                            self.f[s1][l][k1][self.num_segs - 1]
+                                            <= self.r[s2][l][k2][0],
+                                            self.f[s2][l][k2][self.num_segs - 1]
+                                            <= self.r[s1][l][k1][0],
+                                        )
+                                    ]
+                                ),
+                            )
+                        )
 
     def add_segments_const(self):
         for s in self.task:
@@ -240,8 +271,8 @@ class smt_pr:
                         [
                             l,
                             queue,
-                            start + k * s.period,
-                            end + k * s.period,
+                            start,
+                            end,
                             self.task.lcm,
                         ]
                     )
@@ -251,13 +282,15 @@ class smt_pr:
         release = []
         for s in self.task:
             for k in s.get_frame_indexes(self.task.lcm):
+                absolute_time = self.model_output[
+                    self.r[s][s.first_link][k][0]
+                ].as_long()  # type: ignore
+                relative_time = absolute_time % s.period
                 release.append(
                     [
                         s,
                         k,
-                        self.model_output[
-                            self.r[s][s.first_link][k][0]
-                        ].as_long(),  # type: ignore
+                        relative_time,
                     ]
                 )  # type: ignore
         return utils.Release(release)
