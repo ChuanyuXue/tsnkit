@@ -10,7 +10,7 @@ from ...utils import Result
 from . import draw, killif, run, mute, print_output, str_flag
 from multiprocessing import Pool, cpu_count, Value, Process, Queue
 
-from ...models import (at, cg, cp_wa, dt, i_ilp, i_omt, jrs_mc, jrs_nw, jrs_nw_l, jrs_wa, ls, ls_pl2, ls_tb, smt_fr,
+from ...models import (at, cg, cp_wa, dt, i_ilp, i_omt, jrs_mc, jrs_nw, jrs_nw_l, jrs_wa, ls, ls_pl, ls_tb, smt_fr,
                        smt_nw, smt_pr, smt_wa)
 
 SCRIPT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -28,15 +28,13 @@ ALGO_DICT = {
     "jrs_nw_l": jrs_nw_l,
     "jrs_wa": jrs_wa,
     "ls": ls,
-    "ls_pl": ls_pl2,
+    "ls_pl": ls_pl,
     "ls_tb": ls_tb,
     "smt_fr": smt_fr,
     "smt_nw": smt_nw,
     "smt_pr": smt_pr,
     "smt_wa": smt_wa
 }
-
-# MULTIPROC = ["ls_pl"]  # TODO: make multiproc compatible with ls_pl
 
 
 def parse():
