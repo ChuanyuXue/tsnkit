@@ -100,7 +100,7 @@ class smt_fr:
         config.queue = self.get_queue_assignment()
         config.route = self.get_route()
         config._delay = self.get_delay()
-        # config._size = self.get_size()
+        config._size = self.get_size()
         return config
 
     def get_delay_perhop(self) -> DelayDict:
