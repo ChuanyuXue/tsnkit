@@ -34,12 +34,12 @@ jobs:
         echo "$GRB_LICENSE_FILE" > $HOME/gurobi.lic
         echo "grb_license_file=$HOME/gurobi.lic" >> $GITHUB_OUTPUT
         
-    - name: get changed models
+    - name: get changed algorithms
       id: changes
       run: |
         git config --global --add safe.directory "$GITHUB_WORKSPACE"
         changes=$(git diff --name-only HEAD^1)
-        changed_models=$(echo $changes | grep "src/tsnkit/models/.*\.py$" | xargs -n1 basename | sed 's/\.py$//' | tr '\n' ' ')
+        changed_models=$(echo $changes | grep "tsnkit/algorithms/.*\.py$" | xargs -n1 basename | sed 's/\.py$//' | tr '\n' ' ')
         echo "models=$changed_models" >> "$GITHUB_OUTPUT"
         echo "$changed_models"
 
@@ -52,7 +52,6 @@ jobs:
       env: 
         GRB_LICENSE_FILE: ${{steps.gurobi-license.outputs.grb_license_file}}
       run: |
-        cd src
         python -m tsnkit.test.debug ${{steps.changes.outputs.models}} jrs_nw ls smt_wa --subset 
       
     
