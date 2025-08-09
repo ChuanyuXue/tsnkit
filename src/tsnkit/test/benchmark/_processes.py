@@ -64,8 +64,8 @@ def killif(main_proc, mem_limit, time_limit, sig, oom_queue):
                 if elapse_time > time_limit * 1.1 or mem > mem_limit:
                     proc_time = proc.cpu_times().user
                     oom_queue.put([round(proc.cpu_times().user, 3), mem])
-                    print_output("-", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                     kill_process(proc)
+                    print_output("-", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                     sig.value += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
