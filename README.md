@@ -61,6 +61,7 @@ python3 -m tsnkit.models.[METHOD] [STREAM PATH] [NETWORK PATH]
 ## Related projects:
 
 - [OMNeT_TSNkit](https://github.com/deepsea52418/OMNeT_TSNkit): Integrating TSNkit into OMNeT++ for simulation.
+- [VisTSN](https://github.com/AmyangXYZ/VisTSN): Displaying TSN real-world testbed status when TSNKit results applies.
 
 ## Contribute
 

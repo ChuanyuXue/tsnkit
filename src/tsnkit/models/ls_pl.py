@@ -5,14 +5,13 @@ Desc: description
 Created:  2023-11-25T22:07:33.985Z
 """
 
+MULTI_PROC = False  # Set to False for synchronous execution
 
 from collections import defaultdict
-import copy
 import multiprocessing
-from multiprocessing.managers import DictProxy
 import time
 import traceback
-from typing import Any, Dict, List, Set, Union
+from typing import Any, Dict, List, Set
 from .. import utils
 
 
@@ -55,15 +54,15 @@ def merge_dict(dict1, dict2):
 def schedule_and_update(
     l: utils.Link,
     sched_f: Dict[utils.Link, Dict[utils.Stream, List]],
-    result: DictProxy,
+    result: Dict[utils.Link, Dict[utils.Stream, List]],
     l2f: Dict[utils.Link, List[utils.Stream]],
     task: utils.StreamSet,
 ):
     sched_f, flag = schedule_link(l, sched_f, l2f, task)
     if flag == 0:
-        result[l._id] = None
+        result[l] = None # type: ignore
     else:
-        result[l._id] = sched_f
+        result[l] = sched_f # type: ignore
 
 
 def schedule_link(
@@ -72,7 +71,6 @@ def schedule_link(
     l2f: Dict[utils.Link, List[utils.Stream]],
     task: utils.StreamSet,
 ):
-    sched_f = copy.deepcopy(sched_f)
     ## flag: Three cases. Refer to the paper for details
     flag = 3
     for s in l2f[l]:
@@ -81,7 +79,8 @@ def schedule_link(
             offset = s.deadline - s.get_t_trans(l)
         else:
             offset = min(
-                sched_f[next_l][s][1] - s.get_t_trans(l) - next_l.t_proc, s.deadline - s.get_t_trans(l)  # type: ignore
+                sched_f[next_l][s][1] - s.get_t_trans(l) - next_l.t_proc,  # type: ignore
+                s.deadline - s.get_t_trans(l)  # type: ignore
             )
 
         while flag:
@@ -94,14 +93,14 @@ def schedule_link(
 
             for s, s_j, o_i, on_i, o_j, on_j in collision_set:
                 if order1(s, s_j, o_i, on_i, o_j, on_j, task):  # type: ignore
-                    if task.queues[s] == 8:  # type: ignore
+                    if task.queues[s] == 7:  # type: ignore
                         flag = 1
                         break
                     else:
                         flag = 2
                         break
                 if order2(s, s_j, o_i, on_i, o_j, on_j, task):
-                    if task.queues[s] == 8:  # type: ignore
+                    if task.queues[s] == 7:  # type: ignore
                         flag = 0
                         break
                     else:
@@ -137,7 +136,7 @@ def order1(
     task: utils.StreamSet,
 ):
     for u, v in task.get_frame_index_pairs(i, j):
-        if (o_j + v * j.period < o_i + u * i.period) and (
+        if (o_j + v * j.period + j.t_trans < o_i + u * i.period + i.t_trans) and (
             on_j + v * j.period > on_i + u * i.period
         ):
             return True
@@ -154,7 +153,7 @@ def order2(
     task: utils.StreamSet,
 ):
     for u, v in task.get_frame_index_pairs(i, j):
-        if (o_i + u * i.period < o_j + v * j.period) and (
+        if (o_i + u * i.period + i.t_trans < o_j + v * j.period + j.t_trans) and (
             on_i + u * i.period > on_j + v * j.period
         ):
             return True
@@ -172,31 +171,28 @@ def get_potential_violate(
     next_l = s.get_next_link(l)
     if next_l is None:
         return violate_set
-    q_i = task.queues[s]  # type: ignore
-    o_i = offset
-    on_i = sched_f[next_l][s][1]  # type: ignore
 
-    for next_j in sched_f:
-        if next_l != next_j or l not in sched_f:
+    next_j = next_l
+    for s_j in sched_f[next_j]:
+        if s_j == s:
             continue
-        for s_j in sched_f[next_j]:
-            if s_j == s:
-                continue
-            q_j = task.queues[s_j]  # type: ignore
-            if q_i != q_j:
-                continue
-            l_j = s_j.get_prev_link(next_l)
-            if l_j is None:
-                continue
-            if l_j not in sched_f:
-                continue
-            if s_j not in sched_f[l_j]:
-                continue
 
-            o_j = sched_f[l_j][s_j][1]
-            on_j = sched_f[l_j][s_j][1]
+        l_j = s_j.get_prev_link(next_j)
+        if l_j is None or l_j not in sched_f or s_j not in sched_f[l_j]:
+            continue
 
-            violate_set.append([s, s_j, o_i, on_i, o_j, on_j])
+        on_i = sched_f[next_l][s][1]  # type: ignore
+        on_j = sched_f[next_j][s_j][1]  # type: ignore
+
+        o_i = offset
+        o_j = sched_f[l_j][s_j][1]  # type: ignore
+
+        qn_i = sched_f[next_l][s][0]  # type: ignore
+        qn_j = sched_f[next_j][s_j][0]  # type: ignore
+        if qn_i != qn_j:
+            continue
+
+        violate_set.append([s, s_j, o_i, on_i, o_j, on_j])
     return violate_set
 
 
@@ -220,8 +216,7 @@ def collision(
                 return True
     return False
 
-
-def topology_sort(net: Dict[utils.Link, List[utils.Link]]) -> List[Set[utils.Link]]:
+def topology_sort(net: Dict[utils.Link, List[utils.Link]]) -> List[Set[utils.Link]] | None:
     data = {k: set(v) for k, v in net.items()}
     graph = defaultdict(set)
     nodes = set()
@@ -234,7 +229,8 @@ def topology_sort(net: Dict[utils.Link, List[utils.Link]]) -> List[Set[utils.Lin
     while nodes:
         no_dep = set(n for n in nodes if not graph[n])
         if not no_dep:
-            raise ValueError("Cyclic dependencies exist")
+            # Return None to indicate cyclic dependencies exist
+            return None
         nodes.difference_update(no_dep)
         result.append(no_dep)
 
@@ -271,48 +267,77 @@ class ls_pl:
     def solve(self) -> utils.Statistics:
         self.scheduled_frame: Dict[utils.Link, Dict[utils.Stream, List]] = {}
         start_time = utils.time_log()
+        
+        # Check for cyclic dependencies
+        if self.link_dependency is None:
+            end_time = utils.time_log()
+            return utils.Statistics(
+                "-", utils.Result.unschedulable, end_time - start_time
+            )
+        
         for phase in range(len(self.link_dependency)):
-            with multiprocessing.Manager() as manager:
-                result_dict = manager.dict()
-                processes: List[multiprocessing.Process] = []
+            if MULTI_PROC:
+                # Asynchronous multiprocessing version
+                with multiprocessing.Manager() as manager:
+                    result_dict = manager.dict()
+                    processes: List[multiprocessing.Process] = []
 
+                    for link in self.link_dependency[phase]:
+                        while len(processes) >= self.workers:
+                            for p in processes:
+                                if not p.is_alive():
+                                    p.join()
+                                    processes.remove(p)
+                            time.sleep(0.01)
+
+                        ## [TODO]: Start a new processs
+                        p = multiprocessing.Process(
+                            target=schedule_and_update,
+                            args=(
+                                link,
+                                self.scheduled_frame,
+                                result_dict,
+                                self._link_to_flow,
+                                self.task,
+                            ),
+                        )
+                        p.start()
+                        processes.append(p)
+
+                    for p in processes:
+                        p.join()
+
+                    end_time = utils.time_log()
+                    for l, sched_f in result_dict.items():
+                        if sched_f is None:
+                            return utils.Statistics(
+                                "-", utils.Result.unschedulable, end_time - start_time
+                            )
+                        self.scheduled_frame = merge_dict(self.scheduled_frame, sched_f)
+            else:
+                # Synchronous version
+                sync_result_dict: Dict[utils.Link, Dict[utils.Stream, List]] = {}
                 for link in self.link_dependency[phase]:
-                    while len(processes) >= self.workers:
-                        for p in processes:
-                            if not p.is_alive():
-                                p.join()
-                                processes.remove(p)
-                        time.sleep(0.1)
-
-                    ## [TODO]: Start a new processs
-                    p = multiprocessing.Process(
-                        target=schedule_and_update,
-                        args=(
-                            link,
-                            copy.deepcopy(self.scheduled_frame),
-                            result_dict,
-                            copy.deepcopy(self._link_to_flow),
-                            copy.deepcopy(self.task),
-                        ),
+                    schedule_and_update(
+                        link, 
+                        self.scheduled_frame, 
+                        sync_result_dict, 
+                        self._link_to_flow,
+                        self.task
                     )
-                    p.start()
-                    processes.append(p)
-
-                for p in processes:
-                    p.join()
-
+                
                 end_time = utils.time_log()
-                for l, sched_f in result_dict.items():
+                for l, sched_f in sync_result_dict.items():
                     if sched_f is None:
                         return utils.Statistics(
                             "-", utils.Result.unschedulable, end_time - start_time
                         )
                     self.scheduled_frame = merge_dict(self.scheduled_frame, sched_f)
 
-                if end_time - start_time > utils.T_LIMIT:
-                    return utils.Statistics(
-                        "-", utils.Result.unknown, end_time - start_time
-                    )
+            if end_time - start_time > utils.T_LIMIT:
+                return utils.Statistics(
+                    "-", utils.Result.unknown, end_time - start_time
+                )
         run_time = utils.time_log() - start_time
         return utils.Statistics("-", utils.Result.schedulable, run_time)
 
@@ -325,7 +350,7 @@ class ls_pl:
         config._delay = self.get_delay()
         return config
 
-    def get_link_dependency(self) -> List[Set[utils.Link]]:
+    def get_link_dependency(self) -> List[Set[utils.Link]] | None:
         ## Get link dependency
         link_dependency: Dict[utils.Link, List[utils.Link]] = {}
         for s in self.task:
