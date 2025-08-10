@@ -1,7 +1,6 @@
 import argparse
 import gc
 import os
-import signal
 import time
 
 import pandas as pd
@@ -9,7 +8,6 @@ import numpy as np
 
 from ...utils import Result
 from . import draw, killif, run, mute, print_output, str_flag
-from ... import utils
 from multiprocessing import Pool, cpu_count, Value, Process, Queue
 
 from ...models import (at, cg, cp_wa, dt, i_ilp, i_omt, jrs_mc, jrs_nw, jrs_nw_l, jrs_wa, ls, ls_pl, ls_tb, smt_fr,
@@ -37,8 +35,6 @@ ALGO_DICT = {
     "smt_pr": smt_pr,
     "smt_wa": smt_wa
 }
-
-MULTIPROC = ["ls_pl"]
 
 
 def parse():
@@ -70,7 +66,7 @@ def remove_configs(config_num: str):
 
 
 def process_num(name: str):
-    if name in ["dt", "ls", "ls_tb"]:
+    if name in ["dt", "ls", "ls_pl", "ls_tb"]:
         return 1
     return 4
 
@@ -89,7 +85,7 @@ if __name__ == "__main__":
     ins = args.ins
     if len(ins) == 1:
         ins = [ins[0]] * len(methods)
-    utils.T_LIMIT = args.t
+    t_limit = args.t
     output_affix = args.o
 
     data_path = f"{SCRIPT_DIR}/data/"
@@ -111,11 +107,10 @@ if __name__ == "__main__":
         print(f"------------------------------------{name}------------------------------------")
         print(algo_header.format("time", "task id", "flag", "solve_time", "total_time", "total_mem", ), flush=True)
 
-        successful = []
         a, b = ins[i].split("-")
         tasks = int(b) - int(a) + 1
 
-        signal = Value("i", 0)
+        sig = Value("i", 0)
         oom_queue = Queue()
 
         oom = Process(
@@ -123,8 +118,8 @@ if __name__ == "__main__":
             args=(
                 os.getpid(),
                 process_num(name),
-                utils.T_LIMIT,
-                signal,
+                t_limit,
+                sig,
                 oom_queue,
             ),
         )
@@ -136,40 +131,33 @@ if __name__ == "__main__":
             flag = output[1]
             task_num = output[0]
             result = [name, task_num, "successful", output[2], output[3], output[4]]
-            if flag == Result.schedulable.value:
-                successful.append(int(task_num))
-                remove_configs(task_num)
-            elif flag == Result.unknown.value:
+            if flag == Result.unknown.value:
                 result[2] = "unknown"
-            else:
+            elif flag == Result.unschedulable.value or flag == Result.error.value:
                 result[2] = "infeasible"
             results.iloc[total_ins + int(task_num) - 1, :] = result
-            signal.value += 1
             if verbose:
-                print_output(task_num, str_flag(flag), output[2], output[3], output[4])
+                print_output(f"{task_num}", str_flag(flag), output[2], output[3], output[4])
+            sig.value += 1
 
-        if name in MULTIPROC:
+
+        with Pool(processes=cpu_count() // process_num(name), maxtasksperchild=1, initializer=mute) as p:
             for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
-                store(run(alg.benchmark, file_num, process_num(name)), verbose=False)
-        else:
-            with Pool(processes=cpu_count() // process_num(name), maxtasksperchild=1, initializer=mute) as p:
-                for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
-                    p.apply_async(
-                        run,
-                        args=(
-                            alg.benchmark,
-                            file_num,
-                            process_num(name),
-                        ),
-                        callback=store,
-                    )
-                p.close()
-                try:
-                    while signal.value < tasks:
-                        time.sleep(1)
-                except KeyboardInterrupt:
-                    print(f"Terminate calculation by hand.")
-                    tasks = signal.value
+                p.apply_async(
+                    run,
+                    args=(
+                        alg.benchmark,
+                        file_num,
+                        process_num(name),
+                    ),
+                    callback=store,
+                )
+            try:
+                while sig.value < tasks:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                print(f"Terminate calculation by hand.")
+                tasks = sig.value
 
         oom.terminate()
         gc.collect()
@@ -185,7 +173,6 @@ if __name__ == "__main__":
 
         results.iloc[:(total_ins + tasks), :].to_csv(f"{output_affix}results.csv", index=False)
         total_ins += tasks
-        gc.collect()
 
     results = results.iloc[0:total_ins]
     results.to_csv(f"{output_affix}results.csv", index=False)
