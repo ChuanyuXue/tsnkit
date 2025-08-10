@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 
 from ...utils import Result
+from ... import utils
 from . import draw, killif, run, mute, print_output, str_flag
 from multiprocessing import Pool, cpu_count, Value, Process, Queue
 
@@ -65,12 +66,6 @@ def remove_configs(config_num: str):
     os.remove(f"./{config_num}-ROUTE.csv")
 
 
-def process_num(name: str):
-    if name in ["dt", "ls", "ls_pl", "ls_tb"]:
-        return 1
-    return 4
-
-
 def print_result(task_num: int, result: str):
     print_format = "| {:<13} | {:<6} | {:}"
 
@@ -85,7 +80,7 @@ if __name__ == "__main__":
     ins = args.ins
     if len(ins) == 1:
         ins = [ins[0]] * len(methods)
-    t_limit = args.t
+    utils.T_LIMIT = args.t
     output_affix = args.o
 
     data_path = f"{SCRIPT_DIR}/data/"
@@ -117,8 +112,8 @@ if __name__ == "__main__":
             target=killif,
             args=(
                 os.getpid(),
-                process_num(name),
-                t_limit,
+                utils.M_LIMIT,
+                utils.T_LIMIT,
                 sig,
                 oom_queue,
             ),
@@ -141,14 +136,14 @@ if __name__ == "__main__":
             sig.value += 1
 
 
-        with Pool(processes=cpu_count() // process_num(name), maxtasksperchild=1, initializer=mute) as p:
+        with Pool(processes=cpu_count() // utils.NUM_CORE_LIMIT, maxtasksperchild=1, initializer=mute) as p:
             for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
                 p.apply_async(
                     run,
                     args=(
                         alg.benchmark,
                         file_num,
-                        process_num(name),
+                        utils.NUM_CORE_LIMIT, # workers
                     ),
                     callback=store,
                 )

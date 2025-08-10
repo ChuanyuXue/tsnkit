@@ -44,7 +44,7 @@ def killif(main_proc, mem_limit, time_limit, sig, oom_queue):
     """
     time.sleep(1)
     self_proc = os.getpid()
-    mem_limit = mem_limit * 1024 ** 3
+    mem_limit = mem_limit * 1024 ** 2
     while True:
         _current_time = time.time()
         for proc in psutil.process_iter(["pid", "name", "username", "ppid", "cpu_times", "status"]):
