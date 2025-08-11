@@ -4,7 +4,7 @@ import numpy
 import os
 
 # Create __init__.py for the cython package if it doesn't exist
-cython_dir = "src/tsnkit/simulation/cython"
+cython_dir = "tsnkit/simulation/cython"
 init_file = os.path.join(cython_dir, "__init__.py")
 if not os.path.exists(init_file):
     with open(init_file, "w") as f:
@@ -14,7 +14,7 @@ if not os.path.exists(init_file):
 extensions = [
     Extension(
         "tsnkit.simulation.cython.simulation_core",
-        ["src/tsnkit/simulation/cython/simulation_core.pyx"],
+        ["tsnkit/simulation/cython/simulation_core.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
         extra_compile_args=["/O2"] if os.name == "nt" else ["-O3", "-ffast-math"]

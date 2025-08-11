@@ -50,7 +50,7 @@ destination nodes should not be switches.
 
 ### Output
 
-Following are the output files (gcl, offset, route, queuing assignment) from the algorithm, which can be fed into the TSN simulator or testbed. The implementation can be found in `tsnkit.utils._config.py`
+Following are the output files (gcl, offset, route, queuing assignment) from the algorithm, which can be fed into the TSN simulator or testbed. The implementation can be found in `tsnkit.core._config.py`
 
 **GCL:**
 

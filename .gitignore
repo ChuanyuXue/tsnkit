@@ -15,6 +15,6 @@ dist/
 
 *.DS_Store
 
-src/tsnkit/simulation/cython/*.c
-src/tsnkit/simulation/cython/*.so
+tsnkit/simulation/cython/*.c
+tsnkit/simulation/cython/*.so
 
