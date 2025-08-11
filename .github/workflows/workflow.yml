@@ -1,9 +1,10 @@
-name: model workflow
+name: workflow
 
 on: 
   pull_request_target: 
     branches:
     - main
+    - workflow
 
 jobs:
   my_job:
@@ -19,39 +20,25 @@ jobs:
     - name: checkout tsnkit
       uses: actions/checkout@v4
       with:
-        fetch-depth: 2
+        fetch-depth: 0
+        lfs: true
+        ref: ${{ github.event.pull_request.head.ref }}
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
 
-    - name: install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install seaborn
-
-    - name: gurobi-license
-      env: 
-        GRB_LICENSE_FILE: ${{secrets.GUROBI_LICENSE}}
-      run: |
-        echo "$GRB_LICENSE_FILE" > $HOME/gurobi.lic
-        echo "grb_license_file=$HOME/gurobi.lic" >> $GITHUB_OUTPUT
-        
     - name: get changed algorithms
       id: changes
+      env:
+        PR: ${{github.event.pull_request.head.sha}}
+        MAIN: ${{github.event.pull_request.base.sha}}
       run: |
+        pip install -q -r requirements.txt
         git config --global --add safe.directory "$GITHUB_WORKSPACE"
-        changes=$(git diff --name-only HEAD^1)
-        changed_models=$(echo $changes | grep "tsnkit/algorithms/.*\.py$" | xargs -n1 basename | sed 's/\.py$//' | tr '\n' ' ')
+        changes=$(git diff --name-only "$PR" "$MAIN")
+        changed_models=$(echo "$changes" | grep '^tsnkit/algorithms/.*\.py$' | xargs -n1 basename | sed 's/\.py$//' | tr '\n' ' ')
         echo "models=$changed_models" >> "$GITHUB_OUTPUT"
         echo "$changed_models"
-
-    - name: get git lfs
-      run: |
-        git lfs install
-        git lfs pull
     
     - name: run test
-      env: 
-        GRB_LICENSE_FILE: ${{steps.gurobi-license.outputs.grb_license_file}}
       run: |
         python -m tsnkit.test.debug ${{steps.changes.outputs.models}} jrs_nw ls smt_wa --subset 
       
-    
