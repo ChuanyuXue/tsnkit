@@ -229,10 +229,10 @@ def draw_deadline(df: pd.DataFrame, file_name: str):
 
 
 def draw_topo(df: pd.DataFrame, file_name: str):
-    topo_dict = {0: "Line", 1: "Mesh"}
+    topo_dict = {0: "Line", 1: "Ring", 2: "Tree", 3: "Mesh"}
     DATASET_LOGS["topo"] = DATASET_LOGS["topo"].apply(lambda x: topo_dict[x])
     schedulability = get_schedulability(df, "topo")
-    draw_fig5(schedulability, "topo", ["Line", "Mesh"], file_name)
+    draw_fig5(schedulability, "topo", ["Line", "Ring"], file_name)
 
 
 def draw_fig5(df: pd.DataFrame, var: str, hue_order: list, file_name: str):
