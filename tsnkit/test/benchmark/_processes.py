@@ -9,17 +9,18 @@ from functools import partialmethod
 import psutil
 from tqdm import tqdm
 
-from ...utils import Result
+from ...core import Result
 from ...simulation import tas
 
 SCRIPT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
-def kill_process(proc: psutil.Process):
+def terminate_process(proc: psutil.Process):
     if sys.platform == "win32" or sys.platform == "cygwin":
         proc.terminate()
     else:
-        proc.send_signal(signal.SIGCHLD)
+        proc.send_signal(signal.SIGINT)
+        proc.parent().send_signal(signal.SIGCHLD)
 
 
 def print_output(name: str, flag: str, solve_time: float, total_time: float, total_mem: float):
@@ -45,6 +46,7 @@ def killif(main_proc, mem_limit, time_limit, sig, oom_queue):
     time.sleep(1)
     self_proc = os.getpid()
     mem_limit = mem_limit * 1024 ** 2
+    pids_int = []
     while True:
         _current_time = time.time()
         for proc in psutil.process_iter(["pid", "name", "username", "ppid", "cpu_times", "status"]):
@@ -56,15 +58,23 @@ def killif(main_proc, mem_limit, time_limit, sig, oom_queue):
                 if proc.pid == main_proc or proc.pid == self_proc:
                     continue
                 if not (sys.platform == "win32" or sys.platform == "cygwin") and proc.status() == psutil.STATUS_ZOMBIE:
-                    kill_process(proc)
-                    continue
+                    proc.parent().send_signal(signal.SIGCHLD)
+                    print("zombie")
                 mem = proc.memory_info().rss
                 start_time = proc.create_time()
                 elapse_time = _current_time - start_time
-                if elapse_time > time_limit * 1.1 or mem > mem_limit:
+                if (elapse_time > time_limit or mem > mem_limit) and proc.pid not in pids_int:
                     proc_time = proc.cpu_times().user
                     oom_queue.put([round(proc.cpu_times().user, 3), mem])
-                    kill_process(proc)
+                    terminate_process(proc)
+                    pids_int.append(proc.pid)
+                    if sys.platform == "win32" or sys.platform == "cygwin":
+                        print_output("-", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
+                        sig.value += 1
+                elif (elapse_time > time_limit * 1.1 or mem > mem_limit) and proc.pid in pids_int:
+                    proc.send_signal(signal.SIGKILL)
+                    proc_time = proc.cpu_times().user
+                    oom_queue.put([round(proc.cpu_times().user, 3), mem])
                     print_output("-", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                     sig.value += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):

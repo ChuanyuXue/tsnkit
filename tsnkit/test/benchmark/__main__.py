@@ -6,8 +6,6 @@ import time
 import pandas as pd
 import numpy as np
 
-from ...utils import Result
-from ... import utils
 from . import draw, killif, run, mute, print_output, str_flag
 from ... import core as utils
 from multiprocessing import Pool, cpu_count, Value, Process, Queue
@@ -127,15 +125,14 @@ if __name__ == "__main__":
             flag = output[1]
             task_num = output[0]
             result = [name, task_num, "successful", output[2], output[3], output[4]]
-            if flag == Result.unknown.value:
+            if flag == utils.Result.unknown.value:
                 result[2] = "unknown"
-            elif flag == Result.unschedulable.value or flag == Result.error.value:
+            elif flag == utils.Result.unschedulable.value or flag == utils.Result.error.value:
                 result[2] = "infeasible"
             results.iloc[total_ins + int(task_num) - 1, :] = result
             if verbose:
                 print_output(f"{task_num}", str_flag(flag), output[2], output[3], output[4])
             sig.value += 1
-
 
         with Pool(processes=cpu_count() // utils.NUM_CORE_LIMIT, maxtasksperchild=1, initializer=mute) as p:
             for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
@@ -155,6 +152,7 @@ if __name__ == "__main__":
                 print(f"Terminate calculation by hand.")
                 tasks = sig.value
 
+        print(f"{sig.value}, final")
         oom.terminate()
         gc.collect()
 
