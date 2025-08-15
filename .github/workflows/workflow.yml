@@ -4,11 +4,64 @@ on:
   pull_request_target: 
     branches:
     - main
-    - workflow
 
 jobs:
-  my_job:
-    name: validate model
+  validate_classes:
+    name: validate classes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout tsnkit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - name: validate classes
+        run: | 
+          pip install -q -r requirements.txt
+          pip install -q seaborn
+          python -m tsnkit.test.debug._validate_classes
+
+  validate_io:
+    name: validate io
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout tsnkit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - name: validate classes
+        run: | 
+          pip install -q -r requirements.txt
+          pip install -q seaborn
+          python -m tsnkit.test.debug._validate_io
+
+  validate_sim:
+    name: validate simulator
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout tsnkit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - name: validate classes
+        run: | 
+          pip install -q -r requirements.txt
+          pip install -q seaborn
+          python -m tsnkit.test.debug._validate_simulator
+
+  validate_algorithms:
+    name: validate algorithms
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/elainehu222/cpoptimizer:latest
