@@ -11,7 +11,7 @@ from ...algorithms import ls
 if __name__ == "__main__":
     # input (generator)
 
-    os.mkdir("./temp/")
+    os.makedirs("./temp/", exist_ok=True)
 
     tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
     g = generator.DatasetGenerator(
