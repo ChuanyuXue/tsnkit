@@ -114,19 +114,16 @@ Follow these steps for a basic use case:
     3. After obtaining a license, follow the steps provided by [this link](https://license.gurobi.com/manager/doc/overview/#optimizer) to start using the Gurobi Optimizer.
 
   
-3. **CPLEX Optimizer**
+3. **CPLEX CP Optimizer**
 
-   Algorithms that require CPLEX Optimizer: cp_wa, jrs_nw_l
+   Algorithms that require CPLEX CP Optimizer: cp_wa, jrs_nw_l
 
    **Installation:**
 
-   The limited version of CPLEX Optimizer should already be installed with your installation of tsnkit. If not, use the following command to install it:
-   ```
-   pip install docplex
-   ```
-    The limited version can only solve models with search spaces up to 2^1000. Models that exceed these limits require the academic version that can be installed through the following steps.
-    
-    1. Go to [this link](https://www.ibm.com/academic/) and click on "Access software downloads" to begin your registration.
-    2. After your registration is accepted, you will be able to access a link to download the academic version of the software.
+   Installing `docplex` only provides the Python API wrapper. You need IBM CPLEX Optimization Studio (includes CP Optimizer executable) installed:
+   
+    1. Go to [IBM Academic Initiative](https://www.ibm.com/academic/) and register for academic access.
+    2. After approval, download and install **CPLEX Optimization Studio**.
+    3. Install the Python API: `pip install docplex`
   
-    _Note: the academic version of this software currently only supports python versions 3.10 or earlier_
+    _Note: Academic version currently only supports Python versions 3.10. You may need to change their setup.py to support other versions._
