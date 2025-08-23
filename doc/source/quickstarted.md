@@ -14,7 +14,7 @@ Install from source (recommended):
 ```
 git clone https://github.com/ChuanyuXue/tsnkit
 cd tsnkit
-python setup.py install
+pip install -r requirements.txt
 ```
 
 From pip: 
@@ -23,7 +23,7 @@ From pip:
 pip install -U tsnkit
 ```
 
-*Note: Currently, the pip version might be behind in updates compared to the source installation, so it's recommended to install from source for the latest features. If `python setup.py install` fails, try `python -m pip install .` instead.*
+*Note: Currently, the pip version might be behind in updates compared to the source installation, so it's recommended to install from source for the latest features.*
 
 ## Example Usage:
 
