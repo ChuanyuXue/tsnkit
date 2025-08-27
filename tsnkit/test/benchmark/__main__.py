@@ -135,7 +135,7 @@ if __name__ == "__main__":
             sig.value += 1
 
         with Pool(processes=cpu_count() // utils.NUM_CORE_LIMIT, maxtasksperchild=1, initializer=mute) as p:
-            for file_num in [str(j) for j in range(int(a), int(b) + 1)]:
+            for file_num in [str(j) for j in range(int(b), int(a) - 1, -1)]:
                 p.apply_async(
                     run,
                     args=(
