@@ -8,7 +8,7 @@ import numpy as np
 
 from . import draw, killif, mute, print_output, str_flag
 from ... import core as utils
-from multiprocessing import Pool, cpu_count, Value, Process, Queue
+from multiprocessing import Pool, cpu_count, Value, Process, Queue, Manager
 
 from ...algorithms import (at, cg, cp_wa, dt, i_ilp, i_omt, jrs_mc, jrs_nw, jrs_nw_l, jrs_wa, ls, ls_pl, ls_tb, smt_fr,
                        smt_nw, smt_pr, smt_wa)
@@ -108,6 +108,10 @@ if __name__ == "__main__":
     sig = Value("i", 0)
     oom_queue = Queue()
 
+    manager = Manager()
+    processes = manager.dict()
+    manager_pid = manager._process.ident
+
     oom = Process(
         target=killif,
         args=(
@@ -116,6 +120,7 @@ if __name__ == "__main__":
             utils.T_LIMIT,
             sig,
             oom_queue,
+            manager_pid,
         ),
     )
 
@@ -126,6 +131,7 @@ if __name__ == "__main__":
         flag = output[1]
         _task = output[0]
         algo_name, task_num = _task.split("-")
+        print(f"name: {algo_name}, index: {result_indices[algo_name] + int(task_num) - 1}")
         result = [name, task_num, "successful", output[2], output[3], output[4]]
         if flag == utils.Result.schedulable.value:
             try:
@@ -141,11 +147,8 @@ if __name__ == "__main__":
             print_output(f"{_task}", str_flag(flag), output[2], output[3], output[4])
         sig.value += 1
 
-    processes = {}
-
-    def run(alg, task_param: str, workers: int):
-        processes[os.getpid()] = task_param
-        print(processes.keys())
+    def run(alg, task_param: str, workers: int, process_dict):
+        process_dict[os.getpid()] = task_param
         task_num = task_param[1]
         path = f"{SCRIPT_DIR}/data/{task_num}"
         stats = alg(f"{task_param[0]}-{task_num}", path + "_task.csv", path + "_topo.csv", workers=workers)
@@ -159,6 +162,7 @@ if __name__ == "__main__":
                     import_algorithm(task[0]).benchmark,
                     task,
                     utils.NUM_CORE_LIMIT, # workers
+                    processes
                 ),
                 callback=store,
             )
@@ -171,7 +175,6 @@ if __name__ == "__main__":
             tasks = sig.value
 
     oom.terminate()
-    gc.collect()
 
     # add the processes that timed out to the results dataframe
     while not oom_queue.empty():
@@ -183,6 +186,8 @@ if __name__ == "__main__":
         index = result_indices[name] + task_num - 1
         # ["name", "data_id", "flag", "solve_time", "total_time", "total_mem"]
         results.iloc[index, :] = [name, task_num, "unknown", process[0], process[0], round(mem, 3)]
+
+    gc.collect()
 
     results.to_csv(f"{output_affix}results.csv", index=False)
     draw(f"{output_affix}results.csv")

@@ -35,7 +35,7 @@ def print_output(name: str, flag: str, solve_time: float, total_time: float, tot
         flush=True)
 
 
-def killif(main_proc, mem_limit, time_limit, sig, oom_queue):
+def killif(main_proc, mem_limit, time_limit, sig, oom_queue, manager_pid):
     """
     Kill the process if it uses more than mem memory or more than time seconds
     Args:
@@ -46,6 +46,7 @@ def killif(main_proc, mem_limit, time_limit, sig, oom_queue):
     time.sleep(1)
     self_proc = os.getpid()
     mem_limit = mem_limit * 1024 ** 2
+    wait_time = 60
     pids_int = []
     while True:
         _current_time = time.time()
@@ -56,6 +57,8 @@ def killif(main_proc, mem_limit, time_limit, sig, oom_queue):
                 if proc.ppid() != main_proc and "cpoptimizer" not in proc.name():
                     continue
                 if proc.pid == main_proc or proc.pid == self_proc:
+                    continue
+                if proc.pid == manager_pid:
                     continue
                 if not (sys.platform == "win32" or sys.platform == "cygwin") and proc.status() == psutil.STATUS_ZOMBIE:
                     proc.parent().send_signal(signal.SIGCHLD)
@@ -70,7 +73,7 @@ def killif(main_proc, mem_limit, time_limit, sig, oom_queue):
                         oom_queue.put([round(proc.cpu_times().user, 3), mem, proc.pid])
                         print_output("-", str(Result.unknown), proc_time, proc_time, mem / (1024 ** 2))
                         sig.value += 1
-                elif (elapse_time > time_limit * 1.1 or mem > mem_limit) and proc.pid in pids_int:
+                elif (elapse_time > (time_limit + wait_time) or mem > mem_limit) and proc.pid in pids_int:
                     proc.send_signal(signal.SIGKILL)
                     proc_time = proc.cpu_times().user
                     oom_queue.put([round(proc.cpu_times().user, 3), mem, proc.pid])
@@ -101,7 +104,7 @@ def str_flag(flag):
 def mute():
     process = multiprocessing.current_process()
     process.daemon = False  # nested multiprocessing
-    # sys.stdout = open(os.devnull, "w")
+    sys.stdout = open(os.devnull, "w")
     sys.stderr = open(os.devnull, "w")
     warnings.filterwarnings("ignore")
 
