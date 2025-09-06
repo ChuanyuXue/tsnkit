@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     results = pd.DataFrame(
         columns=["name", "data_id", "flag", "solve_time", "total_time", "total_mem"],
-        index=np.arange(4352))
+        index=np.arange(17*256))
 
     algo_header = "| {:<13} | {:<13} | {:<6} | {:<10} | {:<10} | {:<10}"
     sim_header = "| {:<13} | {:<6} | {:<12}"
@@ -102,6 +102,8 @@ if __name__ == "__main__":
         result_indices[name] = stop
         tasks.extend([(name, n) for n in range(int(b), int(a) - 1, -1)])
         stop += int(b) - int(a) + 1
+
+    tasks = sorted(tasks, key=lambda t: t[1], reverse=True)
 
     print(algo_header.format("time", "task", "flag", "solve_time", "total_time", "total_mem", ), flush=True)
 
@@ -131,8 +133,7 @@ if __name__ == "__main__":
         flag = output[1]
         _task = output[0]
         algo_name, task_num = _task.split("-")
-        print(f"name: {algo_name}, index: {result_indices[algo_name] + int(task_num) - 1}")
-        result = [name, task_num, "successful", output[2], output[3], output[4]]
+        result = [algo_name, task_num, "successful", output[2], output[3], output[4]]
         if flag == utils.Result.schedulable.value:
             try:
                 remove_configs(_task)
