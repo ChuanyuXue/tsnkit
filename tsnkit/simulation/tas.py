@@ -103,6 +103,7 @@ def simulation(
     it: int = 10,
     verbose: bool = False,
     draw_results: bool = True,
+    disable_pbar: bool = False
 ) -> List[List[List[int]]]:
     if CYTHON_AVAILABLE:
         match_time_func = match_time_optimized
@@ -178,7 +179,7 @@ def simulation(
     available_t = {link: 0 for link, _ in GCL.items()}
     _pool: dict[Tuple[int, int], list[Tuple]] = {link: [] for link, _ in GCL.items()}
 
-    for t in tqdm(range(0, hyper_period * it, T_SLOT)):
+    for t in tqdm(range(0, hyper_period * it, T_SLOT), disable=disable_pbar):
         ## Release task
         for flow in range(len(task)):
             frame = (flow, instance_count[flow] % OFFSET_MAX[flow])

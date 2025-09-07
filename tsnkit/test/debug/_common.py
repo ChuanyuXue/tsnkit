@@ -115,7 +115,7 @@ def process_single_dataset(args_tuple):
     # validate schedule
     # Don't modify tqdm in worker processes - this causes semaphore leaks
     try:
-        log = tas.simulation(task_path, "./", it=it, draw_results=False)
+        log = tas.simulation(task_path, "./", it=it, draw_results=False, disable_pbar=True)
         
         deadline = list(pd.read_csv(task_path)["deadline"])
         flag = "succ"
@@ -228,6 +228,13 @@ def run(
                 # Print output line
                 if 'output_line' in res:
                     tqdm.write(res['output_line'])
+
+                # Raise error for workflow validation
+                if validation:
+                    if res['error']:
+                        raise res['error']
+                    if res['data_id'] > 256 and res['flag'] != 'succ':
+                        raise
                 
                 # Handle algorithm not found case
                 if res.get('break_loop', False):
