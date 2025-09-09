@@ -21,6 +21,7 @@ def parse():
     parser.add_argument("-o", type=str, help="path for output report")
     parser.add_argument("--it", type=int, default=5, help="simulation iterations")
     parser.add_argument("--subset", action="store_true", help="subset")
+    parser.add_argument("--workers", type=int, default=None, help="number of parallel workers (default: auto)")
 
     return parser.parse_args()
 

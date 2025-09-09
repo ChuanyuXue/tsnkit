@@ -1,5 +1,3 @@
-import seaborn as sns
-import matplotlib.pyplot as plt
 from typing import List, Tuple
 
 
@@ -36,6 +34,8 @@ def draw(log: List[List[List[int]]]) -> None:
     """
     Draw the delay and jitter of each stream in time-series.
     """
+    import seaborn as sns
+    import matplotlib.pyplot as plt
 
     flow_delays, flow_jitters = calc_delay_jitter(log)
 

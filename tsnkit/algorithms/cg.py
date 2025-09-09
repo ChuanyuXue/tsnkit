@@ -141,6 +141,10 @@ class cg:
 
     @utils.check_time_limit
     def solve(self) -> utils.Statistics:
+        for s in self.task:
+            if not self.paths[s]:
+                return utils.Statistics("-", utils.Result.unschedulable, 0.0)
+
         flag = True
         start = utils.time_log()
         while flag:

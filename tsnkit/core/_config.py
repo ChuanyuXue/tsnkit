@@ -320,9 +320,9 @@ class Size(list):
 
     def to_csv(self, path: str) -> None:
         result = pd.DataFrame(self, dtype=int)
-        result = result.sort_values(by=["stream", "frame"])
         result.columns = ["stream", "frame", "size"]
-
+        result = result.sort_values(by=["stream", "frame"])
+        result.to_csv(path, index=False)
 
 class Config:
     def __init__(self):
