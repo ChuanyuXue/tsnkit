@@ -1,4 +1,5 @@
-import seaborn as sns
+import warnings
+
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import pandas as pd
@@ -8,19 +9,6 @@ import copy
 
 SCRIPT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DATASET_LOGS = pd.read_csv(SCRIPT_DIR + "/data/dataset_logs.csv")
-
-ordered_palette = sns.color_palette(['#B0B1B6', '#BEB1A8', '#8A95A9',
-                                     '#99857E', '#686789', '#B77F70',
-                                     '#B57C82', '#9FABB9', '#ECCED0',
-                                     '#91A0A5', '#E5E2B9', '#88878D',
-                                     '#E8D3C0', '#7D7465', '#789798',
-                                     '#7A8A71', '#9AA690'])
-
-dark_palette = sns.color_palette([
-    '#686789', '#B77F70', '#E5E2B9', '#BEB1A8', '#A79A89', '#8A95A9',
-    '#ECCED0', '#7D7465', '#E8D3C0', '#7A8A71', '#789798', '#B57C82',
-    '#9FABB9', '#B0B1B6', '#99857E', '#88878D', '#91A0A5',
-])
 
 METHOD_ORDER = ['smt_wa', 'smt_nw', 'jrs_wa', 'at', 'jrs_nw_l', 'ls', 'jrs_mc', 'i_ilp', 'i_omt', 'cg', 'jrs_nw',
                 'smt_fr', 'cp_wa', 'ls_tb', 'ls_pl', 'smt_pr', 'dt']
@@ -33,8 +21,6 @@ dash_dict = {name: (2, 2) for name in METHOD_ORDER}
 
 ALPHA_REJ = 0.5
 
-gradient_palette = sns.color_palette(sns.color_palette(dark_palette).as_hex(), n_colors=16)
-
 _temp_morandi = ["#F0F0F0", "#E0E0E0", "#C0C0C0", "#8B8680", "#808080"]
 
 morandi_cmap = mcolors.LinearSegmentedColormap.from_list("morandi_cmap", _temp_morandi)
@@ -44,6 +30,22 @@ morandi_cmap.set_bad(color=default_color)
 
 extended_colors = [default_color] + _temp_morandi
 extended_cmap = mcolors.LinearSegmentedColormap.from_list("morandi_cmap", extended_colors)
+
+def get_palette(palette: int):
+    import seaborn as sns
+    if palette == 0:
+        return sns.color_palette(['#B0B1B6', '#BEB1A8', '#8A95A9',
+                                  '#99857E', '#686789', '#B77F70',
+                                  '#B57C82', '#9FABB9', '#ECCED0',
+                                  '#91A0A5', '#E5E2B9', '#88878D',
+                                  '#E8D3C0', '#7D7465', '#789798',
+                                  '#7A8A71', '#9AA690'])
+
+    return sns.color_palette([
+        '#686789', '#B77F70', '#E5E2B9', '#BEB1A8', '#A79A89', '#8A95A9',
+        '#ECCED0', '#7D7465', '#E8D3C0', '#7A8A71', '#789798', '#B57C82',
+        '#9FABB9', '#B0B1B6', '#99857E', '#88878D', '#91A0A5',
+    ])
 
 
 def get_schedulability(data: pd.DataFrame, var: str):
@@ -159,11 +161,13 @@ def draw_links(df: pd.DataFrame, file_name: str):
 
 
 def draw_fig4(df: pd.DataFrame, var: str, graph_name: str, file_name: str):
+    import seaborn as sns
     plt.rcParams['axes.axisbelow'] = True
     plt.figure(figsize=(3, 2))
 
     schedulability = get_schedulability(df, var)
     stat_pass, stat_rej = test_evidence_thres(schedulability, var)
+    palette = get_palette(0)
 
     # plot rejected points
     ax = sns.lineplot(data=stat_rej,
@@ -171,7 +175,7 @@ def draw_fig4(df: pd.DataFrame, var: str, graph_name: str, file_name: str):
                       y='schedulability',
                       hue="name",
                       style="name",
-                      palette=ordered_palette,
+                      palette=palette,
                       hue_order=METHOD_ORDER,
                       markers=marker_dict,
                       dashes=dash_dict,
@@ -188,7 +192,7 @@ def draw_fig4(df: pd.DataFrame, var: str, graph_name: str, file_name: str):
                           y="schedulability",
                           hue="name",
                           style="name",
-                          palette=ordered_palette,
+                          palette=palette,
                           hue_order=METHOD_ORDER,
                           markers=marker_dict,
                           dashes=False,
@@ -236,6 +240,7 @@ def draw_topo(df: pd.DataFrame, file_name: str):
 
 
 def draw_fig5(df: pd.DataFrame, var: str, hue_order: list, file_name: str):
+    import seaborn as sns
     plt.figure(figsize=(18, 1))
     plt.rc('xtick', labelsize=8)
     plt.rcParams['axes.axisbelow'] = True
@@ -245,7 +250,7 @@ def draw_fig5(df: pd.DataFrame, var: str, hue_order: list, file_name: str):
         x="name",
         hue=var,
         hue_order=hue_order,
-        palette=dark_palette,
+        palette=get_palette(1),
         order=METHOD_ORDER
     )
     plt.xlabel('')
@@ -283,6 +288,7 @@ def get_comparison_matrix(df: pd.DataFrame):
 
 
 def draw_comparison_matrix(df: pd.DataFrame, file_name: str):
+    import seaborn as sns
     comparison_matrix, all_result_matrix = get_comparison_matrix(df)
     comparison_matrix[np.where(comparison_matrix == 0)] = np.nan
 
@@ -340,6 +346,8 @@ def get_memory_stat(data: pd.DataFrame, var: str):
 
 
 def draw_scalability(df: pd.DataFrame, x: str, y: str, x_label: str, y_label: str, file_name: str):
+    import seaborn as sns
+
     df = copy.deepcopy(df)
     df[x] = df["data_id"].map(dict(zip(DATASET_LOGS["id"], DATASET_LOGS[x])))
 
@@ -352,13 +360,14 @@ def draw_scalability(df: pd.DataFrame, x: str, y: str, x_label: str, y_label: st
     pass_rej = test_evidence_thres(schedulability, x)
     stat_pass = pd.merge(stat, pass_rej[0], on=["name", x])
     stat_rej = pd.merge(stat, pass_rej[1], on=["name", x])
+    palette = get_palette(0)
 
     ax = sns.lineplot(data=stat_pass,
                       x=x,
                       y=y,
                       hue="name",
                       style="name",
-                      palette=ordered_palette,
+                      palette=palette,
                       hue_order=METHOD_ORDER,
                       markers=marker_dict,
                       dashes=False,
@@ -373,7 +382,7 @@ def draw_scalability(df: pd.DataFrame, x: str, y: str, x_label: str, y_label: st
                       y=y,
                       hue="name",
                       style="name",
-                      palette=ordered_palette,
+                      palette=palette,
                       hue_order=METHOD_ORDER,
                       markers=marker_dict,
                       dashes=dash_dict,
@@ -401,8 +410,17 @@ def draw_mem(df: pd.DataFrame, file_name: str):
     draw_scalability(df, "num_stream", "total_mem", "Number of streams", "Memory (MB)", f"{file_name}_stream")
     draw_scalability(df, "num_sw", "total_mem", "Number of bridges", "Memory (MB)", f"{file_name}_bridge")
 
+def draw_legend():
+    legend_fig = plt.figure(figsize=(10, 2))
+    handles = [plt.Line2D([0], [0], color="none", marker=marker_dict[METHOD_ORDER[i]], linestyle="",
+                          markersize=7, markeredgecolor=get_palette(0)[i]) for i in range(len(METHOD_ORDER))]
+    legend_fig.legend(handles, METHOD_ORDER, loc="center", ncol=9, prop={"size": 8},
+                               numpoints=1, handletextpad=0)
+    legend_fig.savefig("legend.pdf", bbox_inches="tight")
+
 
 def draw(path: str, output_affix="./"):
+    warnings.filterwarnings("ignore")
     df = pd.read_csv(path)
     draw_streams(df, f"{output_affix}stream")
     draw_bridges(df, f"{output_affix}bridge")
@@ -415,6 +433,7 @@ def draw(path: str, output_affix="./"):
     draw_comparison_matrix(df, f"{output_affix}comparison_matrix")
     draw_runtime(df, f"{output_affix}runtime")
     draw_mem(df, f"{output_affix}mem")
+    draw_legend()
 
 
 if __name__ == "__main__":
