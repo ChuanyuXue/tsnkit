@@ -6,4 +6,4 @@ Created:  2024-08-10
 """
 
 from .draw import draw
-from ._processes import killif, run, validate_schedule, mute, print_output, str_flag
+from ._processes import killif, validate_schedule, mute, print_output, str_flag
