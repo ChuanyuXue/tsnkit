@@ -1,7 +1,5 @@
 import warnings
 
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 import pandas as pd
 import numpy as np
 import os
@@ -22,14 +20,6 @@ dash_dict = {name: (2, 2) for name in METHOD_ORDER}
 ALPHA_REJ = 0.5
 
 _temp_morandi = ["#F0F0F0", "#E0E0E0", "#C0C0C0", "#8B8680", "#808080"]
-
-morandi_cmap = mcolors.LinearSegmentedColormap.from_list("morandi_cmap", _temp_morandi)
-
-default_color = "#FFEBCD"
-morandi_cmap.set_bad(color=default_color)
-
-extended_colors = [default_color] + _temp_morandi
-extended_cmap = mcolors.LinearSegmentedColormap.from_list("morandi_cmap", extended_colors)
 
 def get_palette(palette: int):
     import seaborn as sns
@@ -162,6 +152,7 @@ def draw_links(df: pd.DataFrame, file_name: str):
 
 def draw_fig4(df: pd.DataFrame, var: str, graph_name: str, file_name: str):
     import seaborn as sns
+    import matplotlib.pyplot as plt
     plt.rcParams['axes.axisbelow'] = True
     plt.figure(figsize=(3, 2))
 
@@ -241,6 +232,7 @@ def draw_topo(df: pd.DataFrame, file_name: str):
 
 def draw_fig5(df: pd.DataFrame, var: str, hue_order: list, file_name: str):
     import seaborn as sns
+    import matplotlib.pyplot as plt
     plt.figure(figsize=(18, 1))
     plt.rc('xtick', labelsize=8)
     plt.rcParams['axes.axisbelow'] = True
@@ -289,6 +281,13 @@ def get_comparison_matrix(df: pd.DataFrame):
 
 def draw_comparison_matrix(df: pd.DataFrame, file_name: str):
     import seaborn as sns
+    import matplotlib.pyplot as plt
+    import matplotlib.colors as mcolors
+    default_color = "#FFEBCD"
+    morandi_cmap = mcolors.LinearSegmentedColormap.from_list("morandi_cmap", _temp_morandi)
+    morandi_cmap.set_bad(color=default_color)
+    extended_colors = [default_color] + _temp_morandi
+    extended_cmap = mcolors.LinearSegmentedColormap.from_list("morandi_cmap", extended_colors)
     comparison_matrix, all_result_matrix = get_comparison_matrix(df)
     comparison_matrix[np.where(comparison_matrix == 0)] = np.nan
 
@@ -347,6 +346,7 @@ def get_memory_stat(data: pd.DataFrame, var: str):
 
 def draw_scalability(df: pd.DataFrame, x: str, y: str, x_label: str, y_label: str, file_name: str):
     import seaborn as sns
+    import matplotlib.pyplot as plt
 
     df = copy.deepcopy(df)
     df[x] = df["data_id"].map(dict(zip(DATASET_LOGS["id"], DATASET_LOGS[x])))
@@ -411,6 +411,7 @@ def draw_mem(df: pd.DataFrame, file_name: str):
     draw_scalability(df, "num_sw", "total_mem", "Number of bridges", "Memory (MB)", f"{file_name}_bridge")
 
 def draw_legend():
+    import matplotlib.pyplot as plt
     legend_fig = plt.figure(figsize=(10, 2))
     handles = [plt.Line2D([0], [0], color="none", marker=marker_dict[METHOD_ORDER[i]], linestyle="",
                           markersize=7, markeredgecolor=get_palette(0)[i]) for i in range(len(METHOD_ORDER))]
