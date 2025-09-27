@@ -1,6 +1,6 @@
 [project]
 name = "tsnkit"
-version = "0.2.4"
+version = "0.3.0"
 authors = [
   { name="Chuanyu Xue", email="skewcy@gmail.com" },
   { name="Elaine Hu", email="elainehu222@gmail.com" },

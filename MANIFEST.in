@@ -1,0 +1,11 @@
+include README.md
+include LICENSE
+
+# Ensure Cython sources and generated C are in sdist
+include tsnkit/simulation/cython/simulation_core.pyx
+include tsnkit/simulation/cython/simulation_core.c
+
+# Exclude transient artifacts
+prune tsnkit.egg-info
+global-exclude *.py[cod] __pycache__
+global-exclude *.csv
