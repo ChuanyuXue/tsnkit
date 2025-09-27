@@ -29,8 +29,9 @@ python3 -m tsnkit.simulation.tas [TASK PATH] [CONFIG PATH]
 
 - Task path: The stream set file as described in [previous section](dataprep.md).
 - Config path: The folder containing the generated configuration files. The detailed format can be also found in [previous section](dataprep.md). *Please note this path should be the folder path that containing the configuration files, such as `./data/output/`*
-- Iter: The number of network cycle to run the simulation. Default is `5`.
-- Verbose: If set to `True`, the simulator will print the simulation log to the console. Otherwise, the simulator will only print the simulation result. Default is `False`.
+- Iter: The number of network cycles to run the simulation. Default is `1` (use `--iter N` to change).
+- Verbose: If set to `True` (`--verbose`), the simulator prints detailed logs; otherwise it prints a summary. Default is `False`.
+- No-draw: Disable plotting by passing `--no-draw` (useful for benchmarking).
 
 
 The simulator will automatically infer the network settings from the configuration files, thus a separate network path is not required.
@@ -89,12 +90,12 @@ The debug tool is used for quickly validating a single or multiple methods on a 
 
 Testing a single method:
 ```
-tsnkit.test.[method] -t [total_timeout_limit] -o [path_for_output_report]
+python -m tsnkit.test.debug.<method> -t [total_timeout_limit] -o [path_for_output_report]
 ```
 
 Testing multiple methods:
 ```
-tsnkit.test [methods] -t [total_timeout_limit] -o [path_for_output_report]
+python -m tsnkit.test.debug [methods] -t [total_timeout_limit] -o [path_for_output_report]
 ```
 
 ## OMNeT_TSNkit
