@@ -24,7 +24,7 @@ python setup.py build_ext --inplace
 **Usage:**
 
 ```
-python3 -m tsnkit.simulation.tas [TASK PATH] [NETWORK PATH] [SCHEDULE PATH]
+python3 -m tsnkit.simulation.tas [TASK PATH] [CONFIG PATH]
 ```
 
 - Task path: The stream set file as described in [previous section](dataprep.md).
@@ -33,7 +33,7 @@ python3 -m tsnkit.simulation.tas [TASK PATH] [NETWORK PATH] [SCHEDULE PATH]
 - Verbose: If set to `True`, the simulator will print the simulation log to the console. Otherwise, the simulator will only print the simulation result. Default is `False`.
 
 
-The simulator will automatically infer the network settings from the configuration files, thus the network path is not required.
+The simulator will automatically infer the network settings from the configuration files, thus a separate network path is not required.
 
 **Output:**
 

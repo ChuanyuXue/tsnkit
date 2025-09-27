@@ -23,10 +23,8 @@ Install from source (recommended):
 ```
 git clone https://github.com/ChuanyuXue/tsnkit
 cd tsnkit
-python setup.py install
+pip install .
 ```
-
-
 From pip:
 
 ```
