@@ -27,7 +27,7 @@ We provide the generated benchmark results in the `data` folder along with the v
 
 **Small scale benchmark demo:**
 
-To quickly demonstrate the benchmark results, we provide a small scale benchmark with 256 experiments.
+To quickly demonstrate the benchmark results, we provide a small scale benchmark with 256 experiments. Note some algorithms have solver dependencies, see getting started section.
 
 Run the following command to generate the benchmark results for all algorithms:
 
