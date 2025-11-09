@@ -160,6 +160,7 @@ def process_single_dataset(args_tuple):
 def parse() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("--ins", type=str, nargs="+", help="list of problem instances")
     parser.add_argument("-t", type=int, default=utils.T_LIMIT, help="total timeout limit")
     parser.add_argument("-o", type=str, help="path for output report")
     parser.add_argument("--it", type=int, default=5, help="simulation iterations")
@@ -188,7 +189,15 @@ def run(
 
     algorithms = [algorithms] if isinstance(algorithms, str) else algorithms
 
-    dataset = [*range(1, 17), *range(33, 49), *range(65, 81)]
+    dataset = []
+
+    if args.ins is None:
+        dataset = [*range(1, 17), *range(33, 49), *range(65, 81)]
+    else:
+        for ins in args.ins:
+            a, b = ins.split("-")
+            dataset.extend(range(int(a), int(b)))
+
     validation = args.subset
     
     # Determine number of workers - be conservative to avoid resource exhaustion
