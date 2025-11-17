@@ -24,6 +24,8 @@ def parse():
     parser.add_argument("--subset", action="store_true", help="subset")
     parser.add_argument("--workers", type=int, default=None, help="number of parallel workers (default: auto)")
 
+    utils.parse_command_line_constants(parser)
+
     return parser.parse_args()
 
 

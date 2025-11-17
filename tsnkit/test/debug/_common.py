@@ -167,6 +167,8 @@ def parse() -> argparse.Namespace:
     parser.add_argument("--subset", action="store_true", help="for quick validation")
     parser.add_argument("--workers", type=int, default=None, help="number of parallel workers (default: auto)")
 
+    utils.parse_command_line_constants(parser)
+
     return parser.parse_args()
 
 

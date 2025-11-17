@@ -5,7 +5,7 @@ from enum import Enum
 from tqdm import tqdm
 from .draw import *
 from typing import Set, Dict, List, Tuple
-from ..core import find_files_with_prefix, T_SLOT, T_PROC
+from ..core import find_files_with_prefix, T_SLOT, T_PROC, parse_command_line_constants
 
 # Try to import Cython optimized functions
 try:
@@ -305,6 +305,7 @@ if __name__ == "__main__":
     # ]
 
     # Parse the arguments
+    parse_command_line_constants(parser)
     args = parser.parse_args()
     task_path = args.task_opt if args.task_opt is not None else args.task
     config_path = args.config_opt if args.config_opt is not None else args.config

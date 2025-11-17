@@ -29,6 +29,14 @@ def parse_command_line_args():
     parser.add_argument(
         "name", type=str, nargs="?", help="The name of the experiment.", default="-"
     )
+
+    parse_command_line_constants(parser)
+
+    # Parse the arguments and return them
+    return parser.parse_args()
+
+
+def parse_command_line_constants(parser: argparse.ArgumentParser):
     parser.add_argument("-t_slot", type=int, help="transmission slot", default=core.T_SLOT)
     parser.add_argument("-t_proc", type=int, help="transmission processing time", default=core.T_PROC)
     parser.add_argument("-t_mem", type=int, help="transmission slot", default=core.T_M)
@@ -44,7 +52,6 @@ def parse_command_line_args():
     core.MAX_NUM_QUEUE = args.max_q
     core.NUM_PORT = args.ports
 
-    # Parse the arguments and return them
     return args
 
 
