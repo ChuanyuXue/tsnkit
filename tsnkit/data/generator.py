@@ -56,14 +56,14 @@ class DatasetGenerator:
                             data_rate=1,
                             header=path + header + "_topo",
                         )
-                        _flowset = generate_flowset(
+                        _ = generate_flowset(
                             nx.DiGraph(net),
                             size,
                             period,
                             deadline,
                             num_stream,
                             num_sw,
-                            num_sw if topo != 4 else int(np.sqrt(num_sw)-1),
+                            num_sw if topo != 4 else int(np.sqrt(num_sw)-1) * 4,
                             path + header + "_task",
                         )
                         exp_info = [

@@ -224,7 +224,7 @@ class Route(list):
 
     @staticmethod
     def is_valid_route_logic(init_list: List[List]) -> bool:
-        ## [NOTE] May casue some problem for un-continuous link_id
+        ## [NOTE] May cause some problem for un-continuous link_id
         routes: List[List[Union[Tuple[int, int], Link]]] = [
             [] for i in range(max([int(x[0]) for x in init_list]) + 1)
         ]

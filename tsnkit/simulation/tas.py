@@ -204,7 +204,7 @@ def simulation(
                 if t >= ct:
                     if link[0] == SRC[flow]:
                         log[flow][0].append(t)
-                        output.append([flow, link, 1, t])
+                        # output.append([flow, link, 1, t])
                         if verbose and (DEBUG_FLAG == 0 or flow in DEBUG_FLOWSET):
                             print(
                                 ("[Talker %d]:" % link[0]).ljust(20)
@@ -371,5 +371,5 @@ if __name__ == "__main__":
         if not file_name:
             file_name = "log.csv"
         pd.DataFrame(output, 
-            columns=["flow", "link", "di", "time"]
+            columns=["stream", "link", "di", "time"]
             ).to_csv("/".join([path_name, file_name]), index=False)
