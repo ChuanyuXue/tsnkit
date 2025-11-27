@@ -7,6 +7,7 @@ Created:  2023-10-08T17:51:27.418Z
 
 from typing import Any, Sequence
 import argparse
+import os
 
 
 def parse_command_line_args():
@@ -15,22 +16,46 @@ def parse_command_line_args():
         description="Process the stream and network paths."
     )
 
-    # Add the positional arguments
+    # Switch to optional flags for all parameters
+    parser.add_argument(
+        "task",
+        type=str,
+        help="The file path to the stream CSV file.",
+    )
+    parser.add_argument(
+        "net",
+        type=str,
+        help="The file path to the network CSV file.",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="./",
+        nargs="?",
+        help="The output folder path.",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        nargs="?",
+        help="The number of workers.",
+    )
+    parser.add_argument(
+        "--name",
+        type=str,
+        default="-",
+        nargs="?",
+        help="The name of the experiment.",
+    )
 
-    parser.add_argument("task", type=str, help="The file path to the stream CSV file.")
-    parser.add_argument("net", type=str, help="The file path to the network CSV file.")
-    parser.add_argument(
-        "output", type=str, nargs="?", help="The output folder path.", default="./"
-    )
-    parser.add_argument(
-        "workers", type=int, nargs="?", help="The number of workers.", default=1
-    )
-    parser.add_argument(
-        "name", type=str, nargs="?", help="The name of the experiment.", default="-"
-    )
+    parsed = parser.parse_args()
+    ## TODO: Put me somewhere else.
+    if parsed.output:
+        os.makedirs(parsed.output, exist_ok=True)
 
     # Parse the arguments and return them
-    return parser.parse_args()
+    return parsed
 
 
 def benchmark(stream_path, network_path):
@@ -40,7 +65,7 @@ def benchmark(stream_path, network_path):
 
 if __name__ == "__main__":
     args = parse_command_line_args()
-    benchmark(args.STREAM_PATH, args.NETWORK_PATH)
+    benchmark(args.task, args.net)
 
 
 def _interface(name: str) -> Any:
