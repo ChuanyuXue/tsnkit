@@ -197,8 +197,12 @@ def run(
         dataset = [*range(1, 17), *range(33, 49), *range(65, 81)]
     else:
         for ins in args.ins:
-            a, b = ins.split("-")
-            dataset.extend(range(int(a), int(b)))
+            try:
+                a, b = ins.split("-")
+                dataset.extend(range(int(a), int(b)))
+            except (ValueError, TypeError):
+                print(f"Invalid instance range format: '{ins}'. Expected 'start-end' (e.g., '1-50').")
+                sys.exit(1)
 
     validation = args.subset
     
