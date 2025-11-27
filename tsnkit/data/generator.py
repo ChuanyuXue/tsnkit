@@ -11,6 +11,7 @@ import itertools
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
+import os
 import networkx as nx
 from .dataset_spec import generate_flowset
 from .dataset_spec import TOPO_FUNC
@@ -27,6 +28,7 @@ class DatasetGenerator:
         self.topo = [topo] if isinstance(topo, int) else topo
 
     def run(self, path):
+        os.makedirs(path, exist_ok=True)
         param_combinations = list(itertools.product(
                                 self.num_stream, 
                                 self.num_sw,
