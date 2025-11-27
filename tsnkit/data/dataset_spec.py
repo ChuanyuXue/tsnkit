@@ -85,19 +85,7 @@ def line(num_sw, num_queue, data_rate, header):
         net[i + num_sw, i] = 1
         net[i, i + num_sw] = 1
 
-    result = []
-    for i in range(num_node):
-        for j in range(num_node):
-            if net[i][j]:
-                link = []
-                link.append((i, j))
-                link.append(num_queue)
-                link.append(data_rate)
-                link.append(ERROR)
-                link.append(0)
-                result.append(link)
-
-    result = pd.DataFrame(result, columns=["link", "q_num", "rate", "t_proc", "t_prop"])
+    result = _convert_2darray_to_csv(net, num_node, num_queue, data_rate) 
     result.to_csv(header + ".csv", index=False)
     return net
 
@@ -119,24 +107,13 @@ def ring(num_sw, num_queue, data_rate, header):
     net[0, num_sw - 1] = 1
     net[num_sw - 1, 0] = 1
 
-    result = []
-    for i in range(num_node):
-        for j in range(num_node):
-            if net[i][j]:
-                link = []
-                link.append((i, j))
-                link.append(num_queue)
-                link.append(data_rate)
-                link.append(ERROR)
-                link.append(0)
-                result.append(link)
-
-    result = pd.DataFrame(result, columns=["link", "q_num", "rate", "t_proc", "t_prop"])
+    result = _convert_2darray_to_csv(net, num_node, num_queue, data_rate) 
     result.to_csv(header + ".csv", index=False)
     return net
 
 
 def tree(num_sw, num_queue, data_rate, header):
+    # Aka. STAR
     num_node = num_sw * 2 + 1
     net = np.zeros(shape=(num_node, num_node))
 
@@ -145,19 +122,8 @@ def tree(num_sw, num_queue, data_rate, header):
         net[i * 2 + 1, i] = 1
         net[i, i * 2 + 2] = 1
         net[i * 2 + 2, i] = 1
-    result = []
-    for i in range(num_node):
-        for j in range(num_node):
-            if net[i][j]:
-                link = []
-                link.append((i, j))
-                link.append(num_queue)
-                link.append(data_rate)
-                link.append(ERROR)
-                link.append(0)
-                result.append(link)
 
-    result = pd.DataFrame(result, columns=["link", "q_num", "rate", "t_proc", "t_prop"])
+    result = _convert_2darray_to_csv(net, num_node, num_queue, data_rate) 
     result.to_csv(header + ".csv", index=False)
     return net
 
@@ -170,12 +136,13 @@ def mesh(num_sw, num_queue, data_rate, header):
     for i in range(0, num_sw - 1):
         net[i, i + 1] = 1
         net[i + 1, i] = 1
+
     ## Connect the switch and the end-station
     for i in range(num_sw):
         net[i + num_sw, i] = 1
         net[i, i + num_sw] = 1
 
-    ## Connect the mesh
+    ## Connect the ring
     net[0, num_sw - 1] = 1
     net[num_sw - 1, 0] = 1
 
@@ -184,24 +151,69 @@ def mesh(num_sw, num_queue, data_rate, header):
         net[i, num_sw - i - 1] = 1
         net[num_sw - i - 1, i] = 1
 
-    result = []
-    for i in range(num_node):
-        for j in range(num_node):
-            if net[i][j]:
-                link = []
-                link.append((i, j))
-                link.append(num_queue)
-                link.append(data_rate)
-                link.append(ERROR)
-                link.append(0)
-                result.append(link)
-
-    result = pd.DataFrame(result, columns=["link", "q_num", "rate", "t_proc", "t_prop"])
+    result = _convert_2darray_to_csv(net, num_node, num_queue, data_rate) 
     result.to_csv(header + ".csv", index=False)
     return net
 
+def mesh_2d(num_sw, num_queue, data_rate, header):
+    num_node = num_sw * 2 ## TODO: |ES| != |SW| for mesh_2d
+    net = np.zeros(shape=(num_node, num_node))
 
-TOPO_FUNC = [line, ring, tree, mesh]
+    if int(np.sqrt(num_sw)) ** 2 != num_sw:
+        raise ValueError("Wrong num_sw for mesh_2d, col_len != row_len")
+
+    row_len = col_len = int(np.sqrt(num_sw))
+
+    # Save to mat
+    mat = []
+    count = 0
+    for i in range(row_len):
+        if i % 2 == 0:
+            row = list(range(count, count + col_len))
+        else:
+            row = list(range(count, count + col_len))[::-1]
+        mat.append(row)
+        count += col_len
+    
+    # Fill net
+    searched = set()
+    es_id = num_sw
+
+    def _dfs(x, y):
+        nonlocal es_id, searched
+        if x < 0 or y < 0 or x >= row_len or y >= col_len:
+            return
+        if (x,y) in searched:
+            return
+        searched.add((x,y))
+
+        # Add es on boarder
+        if x == 0 or y == 0 or x == row_len - 1 or y == col_len - 1:
+            net[mat[x][y]][es_id] = 1
+            net[es_id][mat[x][y]] = 1
+            es_id += 1
+
+        # Connect sw neighbors
+        def _search_nxt(x, y, nx, ny):
+            if row_len > nx >= 0 and col_len > ny >= 0: 
+                net[mat[x][y]][mat[nx][ny]] = 1
+                net[mat[nx][ny]][mat[x][y]] = 1
+                _dfs(nx, ny)
+        
+        _search_nxt(x, y, x-1, y)
+        _search_nxt(x, y, x+1, y)
+        _search_nxt(x, y, x, y-1)
+        _search_nxt(x, y, x, y+1)
+            
+    _dfs(0, 0)
+
+    result = _convert_2darray_to_csv(net, num_node, num_queue, data_rate) 
+    result.to_csv(header + ".csv", index=False)
+    print(result)
+    return net
+
+
+TOPO_FUNC = [line, ring, tree, mesh, mesh_2d]
 
 
 def generate_flowset(
@@ -251,3 +263,24 @@ def generate_flowset(
             i += 1
         else:
             continue
+
+
+def _convert_2darray_to_csv(net, num_node, num_queue, data_rate):
+    result = []
+    for i in range(num_node):
+        for j in range(num_node):
+            if net[i][j]:
+                link = []
+                link.append((i, j))
+                link.append(num_queue)
+                link.append(data_rate)
+                link.append(ERROR)
+                link.append(0)
+                result.append(link)
+
+    result = pd.DataFrame(result, columns=["link", "q_num", "rate", "t_proc", "t_prop"])
+    return result
+
+
+if __name__ == "__main__":
+    mesh_2d(9,1,1,"test")

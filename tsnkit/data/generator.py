@@ -125,7 +125,7 @@ if __name__ == "__main__":
         "--topo",
         type=int_or_int_list,
         default=0,
-        help="Topology type: 0-Line, 1-Ring, 2-Tree, 3-Mesh",
+        help="Topology type: 0-Line, 1-Ring, 2-Tree, 3-Mesh, 4-2dMesh",
     )
     parser.add_argument(
         "--output",
