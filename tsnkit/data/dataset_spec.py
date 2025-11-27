@@ -239,6 +239,7 @@ def generate_flowset(
             result.to_csv(header + ".csv", index=False)
             return
 
+        # NOTE: Prioritize uti(ES) <= 75% for traffic generation
         availble_es = np.argwhere(uti_ports <= 0.75).reshape(-1)
         if availble_es.size == 0:
             availble_es = np.array([x for x in range(num_es)])

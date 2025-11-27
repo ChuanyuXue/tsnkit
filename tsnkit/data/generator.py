@@ -9,6 +9,7 @@ import argparse
 import traceback
 import itertools
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 import networkx as nx
 from .dataset_spec import generate_flowset
@@ -60,7 +61,7 @@ class DatasetGenerator:
                             deadline,
                             num_stream,
                             num_sw,
-                            num_sw,
+                            num_sw if topo != 4 else int(np.sqrt(num_sw)-1),
                             path + header + "_task",
                         )
                         exp_info = [
