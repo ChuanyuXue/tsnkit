@@ -136,30 +136,6 @@ class TSNProVisualizer:
         except NameError:
             return False
 
-    def show(self, ns_per_sec=1000.0, fps=30, speed=1.0):
-        if not self.segments:
-            print("Error: No packet segments found.")
-            return
-
-        # 1. Setup Figure
-        plt.style.use('dark_background')
-        fig, ax = plt.subplots(figsize=(12, 10))
-        fig.patch.set_facecolor(self.colors['bg'])
-        ax.set_facecolor(self.colors['bg'])
-        ax.axis('off')
-        
-        # 2. Draw Static Elements
-        nx.draw_networkx_edges(self.G, self.pos, ax=ax, edge_color=self.colors['edge'], 
-                               width=1.5, arrowsize=10)
-        
-        ends = [n for n in self.G.nodes if self.G.degree(n) == 2]
-        switches = [n for n in self.G.nodes if n not in ends]
-        
-        nx.draw_networkx_nodes(self.G, self.pos, nodelist=switches, ax=ax, 
-                               node_size=600, node_color=self.colors['sw'], node_shape='s', label='Switch')
-        nx.draw_networkx_nodes(self.G, self.pos, nodelist=ends, ax=ax, 
-                               node_size=600, node_color=self.colors['es'], node_shape='s', label='End Station')
-
     def show(self, ns_per_sec=10000.0, fps=30, speed=1.0):
         if not self.segments:
             print("Error: No packet segments found.")

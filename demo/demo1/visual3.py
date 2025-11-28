@@ -42,7 +42,9 @@ class TSNProVisualizer:
         self.segments = self._build_segments(log_path)
         
         # Precompute Logs and Delay Stats
-        self.log_entries = []     
+        self.log_entries = []     # legacy preformatted strings (per-cycle)
+        self.events = []          # structured events for continuous-time logging
+        self.event_times = []     # event times for bisect (ns)
         self.delay_data = {}      
         self._precompute_stats(log_path)
         
@@ -148,11 +150,13 @@ class TSNProVisualizer:
             u, v = row["u_v"]
             di = int(row["di"])
             
-            # Create Log String
-            ts_str = f"[{t/1e9:.6f}]" 
+            # Create structured event for continuous-time logging
             evt = "Send" if di == 1 else "Recv"
-            msg = f"{ts_str} Flw{f}: {evt} {u}->{v}"
-            self.log_entries.append((t, msg))
+            self.events.append({'time': t, 'flow': f, 'evt': evt, 'u': int(u), 'v': int(v)})
+            self.event_times.append(t)
+            # Also keep a preformatted message (per-cycle) for fallback
+            ts_str = f"[{t/1e9:.9f}]"
+            self.log_entries.append((t, f"{ts_str} Flw{f}: {evt} {u}->{v}"))
 
             # Delay Logic
             src_node = self.flow_src.get(f)
@@ -229,10 +233,12 @@ class TSNProVisualizer:
         flow_lines = {}
         cmap = plt.get_cmap('tab10')
         all_delays = []
+        all_delay_times = []
         for f, data in self.delay_data.items():
-            line, = ax_delay.plot([], [], label=f"Flow {f}", color=cmap(f%10), linewidth=1.5)
+            line, = ax_delay.plot([], [], label=f"Flow {f}", color=cmap(f%10), linewidth=1.0, marker='o', markersize=3, zorder=3)
             flow_lines[f] = line
             all_delays.extend(data['delays'])
+            all_delay_times.extend(data['times'])
 
         # Auto-scale Y axis once based on max delay found
         if all_delays:
@@ -240,6 +246,11 @@ class TSNProVisualizer:
             ax_delay.set_ylim(0, max_delay * 1.2)
         else:
             ax_delay.set_ylim(0, 100) # Default fallback
+        
+        # Initialize X axis window up-front so data are visible even with blitting
+        # Use a 20% window of the total simulation duration
+        # (update() will keep sliding this window as time advances)
+        # Compute from segments time range below
 
         # --- 2. Static Topology Draw ---
         nx.draw_networkx_edges(self.G, self.pos, ax=ax_topo, edge_color=self.colors['edge'], width=1.5, arrowsize=10)
@@ -264,17 +275,24 @@ class TSNProVisualizer:
         time_text = ax_topo.text(0.02, 0.95, '', transform=ax_topo.transAxes, color=self.colors['text'], 
                                  fontsize=14, fontfamily='monospace', weight='bold')
 
-        # --- 3. Animation Logic (Fixed Continuous Play) ---
+        # --- 3. Animation Logic (Infinite-Cycle Like visual2) ---
         
         # Calculate global time range from logs
         min_t = min(s['t0'] for s in self.segments)
         max_t = max(s['t1'] for s in self.segments)
         total_dur_ns = max_t - min_t
+        # Set initial X-window for delay chart before animation starts
+        # Anchor to earliest delay time if available, otherwise to segment start
+        initial_window = total_dur_ns * 0.2 if total_dur_ns > 0 else 1
+        delay_start = min(all_delay_times) if all_delay_times else min_t
+        ax_delay.set_xlim(delay_start, delay_start + initial_window)
         
-        # Calculate total frames needed to play the WHOLE simulation once
+        # Calculate simulation time advance per frame in nanoseconds
+        # This avoids rounding issues from integer frames_per_cycle and keeps motion smooth.
         real_duration_sec = (total_dur_ns / ns_per_sec) / speed
-        total_frames = int(real_duration_sec * fps)
-        if total_frames < 1: total_frames = 1
+        step_ns = (ns_per_sec / fps) * speed  # simulation nanoseconds advanced per rendered frame
+        if step_ns <= 0:
+            step_ns = max(1, total_dur_ns // max(1, int(real_duration_sec * fps)) if real_duration_sec > 0 else 1)
         
         scat = ax_topo.scatter([], [], s=100, zorder=5, edgecolors='white', linewidths=0.8)
 
@@ -287,9 +305,13 @@ class TSNProVisualizer:
             return [scat, time_text, log_text_obj] + list(counter_text_objs.values()) + list(flow_lines.values())
 
         def update(frame):
-            # Linear progression: Frame 0 -> min_t, Frame N -> max_t
-            progress = frame / total_frames
-            local_curr_time = min_t + (progress * total_dur_ns)
+            # Use a monotonic simulation time derived from frame count
+            sim_elapsed = frame * step_ns
+            cycle_idx = int(sim_elapsed // total_dur_ns) if total_dur_ns > 0 else 0
+            local_offset = sim_elapsed % total_dur_ns if total_dur_ns > 0 else 0
+            # Local time within the current cycle and global display time
+            local_curr_time = min_t + local_offset
+            global_display_time = min_t + sim_elapsed
             
             # 1. Update Packets
             active = [s for s in self.segments if s['t0'] <= local_curr_time <= s['t1']]
@@ -310,48 +332,94 @@ class TSNProVisualizer:
             else:
                 scat.set_offsets(np.empty((0, 2)))
 
-            # 2. Update Counters
+            # 2. Update Counters (accumulate across cycles like visual2)
             for n, text_obj in counter_text_objs.items():
+                base_tx = len(self.tx_times[n]) * cycle_idx
+                base_rx = len(self.rx_times[n]) * cycle_idx
                 curr_tx = bisect.bisect_right(self.tx_times[n], local_curr_time)
                 curr_rx = bisect.bisect_right(self.rx_times[n], local_curr_time)
-                text_obj.set_text(f"TX:{curr_tx}\nRX:{curr_rx}")
+                total_tx = base_tx + curr_tx
+                total_rx = base_rx + curr_rx
+                text_obj.set_text(f"TX:{total_tx}\nRX:{total_rx}")
 
-            # 3. Update Log Panel (Scroll last 15 lines)
-            log_idx = bisect.bisect_right(self.log_entries, (local_curr_time, "zzzz"))
-            recent_logs = self.log_entries[max(0, log_idx-15):log_idx]
-            log_str = "\n".join([entry[1] for entry in recent_logs])
-            log_text_obj.set_text(log_str)
+            # 3. Update Log Panel (Scroll last 15 lines) with continuous timestamps
+            recent_lines = []
+            if self.events:
+                # Index within this cycle
+                pos = bisect.bisect_right(self.event_times, local_curr_time) - 1
+                c = cycle_idx
+                i = pos
+                while c >= 0 and len(recent_lines) < 15:
+                    while i >= 0 and len(recent_lines) < 15:
+                        ev = self.events[i]
+                        t_disp = ev['time'] + c * total_dur_ns
+                        recent_lines.append(f"[{t_disp/1e9:.9f}] Flw{ev['flow']}: {ev['evt']} {ev['u']}->{ev['v']}")
+                        i -= 1
+                    c -= 1
+                    i = len(self.events) - 1
+                recent_lines.reverse()
+                log_text_obj.set_text("\n".join(recent_lines))
+            else:
+                # Fallback to precomputed per-cycle strings
+                log_idx = bisect.bisect_right(self.log_entries, (local_curr_time, "zzzz"))
+                recent_logs = self.log_entries[max(0, log_idx-15):log_idx]
+                log_text_obj.set_text("\n".join([entry[1] for entry in recent_logs]))
             
-            # 4. Update Delay Chart (Sliding Window)
+            # 4. Update Delay Chart (Sliding Window) with continuous timestamps
+            # Build only the points within the current global time window to keep drawing lightweight
+            window_size = total_dur_ns * 0.2  # 20% window
+            global_now = global_display_time
+            win_start = max(delay_start, global_now - window_size)
             for f, line in flow_lines.items():
                 f_times = self.delay_data[f]['times']
                 f_delays = self.delay_data[f]['delays']
-                
+                if not f_times:
+                    line.set_data([], [])
+                    continue
+                xt = []
+                yt = []
+                # Include a bounded number of prior cycles likely to intersect the window
+                # Compute how many full cycles can fit in the window (usually 0 or 1)
+                cycles_back = int(np.ceil(window_size / total_dur_ns)) if total_dur_ns > 0 else 0
+                k_start = max(0, cycle_idx - cycles_back - 1)
+                for k in range(k_start, cycle_idx):
+                    off = k * total_dur_ns
+                    # Full past cycles
+                    for t, d in zip(f_times, f_delays):
+                        tt = t + off
+                        if tt >= win_start:
+                            xt.append(tt)
+                            yt.append(d)
+                # Current cycle up to local time
                 idx = bisect.bisect_right(f_times, local_curr_time)
                 if idx > 0:
-                    line.set_data(f_times[:idx], f_delays[:idx])
-            
-            # Slide X-Axis window (Show last ~10% of total time or fixed 20ms?)
-            # Let's make it show "Start to Current" or a sliding window if it gets too long
-            window_size = total_dur_ns * 0.2 # Show 20% window
-            if local_curr_time > (min_t + window_size):
-                ax_delay.set_xlim(local_curr_time - window_size, local_curr_time)
-            else:
-                ax_delay.set_xlim(min_t, min_t + window_size)
+                    off = cycle_idx * total_dur_ns
+                    for t, d in zip(f_times[:idx], f_delays[:idx]):
+                        tt = t + off
+                        if tt >= win_start:
+                            xt.append(tt)
+                            yt.append(d)
+                if xt:
+                    line.set_data(np.asarray(xt), np.asarray(yt))
+                else:
+                    line.set_data([], [])
+            # Slide X-Axis window strictly by global time
+            ax_delay.set_xlim(win_start, global_now)
 
-            time_text.set_text(f"TIME: {int(local_curr_time):08d} ns")
+            time_text.set_text(f"TIME: {int(global_display_time):08d} ns")
+            time_text.set_color('#00FF00')
             return [scat, time_text, log_text_obj] + list(counter_text_objs.values()) + list(flow_lines.values())
 
-        print(f"Starting Animation: {total_frames} frames, {real_duration_sec:.2f} sec duration.")
+        print(f"Starting Animation: step {step_ns:.2f} ns/frame, approx {real_duration_sec:.2f} sec/cycle.")
         
         if self._is_notebook():
-            ani = animation.FuncAnimation(fig, update, frames=total_frames, 
-                                          init_func=init, blit=True, interval=1000/fps)
+            ani = animation.FuncAnimation(fig, update, frames=int(max(1, (total_dur_ns/step_ns)))*10, 
+                                          init_func=init, blit=False, interval=1000/fps)
             plt.close(fig)
             return HTML(ani.to_jshtml())
         else:
-            ani = animation.FuncAnimation(fig, update, frames=total_frames, 
-                                          init_func=init, blit=True, interval=1000/fps,
+            ani = animation.FuncAnimation(fig, update, frames=None, 
+                                          init_func=init, blit=False, interval=1000/fps,
                                           cache_frame_data=False)
             plt.show()
 
