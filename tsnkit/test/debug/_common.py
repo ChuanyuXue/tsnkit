@@ -123,7 +123,8 @@ def process_single_dataset(args_tuple):
     # validate schedule
     # Don't modify tqdm in worker processes - this causes semaphore leaks
     try:
-        log = tas.simulation(task_path, f"./{algo_name}-{data_id}", it=it, draw_results=False, disable_pbar=True)
+        # tas.simulation returns (log, output); we only need log here
+        log, _ = tas.simulation(task_path, f"./{algo_name}-{data_id}", it=it, draw_results=False, disable_pbar=True)
         
         deadline = list(pd.read_csv(task_path)["deadline"])
         flag = "succ"

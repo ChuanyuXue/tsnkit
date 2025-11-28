@@ -86,7 +86,7 @@ def killif(main_proc, mem_limit, time_limit, sig, oom_queue, manager_pid):
 
 def validate_schedule(task_path, file_num):
     tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)  # disable pbar during simulations
-    log = tas.simulation(task_path, f"./{file_num}-", it=2)
+    log, _ = tas.simulation(task_path, f"./{file_num}-", it=2)
     return log
 
 
@@ -107,4 +107,3 @@ def mute():
     sys.stdout = open(os.devnull, "w")
     sys.stderr = open(os.devnull, "w")
     warnings.filterwarnings("ignore")
-
