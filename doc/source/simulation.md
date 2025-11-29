@@ -88,15 +88,11 @@ The debug tool is used for quickly validating a single or multiple methods on a 
 
 **Usage**
 
-Testing a single method:
 ```
-python -m tsnkit.test.debug.<method> -t [total_timeout_limit] -o [path_for_output_report]
+python -m tsnkit.test.debug [methods] --ins [problem_instances] -t [total_timeout_limit] -o [path_for_output_report]
 ```
 
-Testing multiple methods:
-```
-python -m tsnkit.test.debug [methods] -t [total_timeout_limit] -o [path_for_output_report]
-```
+Problem instances are used as ranges (e.g. `--ins 1-50`, `--ins 150-200`). There are a total of 256 pregenerated problem instances. The command also supports test single methods, e.g., `python -m tsnkit.test.debug.ls --ins 1-16`.
 
 ## OMNeT_TSNkit
 

@@ -45,6 +45,8 @@ def parse():
     parser.add_argument("-t", type=int, default=600, help="total timeout limit")
     parser.add_argument("-o", type=str, default="./", help="output path")
 
+    utils.parse_command_line_constants(parser)
+
     return parser.parse_args()
 
 

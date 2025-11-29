@@ -13,6 +13,7 @@ from tqdm import tqdm
 import networkx as nx
 from .dataset_spec import generate_flowset
 from .dataset_spec import TOPO_FUNC
+from .. import core
 
 
 class DatasetGenerator:
@@ -133,6 +134,8 @@ if __name__ == "__main__":
         default="./",
         help="Output folder path",
     )
+
+    core.parse_command_line_constants(parser)
 
     args = parser.parse_args()
     generator = DatasetGenerator(

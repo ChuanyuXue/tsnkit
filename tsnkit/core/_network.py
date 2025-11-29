@@ -144,7 +144,7 @@ class Link(int):
         t_proc: int,
         t_prop: int,
         q_num: int,
-        rate: int,
+        rate: float,
     ) -> None:
         id = int(id)
         src = src
@@ -152,7 +152,7 @@ class Link(int):
         t_proc = int(np.ceil(int(t_proc) / T_SLOT))
         t_prop = int(np.ceil(int(t_prop) / T_SLOT))
         q_num = int(q_num)
-        rate = int(rate)
+        rate = float(rate)
 
         self._id = id
         self._name = (src, dst)  ## Tuple: (src, dst)
@@ -165,9 +165,9 @@ class Link(int):
         self._q_num = q_num
         self._rate = rate
 
-        if rate not in [1, 10, 100, 1000]:
+        if rate not in [0.01, 0.1, 1, 10, 100, 1000]:
             raise Exception(
-                "Invalid rate: Must in 1(Gbs), 10(100Mbs), 100(10Mbs), 1000(Mbs)"
+                f"Invalid rate: Must be 1 (1 Gbps), 0.1 (100 Mbps), 0.01 (10 Mbps)"
             )
 
     # id: int = _interface("id")
@@ -178,7 +178,7 @@ class Link(int):
     t_prop: int = _interface("t_prop")
     t_sync: int = _interface("t_sync")
     q_num: int = _interface("q_num")
-    rate: Literal[1, 10, 100, 1000] = _interface("rate")
+    rate: Literal[0.01, 0.1, 1, 10, 100, 1000] = _interface("rate")
 
     def __hash__(self) -> int:
         return self._id
@@ -493,7 +493,7 @@ def load_network(path: str) -> Network:
             t_proc=int(row["t_proc"]),
             t_prop=int(row["t_prop"]),
             q_num=int(row["q_num"]),
-            rate=int(row["rate"]),
+            rate=float(row["rate"]),
         )
 
         network._links.append(link)
