@@ -27,12 +27,12 @@ python setup.py build_ext --inplace
 python3 -m tsnkit.simulation.tas [TASK PATH] [CONFIG PATH]
 ```
 
-- Task path: The stream set file as described in [previous section](dataprep.md).
-- Config path: The folder containing the generated configuration files. The detailed format can be also found in [previous section](dataprep.md). *Please note this path should be the folder path that containing the configuration files, such as `./data/output/`*
-- Iter: The number of network cycles to run the simulation. Default is `1` (use `--iter N` to change).
-- Verbose: If set to `True` (`--verbose`), the simulator prints detailed logs; otherwise it prints a summary. Default is `False`.
-- No-draw: Disable plotting by passing `--no-draw` (useful for benchmarking).
-
+- `task`: The stream set file as described in [previous section](dataprep.md).
+- `config`: The folder containing the generated configuration files. The detailed format can be also found in [previous section](dataprep.md). *Note this should be a folder path that containing the configuration files, such as `./data/output/`*
+- `--iter`: The number of network cycles to run the simulation. Default is `1` (use `--iter N` to change).
+- `--verbose`: If set to `True` (`--verbose`), the simulator prints detailed logs; otherwise it prints a summary. Default is `False`.
+- `--no-draw`: Disable plotting by passing `--no-draw`.
+- `--output`: Save the simulation logs into a `.csv` file (by default current folder). 
 
 The simulator will automatically infer the network settings from the configuration files, thus a separate network path is not required.
 
@@ -49,8 +49,6 @@ During the runtime, the script outputs logs as following to show the forwarding 
     [Bridge (0, 8)]:    Flow 0 - Arrive at 8021000
     [Listener 8]:       Flow 0 - Receive at 8023800
     ```
-
-
 
 The final log indicates any potential errors and the send/receive times for each flow:
 

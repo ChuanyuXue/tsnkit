@@ -51,8 +51,7 @@ def parse_command_line_args():
 
     parsed = parser.parse_args()
     ## TODO: Put me somewhere else.
-    if parsed.output:
-        os.makedirs(parsed.output, exist_ok=True)
+    os.makedirs(parsed.output, exist_ok=True)
 
     # Parse the arguments and return them
     return parsed

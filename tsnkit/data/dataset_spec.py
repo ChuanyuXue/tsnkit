@@ -156,10 +156,12 @@ def mesh(num_sw, num_queue, data_rate, header):
     return net
 
 def mesh_2d(num_sw, num_queue, data_rate, header):
-    num_node = num_sw * 2 ## TODO: |ES| != |SW| for mesh_2d
+
+    n = int(np.sqrt(num_sw))
+    num_node = num_sw + 4 * n - 4
     net = np.zeros(shape=(num_node, num_node))
 
-    if int(np.sqrt(num_sw)) ** 2 != num_sw:
+    if n ** 2 != num_sw:
         raise ValueError("Wrong num_sw for mesh_2d, col_len != row_len")
 
     row_len = col_len = int(np.sqrt(num_sw))
@@ -187,7 +189,7 @@ def mesh_2d(num_sw, num_queue, data_rate, header):
             return
         searched.add((x,y))
 
-        # Add es on boarder
+        # Add es on border
         if x == 0 or y == 0 or x == row_len - 1 or y == col_len - 1:
             net[mat[x][y]][es_id] = 1
             net[es_id][mat[x][y]] = 1
@@ -195,7 +197,7 @@ def mesh_2d(num_sw, num_queue, data_rate, header):
 
         # Connect sw neighbors
         def _search_nxt(x, y, nx, ny):
-            if row_len > nx >= 0 and col_len > ny >= 0: 
+            if 0 <= nx < row_len and 0 <= ny < col_len: 
                 net[mat[x][y]][mat[nx][ny]] = 1
                 net[mat[nx][ny]][mat[x][y]] = 1
                 _dfs(nx, ny)
@@ -209,7 +211,6 @@ def mesh_2d(num_sw, num_queue, data_rate, header):
 
     result = _convert_2darray_to_csv(net, num_node, num_queue, data_rate) 
     result.to_csv(header + ".csv", index=False)
-    print(result)
     return net
 
 

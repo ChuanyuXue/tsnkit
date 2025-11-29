@@ -1,5 +1,4 @@
 import argparse
-from email import header
 import pandas as pd
 import numpy as np
 from enum import Enum
@@ -372,4 +371,4 @@ if __name__ == "__main__":
             file_name = "log.csv"
         pd.DataFrame(output, 
             columns=["stream", "link", "di", "time"]
-            ).to_csv("/".join([path_name, file_name]), index=False)
+            ).to_csv(os.path.join(path_name, file_name), index=False)  
