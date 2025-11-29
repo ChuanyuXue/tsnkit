@@ -5,6 +5,7 @@ from enum import Enum
 from tqdm import tqdm
 from .draw import *
 from typing import Set, Dict, List, Tuple
+import os
 from ..core import find_files_with_prefix, T_SLOT, T_PROC, parse_command_line_constants
 
 # Try to import Cython optimized functions
@@ -14,12 +15,13 @@ try:
 except ImportError:
     CYTHON_AVAILABLE = False
 
+# DEBUG only
 DEBUG_FLAG = 0
 DEBUG_FLOWSET: Set[int] = set([0])
 
 
 def match_time(t: int, gcl: List[Tuple[int, int, int]]) -> int:
-    """Match the entry in GCl with the given time. Implemented by binary search.
+    """Match the entry in GCl with the given time. Implemented in binary search.
 
     Args:
         t (int): _description_
@@ -171,10 +173,11 @@ def simulation(
     period = list(task["period"])
     size = list(task["size"])
     hyper_period = np.lcm.reduce(period)
-    log: List[List[List[int]]] = [[[], []] for i in range(len(task))]
-    instance_count = [0 for i in range(len(task))]
+    log: List[List[List[int]]] = [[[], []] for _ in range(len(task))]
+    output: List[int] = []
+    instance_count = [0 for _ in range(len(task))]
     egress_q: Dict[Tuple[int, int], List[List]] = {
-        link: [[] for i in range(NUM_QUEUES)] for link, _ in GCL.items()
+        link: [[] for _ in range(NUM_QUEUES)] for link, _ in GCL.items()
     }
     available_t = {link: 0 for link, _ in GCL.items()}
     _pool: dict[Tuple[int, int], list[Tuple]] = {link: [] for link, _ in GCL.items()}
@@ -192,7 +195,7 @@ def simulation(
 
                 instance_count[flow] = instance_count[flow] + 1
 
-        ## Timer - TODO: Replace by heap
+        ## Timer - TODO: Use min-heap
         for link, vec in _pool.items():
             _new_vec = []
             for ct, frame in vec:
@@ -200,6 +203,7 @@ def simulation(
                 if t >= ct:
                     if link[0] == SRC[flow]:
                         log[flow][0].append(t)
+                        # output.append([flow, link, 1, t])
                         if verbose and (DEBUG_FLAG == 0 or flow in DEBUG_FLOWSET):
                             print(
                                 ("[Talker %d]:" % link[0]).ljust(20)
@@ -207,6 +211,7 @@ def simulation(
                             )
                     if link[1] in DST[flow]:
                         log[flow][1].append(t - T_PROC)
+                        output.append([flow, link, 0, t])
                         if verbose and (DEBUG_FLAG == 0 or flow in DEBUG_FLOWSET):
                             print(
                                 ("[Listener %d]:" % link[-1]).ljust(20)
@@ -215,13 +220,14 @@ def simulation(
                         continue
                     try:
                         for v in ROUTE[flow][link[-1]]:
-                            new_link = (link[-1], v)
+                            nxt_link = (link[-1], v)
+                            output.append([flow, nxt_link, 0, t])
                             if verbose and (DEBUG_FLAG == 0 or flow in DEBUG_FLOWSET):
                                 print(
-                                    ("[Bridge %s]:" % str(new_link)).ljust(20)
+                                    ("[Bridge %s]:" % str(nxt_link)).ljust(20)
                                     + "Flow %d - Arrive at %d" % (flow, t)
                                 )
-                            egress_q[new_link][QUEUE[frame][new_link]].append(frame)
+                            egress_q[nxt_link][QUEUE[frame][nxt_link]].append(frame)
                     except KeyError:
                         print(flow, link)
                         raise
@@ -242,6 +248,7 @@ def simulation(
                     out = egress_q[link][q].pop(0)
                     _pool[link].append((t + trans_delay + T_PROC, out))
                     available_t[link] = t + trans_delay
+                    output.append([out[0], link, 1, t])
                     if verbose and (DEBUG_FLAG == 0 or out[0] in DEBUG_FLOWSET):
                         print(
                             ("[Bridge %s]:" % str(link)).ljust(20)
@@ -251,7 +258,7 @@ def simulation(
     if draw_results:
         draw(log)
     
-    return log
+    return log, output
 
 
 if __name__ == "__main__":
@@ -295,6 +302,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output.")
     parser.add_argument("--no-draw", action="store_true", help="Disable matplotlib plotting (useful for benchmarking)")
+    parser.add_argument("--output", type=str, nargs="?", help="Save logs to output file")
 
     # log: [
     #    Release time,  Arrival time
@@ -314,7 +322,7 @@ if __name__ == "__main__":
     if task_path is None or config_path is None:
         parser.error("the following arguments are required: task, config")
 
-    log = simulation(
+    log, output = simulation(
         task_path,
         config_path,
         it=args.iter,
@@ -355,3 +363,13 @@ if __name__ == "__main__":
             f"Average delay: {average_delay:<10.2f}",
             f"Average jitter: {average_jitter:<10.2f}",
         )
+    
+    if args.output:
+        path_name, file_name = os.path.split(args.output)
+        if path_name:
+            os.makedirs(path_name, exist_ok=True)
+        if not file_name:
+            file_name = "log.csv"
+        pd.DataFrame(output, 
+            columns=["stream", "link", "di", "time"]
+            ).to_csv(os.path.join(path_name, file_name), index=False)  

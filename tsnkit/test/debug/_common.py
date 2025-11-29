@@ -1,5 +1,4 @@
 import time
-from functools import partialmethod
 from typing import List, Union
 import pandas as pd
 import numpy as np
@@ -41,8 +40,16 @@ def process_single_dataset(args_tuple):
     topo_path = data_path + str(data_id) + "_topo.csv"
 
     # create schedule
-    process = subprocess.Popen([py_environment, '-m', 'tsnkit.algorithms.' + algo_name, task_path, topo_path,
-                               "./", "1", f"{algo_name}-{data_id}"],
+    process = subprocess.Popen([
+                               py_environment,
+                               '-m',
+                               'tsnkit.algorithms.' + algo_name,
+                               task_path,
+                               topo_path,
+                               '--output', './',
+                               '--workers', '1',
+                               '--name', f"{algo_name}-{data_id}"
+                               ],
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
                                text=True)
@@ -116,7 +123,8 @@ def process_single_dataset(args_tuple):
     # validate schedule
     # Don't modify tqdm in worker processes - this causes semaphore leaks
     try:
-        log = tas.simulation(task_path, f"./{algo_name}-{data_id}", it=it, draw_results=False, disable_pbar=True)
+        # tas.simulation returns (log, output); we only need log here
+        log, _ = tas.simulation(task_path, f"./{algo_name}-{data_id}", it=it, draw_results=False, disable_pbar=True)
         
         deadline = list(pd.read_csv(task_path)["deadline"])
         flag = "succ"

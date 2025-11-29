@@ -102,10 +102,10 @@ The data generator is a python script that generates random stream set and netwo
 - **--num_ins:** Number of problem instances to generate, default is 1.
 - **--num_stream:** Number of flows in each problem instance, default is 8.
 - **--num_sw:** Number of network bridge in each problem instance, default is 8.
-- **--period:** Period pattern of stream set.
-- **--size:** Size pattern of stream set.
-- **--deadline:** Deadline pattern of stream set.
-- **--topo:** Topology pattern of network.
+- **--period:** Period pattern of stream set. [ns]
+- **--size:** Size pattern of stream set. [bytes]
+- **--deadline:** Deadline pattern of stream set. [ns]
+- **--topo:** Topology pattern of network. [0:line, 1:ring, 2:tree, 3:mesh, 4:mesh_2d]
 - **--output:** Output directory for generated files.
 
 To generate a single dataset:

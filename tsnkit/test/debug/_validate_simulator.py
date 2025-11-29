@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     ls.benchmark("-", "./1_task.csv", "./1_topo.csv")
 
-    log = tas.simulation("./1_task.csv", "./", it=5, draw_results=False)
+    log, _ = tas.simulation("./1_task.csv", "./", it=5, draw_results=False)
     gcl = pd.read_csv("./--GCL.csv")
     route = pd.read_csv("./--ROUTE.csv")
 
