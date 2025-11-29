@@ -47,7 +47,7 @@ def parse_command_line_constants(parser: argparse.ArgumentParser):
     args = parser.parse_args()
     core.T_SLOT = args.t_slot
     core.T_PROC = args.t_proc
-    core.T_M = args.t_mem
+    core.T_M = args.t_max
     core.E_SYNC = args.e_sync
     core.MAX_NUM_QUEUE = args.max_q
     core.NUM_PORT = args.ports
