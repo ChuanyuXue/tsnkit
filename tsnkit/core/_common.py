@@ -8,6 +8,7 @@ Created:  2023-10-08T17:51:27.418Z
 from typing import Any, Sequence
 import argparse
 import os
+from .. import core
 
 
 def parse_command_line_args():
@@ -53,8 +54,29 @@ def parse_command_line_args():
     ## TODO: Put me somewhere else.
     os.makedirs(parsed.output, exist_ok=True)
 
+    args = parse_command_line_constants(parser)
+
     # Parse the arguments and return them
-    return parsed
+    return args
+
+
+def parse_command_line_constants(parser: argparse.ArgumentParser):
+    parser.add_argument("-t_slot", type=int, help="slot size", default=core.T_SLOT)
+    parser.add_argument("-t_proc", type=int, help="processing delay", default=core.T_PROC)
+    parser.add_argument("-t_max", type=int, help="maximum_time", default=core.T_M)
+    parser.add_argument("-e_sync", type=int, help="maximum synchronization error", default=core.E_SYNC)
+    parser.add_argument("-max_q", type=int, help="maximum number of queues", default=core.MAX_NUM_QUEUE)
+    parser.add_argument("-ports", type=int, help="number of ports", default=core.NUM_PORT)
+
+    args = parser.parse_args()
+    core.T_SLOT = args.t_slot
+    core.T_PROC = args.t_proc
+    core.T_M = args.t_max
+    core.E_SYNC = args.e_sync
+    core.MAX_NUM_QUEUE = args.max_q
+    core.NUM_PORT = args.ports
+
+    return args
 
 
 def benchmark(stream_path, network_path):
