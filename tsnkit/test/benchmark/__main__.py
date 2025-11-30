@@ -157,7 +157,7 @@ if __name__ == "__main__":
         stats = alg(f"{task_param[0]}-{task_num}", path + "_task.csv", path + "_topo.csv", workers=workers)
         return stats.to_list()
 
-    with Pool(processes=cpu_count() // utils.NUM_CORE_LIMIT, maxtasksperchild=1, initializer=mute) as p:
+    with Pool(processes=max(1, cpu_count() // utils.NUM_CORE_LIMIT), maxtasksperchild=1, initializer=mute) as p:
         for task in tasks:
             p.apply_async(
                 run,
