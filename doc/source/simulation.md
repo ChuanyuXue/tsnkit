@@ -28,13 +28,13 @@ python3 -m tsnkit.simulation.tas [TASK PATH] [CONFIG PATH]
 ```
 
 - `task`: The stream set file as described in [previous section](dataprep.md).
-- `config`: The folder containing the generated configuration files. The detailed format can be also found in [previous section](dataprep.md). *Note this should be a folder path that containing the configuration files, such as `./data/output/`*
+- `config`: The folder containing the generated configuration files. The detailed format can be also found in [previous section](dataprep.md). *Note this should be a folder path that containing the configuration files, such as `./data/input/`*
 - `--iter`: The number of network cycles to run the simulation. Default is `1` (use `--iter N` to change).
 - `--verbose`: If set to `True` (`--verbose`), the simulator prints detailed logs; otherwise it prints a summary. Default is `False`.
 - `--no-draw`: Disable plotting by passing `--no-draw`.
 - `--output`: Save the simulation logs into a `.csv` file (by default current folder). 
 
-The simulator will automatically infer the network settings from the configuration files, thus a separate network path is not required.
+The simulator will automatically infer the network settings from the configuration files, thus a separate network path is not required. `config` parameter also supports prefix-path, if you have both `./data/input/a-GCL.csv` and `./data/input/b-GCL.csv`, you can use prefix-path `./data/intput/a` or `./data/intput/b` to distinguish them.
 
 **Output:**
 
