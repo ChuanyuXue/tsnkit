@@ -14,8 +14,9 @@
 * **Benchmarking Tools:** Tools for performance comparison among scheduling methods.
 
 
-Documentation: https://tsnkit.readthedocs.io\
-Demo: https://github.com/ChuanyuXue/tsnkit/blob/main/doc/rtss25.ipynb
+Documentation: https://tsnkit.readthedocs.io 
+
+Demo: [Check in Colab](https://colab.research.google.com/drive/1AaTvpjdEawniOReLJxjBzVsf5O6iTrQM?usp=sharing)
 
 ## Installation
 
