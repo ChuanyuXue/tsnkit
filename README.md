@@ -1,22 +1,23 @@
 # tsnkit
 
-A scheduling and benchmark toolkit for Time-Sensitive Networking in Python
+[![Build Status](https://github.com/ChuanyuXue/tsnkit/actions/workflows/workflow.yml/badge.svg)](https://github.com/ChuanyuXue/tsnkit/actions/workflows/validation.yml)
+[![PyPI version](https://badge.fury.io/py/tsnkit.svg)](https://badge.fury.io/py/tsnkit)
+[![Documentation Status](https://readthedocs.org/projects/tsnkit/badge/?version=latest)](https://tsnkit.readthedocs.io/en/latest/?badge=latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-```
-@inproceedings{xue2024real,
-  title={Real-time scheduling for 802.1 Qbv time-sensitive networking (TSN): A systematic review and experimental study},
-  author={Xue, Chuanyu and Zhang, Tianyu and Zhou, Yuanbin and Nixon, Mark and Loveless, Andrew and Han, Song},
-  booktitle={2024 IEEE 30th Real-Time and Embedded Technology and Applications Symposium (RTAS)},
-  pages={108--121},
-  year={2024},
-  organization={IEEE}
-}
-```
-Paper link: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10568056
+**TSNKit** is an open-source scheduling and benchmarking toolkit for Time-Sensitive Networking (TSN), written in Python. It provides a unified interface for developing, testing, and benchmarking scheduling algorithms for IEEE 802.1Qbv and related standards.
 
-Documentation (work-in-progress): https://tsnkit.readthedocs.io
+* **Open-source Implementations:** Ready-to-use implementations of state-of-the-art TSN scheduling methods.
+* **Unified Interface:** Standardized typing and commandline interface for algorithms.
+* **Built-in Simulation:** Built-in simulator  to validate scheduling outputs against network constraints.
+* **Benchmarking Tools:** Tools for performance comparison among scheduling methods.
 
-## Install
+
+Documentation: https://tsnkit.readthedocs.io\
+Demo: https://github.com/ChuanyuXue/tsnkit/blob/main/doc/rtss25.ipynb
+
+## Installation
 
 Install from source (recommended):
 
@@ -31,29 +32,22 @@ From pip:
 pip install -U tsnkit
 ```
 
-
-
 ## Usage
 
-**Testing:**
 
 ```
-python3 -m tsnkit.algorithms.[METHOD] [STREAM PATH] [NETWORK PATH]
+## Generate data
+python3 -m tsnkit.data.generator
+
+## Run scheduling algorithm
+python3 -m tsnkit.algorithms.ls 1_task.csv 1_topo.csv 
+
+## Run simulation
+python3 -m tsnkit.simulation.tas ./1_task.csv ./
+
+## Run benchmark
+python -m tsnkit.test.benchmark --methods ALL --ins 1-16
 ```
-**Reproducing benchmark paper results:**
-
-1. Check out to `legacy` branch.
-2. Download `data.gz` from git-lfs, and unzip it to `data` folder. (Or generate it using `data/input/generate_data.ipynb`)
-3. Go `src` foder and run `python main.py --method=ALL --start=0 --end=38400`.
-
-*Both `main` and `legacy` branches use the same logic (models & algorithms). However, we have refined the organization in the `main` branch by introducing a unified interface and standardized type notation to enhance maintainability and simplify the efforts to add new methods. The `legacy` branch houses the source code record used in the paper.*
-
-**Code structure:**
-
-
-- **`tsnkit/algorithms`**: Inplementations of all supported scheduling methods.
-- **`tsnkit/simulation`**: TSN simulator to validate the scheduling output.
-- **`tsnkit/core`**: Data structures and helper functions.
 
 
 ## Related projects:
@@ -61,8 +55,24 @@ python3 -m tsnkit.algorithms.[METHOD] [STREAM PATH] [NETWORK PATH]
 - [OMNeT_TSNkit](https://github.com/deepsea52418/OMNeT_TSNkit): Integrating TSNkit into OMNeT++ for simulation.
 - [VisTSN](https://github.com/AmyangXYZ/VisTSN): Displaying TSN real-world testbed status when TSNKit results applies.
 
+
+
+## Reference
+
+If you use **TSNKit** in your research, please cite our RTAS 2024 paper:
+
+```
+@inproceedings{xue2024real,
+  title={Real-time scheduling for 802.1 Qbv time-sensitive networking (TSN): A systematic review and experimental study},
+  author={Xue, Chuanyu and Zhang, Tianyu and Zhou, Yuanbin and Nixon, Mark and Loveless, Andrew and Han, Song},
+  booktitle={2024 IEEE 30th Real-Time and Embedded Technology and Applications Symposium (RTAS)},
+  pages={108--121},
+  year={2024},
+  organization={IEEE}
+}
+```
+Paper link: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10568056
+
 ## Contribute
 
-Contributions are welcome! Feel free to add your own scheduling algorithm in this toolkit. And contact me to update your new scheduling method into our benchmark paper!
-
-*Refer to `tsnkit/algorithms/__init__.py` to implement the required interface and benchmark entrance.*
+Contributions are welcome!  Feel free to add your own scheduling algorithm in this toolkit. Please reach out to me if you need any help or have any suggestions skewcy@gmail.com.
