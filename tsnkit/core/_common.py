@@ -50,11 +50,9 @@ def parse_command_line_args():
         help="The name of the experiment.",
     )
 
-    parsed = parser.parse_args()
-    ## TODO: Put me somewhere else.
-    os.makedirs(parsed.output, exist_ok=True)
-
     args = parse_command_line_constants(parser)
+    ## TODO: Put me somewhere else.
+    os.makedirs(args.output, exist_ok=True)
 
     # Parse the arguments and return them
     return args
@@ -75,6 +73,9 @@ def parse_command_line_constants(parser: argparse.ArgumentParser):
     core.E_SYNC = args.e_sync
     core.MAX_NUM_QUEUE = args.max_q
     core.NUM_PORT = args.ports
+
+    from . import _constants
+    _constants.E_SYNC = args.e_sync
 
     return args
 

@@ -19,6 +19,7 @@ from typing import (
     cast,
 )
 from ._constants import T_SLOT, E_SYNC, NUM_PORT
+from . import _constants
 from ._common import _interface
 
 import pandas as pd
@@ -43,7 +44,7 @@ class Node(int):
     def __init__(self, id: int, type: NodeType) -> None:
         self._id = id
         self._type = type  ## NodeType
-        self._sync_error = E_SYNC
+        self._sync_error = _constants.E_SYNC
         self._num_port = NUM_PORT
 
     def __new__(cls, *args, **kwargs):
@@ -161,7 +162,7 @@ class Link(int):
 
         self._t_proc = t_proc
         self._t_prop = t_prop
-        self._t_sync = E_SYNC
+        self._t_sync = _constants.E_SYNC
         self._q_num = q_num
         self._rate = rate
 
