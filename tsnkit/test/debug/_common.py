@@ -18,6 +18,23 @@ import sys
 
 SCRIPT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
+## Instances used by --subset
+SUBSET = [*range(1, 17), 257, 258, 259, 260]
+## Gurobi and CPLEX algorithms only get instances that fit the size limits of the
+## free solver versions from PyPI, so CI does not need any license
+SMALL_SUBSET = [257, 258, 259, 260]
+SUBSET_OVERRIDE = {
+    **dict.fromkeys(
+        ["cg", "cp_wa", "i_ilp", "jrs_mc", "jrs_nw", "jrs_wa", "smt_nw"],
+        SMALL_SUBSET,
+    ),
+    "jrs_nw_l": [261],
+}
+
+
+def get_subset(algo_name: str) -> List[int]:
+    return list(SUBSET_OVERRIDE.get(algo_name, SUBSET))
+
 
 def generate(path: str) -> None:
     # create a data directory if one does not exist
@@ -223,9 +240,7 @@ def run(
 
     progress_bar = len(algorithms) * len(dataset)
     if validation:
-        # In subset mode, all algorithms get the same dataset: range(1,17) + [257,258,259,260] = 20 items
-        subset_dataset_size = 16 + 4  # 20 total
-        progress_bar = len(algorithms) * subset_dataset_size
+        progress_bar = sum(len(get_subset(algo_name)) for algo_name in algorithms)
 
     with tqdm(total=progress_bar) as pbar:
         # header
@@ -233,7 +248,7 @@ def run(
         tqdm.write(print_format.format("time", "name", "data id", "flag", "solve_time", "total time", "total mem"))
 
         for algo_name in algorithms:
-            current_dataset = dataset.copy() if not args.subset else [*range(1, 17)] + [257, 258, 259, 260]
+            current_dataset = dataset.copy() if not args.subset else get_subset(algo_name)
             
             # Prepare arguments for multiprocessing
             worker_args = [
