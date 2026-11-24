@@ -1,97 +1,90 @@
 name: workflow
 
-on: 
-  pull_request_target: 
+# Runs untrusted fork code, so use pull_request (no secrets, read-only token),
+# never pull_request_target.
+on:
+  pull_request:
     branches:
     - main
 
+permissions:
+  contents: read
+
 jobs:
-  validate_classes:
-    name: validate classes
+  validate:
+    name: validate ${{ matrix.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: classes
+            module: _validate_classes
+          - name: io
+            module: _validate_io
+          - name: simulator
+            module: _validate_simulator
 
     steps:
       - name: checkout tsnkit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
-          fetch-depth: 0
           lfs: true
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-      - name: validate classes
-        run: | 
-          pip install -q -r requirements.txt
-          pip install -q seaborn
-          python -m tsnkit.test.debug._validate_classes
+          persist-credentials: false
+      - name: set up python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: install dependencies
+        run: pip install -q -r requirements.txt seaborn
+      - name: validate ${{ matrix.name }}
+        run: python -m tsnkit.test.debug.${{ matrix.module }}
 
-  validate_io:
-    name: validate io
+  select_algorithms:
+    name: select algorithms
     runs-on: ubuntu-latest
+    outputs:
+      algorithms: ${{ steps.select.outputs.algorithms }}
 
     steps:
       - name: checkout tsnkit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
-          fetch-depth: 0
-          lfs: true
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-      - name: validate classes
-        run: | 
-          pip install -q -r requirements.txt
-          pip install -q seaborn
-          python -m tsnkit.test.debug._validate_io
-
-  validate_sim:
-    name: validate simulator
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: checkout tsnkit
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          lfs: true
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-      - name: validate classes
-        run: | 
-          pip install -q -r requirements.txt
-          pip install -q seaborn
-          python -m tsnkit.test.debug._validate_simulator
+          fetch-depth: 2 # HEAD is the merge commit, HEAD^1 is main
+          persist-credentials: false
+      - name: select changed and default algorithms
+        id: select
+        shell: bash # enables pipefail
+        run: |
+          changed=$(git diff --name-only --diff-filter=d HEAD^1 HEAD \
+            | sed -nE 's#^tsnkit/algorithms/([a-z0-9][a-z0-9_]*)\.py$#\1#p')
+          algorithms=$(printf '%s\n' $changed ls smt_wa jrs_nw jrs_nw_l cp_wa \
+            | sort -u | jq -Rnc '[inputs]')
+          echo "algorithms=$algorithms" | tee -a "$GITHUB_OUTPUT"
 
   validate_algorithms:
-    name: validate algorithms
+    name: validate ${{ matrix.algorithm }}
+    needs: select_algorithms
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/elainehu222/cpoptimizer:latest
-      credentials:
-        username: elainehu222
-        password: ${{secrets.GHCR_TOKEN}}
+    strategy:
+      fail-fast: false # one failing algorithm must not hide the others
+      matrix:
+        algorithm: ${{ fromJSON(needs.select_algorithms.outputs.algorithms) }}
 
     steps:
-    - name: checkout tsnkit
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        lfs: true
-        ref: ${{ github.event.pull_request.head.ref }}
-        repository: ${{ github.event.pull_request.head.repo.full_name }}
-
-    - name: get changed algorithms
-      id: changes
-      env:
-        PR: ${{github.event.pull_request.head.sha}}
-        MAIN: ${{github.event.pull_request.base.sha}}
-      run: |
-        pip install -q -r requirements.txt
-        git config --global --add safe.directory "$GITHUB_WORKSPACE"
-        changes=$(git diff --name-only "$PR" "$MAIN")
-        changed_models=$(echo "$changes" | grep '^tsnkit/algorithms/.*\.py$' | xargs -n1 basename | sed 's/\.py$//' | tr '\n' ' ')
-        echo "models=$changed_models" >> "$GITHUB_OUTPUT"
-        echo "$changed_models"
-    
-    - name: run test
-      run: |
-        python -m tsnkit.test.debug ${{steps.changes.outputs.models}} jrs_nw ls smt_wa --subset 
-      
+      - name: checkout tsnkit
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+          persist-credentials: false
+      - name: set up python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: install dependencies
+        # cplex on PyPI is the Community Edition, it also ships cpoptimizer
+        run: pip install -q -r requirements.txt seaborn cplex
+      - name: validate ${{ matrix.algorithm }}
+        env:
+          ALGORITHM: ${{ matrix.algorithm }}
+        run: python -m tsnkit.test.debug "$ALGORITHM" --subset
