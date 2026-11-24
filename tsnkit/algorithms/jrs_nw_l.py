@@ -201,8 +201,8 @@ class jrs_nw_l:
                         self.u[s, link]) != 1:
                     continue
 
-                start = self.model_output.get_value(  # type: ignore
-                    self.t[s, link])
+                start = round(self.model_output.get_value(  # type: ignore
+                    self.t[s, link]))
                 end = start + s.get_t_trans(link)
                 for k in s.get_frame_indexes(self.task.lcm):
                     gcl.append([
@@ -224,8 +224,8 @@ class jrs_nw_l:
             if len(_start_links) > 1:
                 warnings.warn("Multiple start link")
             start_link = _start_links[0]
-            start = self.model_output.get_value(  # type: ignore
-                self.t[s, start_link])  # type: ignore
+            start = round(self.model_output.get_value(  # type: ignore
+                self.t[s, start_link]))  # type: ignore
             offset.append([s, 0, start])
         return utils.Release(offset)
 
