@@ -40,15 +40,41 @@ jobs:
       - name: validate ${{ matrix.name }}
         run: python -m tsnkit.test.debug.${{ matrix.module }}
 
-  validate_algorithms:
-    name: validate algorithms
+  select_algorithms:
+    name: select algorithms
     runs-on: ubuntu-latest
+    outputs:
+      algorithms: ${{ steps.select.outputs.algorithms }}
 
     steps:
       - name: checkout tsnkit
         uses: actions/checkout@v6
         with:
           fetch-depth: 2 # HEAD is the merge commit, HEAD^1 is main
+          persist-credentials: false
+      - name: select changed and default algorithms
+        id: select
+        shell: bash # enables pipefail
+        run: |
+          changed=$(git diff --name-only --diff-filter=d HEAD^1 HEAD \
+            | sed -nE 's#^tsnkit/algorithms/([a-z0-9][a-z0-9_]*)\.py$#\1#p')
+          algorithms=$(printf '%s\n' $changed ls smt_wa jrs_nw jrs_nw_l cp_wa \
+            | sort -u | jq -Rnc '[inputs]')
+          echo "algorithms=$algorithms" | tee -a "$GITHUB_OUTPUT"
+
+  validate_algorithms:
+    name: validate ${{ matrix.algorithm }}
+    needs: select_algorithms
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # one failing algorithm must not hide the others
+      matrix:
+        algorithm: ${{ fromJSON(needs.select_algorithms.outputs.algorithms) }}
+
+    steps:
+      - name: checkout tsnkit
+        uses: actions/checkout@v6
+        with:
           lfs: true
           persist-credentials: false
       - name: set up python
@@ -58,12 +84,7 @@ jobs:
       - name: install dependencies
         # cplex on PyPI is the Community Edition, it also ships cpoptimizer
         run: pip install -q -r requirements.txt seaborn cplex
-
-      - name: run test
-        shell: bash # enables pipefail
-        run: |
-          changed=$(git diff --name-only --diff-filter=d HEAD^1 HEAD \
-            | sed -nE 's#^tsnkit/algorithms/([a-z0-9][a-z0-9_]*)\.py$#\1#p')
-          models=$(printf '%s\n' $changed ls smt_wa jrs_nw cp_wa | sort -u)
-          echo "algorithms:" $models
-          python -m tsnkit.test.debug $models --subset
+      - name: validate ${{ matrix.algorithm }}
+        env:
+          ALGORITHM: ${{ matrix.algorithm }}
+        run: python -m tsnkit.test.debug "$ALGORITHM" --subset
